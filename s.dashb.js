@@ -38,3 +38,11 @@ if (memberGroupCardLink) {
         }
     });
 }
+
+const logoutBtn = document.querySelector(".logout");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        window.location.href = "log-sign.html";
+    });
+}

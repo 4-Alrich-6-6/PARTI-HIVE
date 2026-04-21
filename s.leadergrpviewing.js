@@ -16,6 +16,6 @@ if (backBtn) {
 
 if (projectBreakdownTab) {
     projectBreakdownTab.addEventListener("click", () => {
-        window.location.href = "s.projectbreakdown.html";
+        window.location.href = "s.leaderprojectbreakdown.html";
     });
 }

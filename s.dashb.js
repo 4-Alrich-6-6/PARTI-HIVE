@@ -22,3 +22,19 @@ if (groupCardLink) {
         }
     });
 }
+
+const memberGroupCardLink = document.querySelector(".open-member-group-view");
+
+if (memberGroupCardLink) {
+    const openMemberGroupView = () => {
+        window.location.href = "s.membergrpviewing.html";
+    };
+
+    memberGroupCardLink.addEventListener("click", openMemberGroupView);
+    memberGroupCardLink.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openMemberGroupView();
+        }
+    });
+}

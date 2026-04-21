@@ -42,18 +42,16 @@ button {
     border-radius: 8px;
     background: #f1f1f1;
     display: inline-flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 0 9px;
     cursor: pointer;
+    padding: 0;
 }
 
-.menu-btn span {
-    width: 100%;
-    height: 2px;
-    background: #222;
-    border-radius: 2px;
+.menu-btn img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
 }
 
 .datetime {
@@ -63,20 +61,9 @@ button {
     font-weight: 700;
 }
 
-.notif-btn-mobile {
-    display: none;
-    border: 2px solid #c99c00;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #f8c600;
-    padding: 7px;
-    cursor: pointer;
-}
-
 .layout {
     display: grid;
-    grid-template-columns: 115px 1fr 52px;
+    grid-template-columns: 115px 1fr 92px;
     min-height: calc(100vh - 58px);
     width: 100%;
 }
@@ -146,6 +133,7 @@ button {
     padding: 12px 14px 18px;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .main-header {
@@ -163,13 +151,13 @@ button {
     font-weight: 900;
 }
 
-.section-actions {
+.header-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-.section-actions button {
+.action-btn {
     border: none;
     border-radius: 999px;
     background: #ffffff;
@@ -184,10 +172,18 @@ button {
     cursor: pointer;
 }
 
-.section-actions span {
-    width: 14px;
-    height: 14px;
+.post-task-icon {
+    width: 18px;
+    height: 18px;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.post-task-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .main-content {
@@ -196,7 +192,7 @@ button {
     padding: 4px 0 10px;
 }
 
-.stats-row {
+.summary-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 220px));
     justify-content: center;
@@ -204,7 +200,7 @@ button {
     margin-bottom: 24px;
 }
 
-.stat-card {
+.summary-card {
     background: #ffffff;
     border-radius: 12px;
     padding: 14px 16px;
@@ -212,20 +208,20 @@ button {
     text-align: center;
 }
 
-.stat-label {
+.summary-label {
     margin: 0 0 6px;
     font-size: 12px;
     font-weight: 700;
     color: #555;
 }
 
-.stat-card h3 {
+.summary-card h3 {
     margin: 0;
     font-size: 28px;
     font-weight: 900;
 }
 
-.group-section {
+.task-section {
     margin-bottom: 24px;
 }
 
@@ -234,13 +230,13 @@ button {
     margin: 0 auto 10px;
 }
 
-.group-section h2 {
+.task-section h2 {
     margin: 0;
     font-size: 16px;
     font-weight: 800;
 }
 
-.group-card {
+.task-card {
     width: min(100%, 680px);
     margin: 0 auto;
     background: #eef0ba;
@@ -253,41 +249,50 @@ button {
     box-shadow: 0 2px 4px rgba(0,0,0,0.18);
 }
 
-.group-info h3 {
+.task-left h3 {
     margin: 0;
     font-size: 15px;
     font-weight: 800;
 }
 
-.group-info p {
+.task-left p {
     margin: 4px 0 0;
     font-size: 13px;
     font-weight: 700;
 }
 
-.card-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.card-right strong {
-    font-size: 11px;
-    white-space: nowrap;
-}
-
-.more-btn {
-    border: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #f7f7f7;
+.assignee-dot {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+}
+
+.assignee-dot img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.task-status {
+    border: none;
+    border-radius: 999px;
+    min-height: 32px;
+    padding: 0 14px;
+    font-size: 12px;
     font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.16);
+    cursor: pointer;
+    background: #ffffff;
+}
+
+.task-status.inactive {
+    background: #f3f3f3;
+}
+
+.task-status.verify {
+    background: #ffffff;
 }
 
 .help-panel {
@@ -315,28 +320,48 @@ button {
 .right-rail {
     background: #f3f3f3;
     border-left: 1px solid #d8d8d8;
+    padding-top: 16px;
+}
+
+.side-tabs {
+    width: 100%;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 14px;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.notif-btn {
-    border: 2px solid #c99c00;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #f8c600;
-    padding: 6px;
+.tab {
+    border: none;
+    padding: 14px 8px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
     cursor: pointer;
+    color: #111;
 }
 
-.open-group-view {
-    cursor: pointer;
+.tab-group-info {
+    background: #a9ea8d;
 }
 
-.open-member-group-view {
-    cursor: pointer;
+.tab-project-breakdown {
+    background: #e8c8d1;
+}
+
+.tab.active {
+    position: relative;
+    left: -8px;
+    width: calc(100% + 8px);
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 115px 1fr;
+    }
+
+    .right-rail {
+        display: none;
+    }
 }
 
 @media (max-width: 900px) {
@@ -344,36 +369,15 @@ button {
         grid-template-columns: 1fr;
     }
 
-    .right-rail {
+    .sidebar {
         display: none;
     }
 
-    .notif-btn-mobile {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 58px;
-        bottom: 0;
-        width: 180px;
-        transform: translateX(-100%);
-        transition: transform 0.25s ease;
-        z-index: 30;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    .stats-row {
+    .summary-row {
         grid-template-columns: 1fr;
     }
 
-    .group-card {
+    .task-card {
         width: 100%;
     }
 
@@ -384,12 +388,12 @@ button {
 }
 
 @media (max-width: 600px) {
-    .card-right {
-        width: 100%;
-        justify-content: space-between;
+    .task-card {
+        flex-wrap: wrap;
+        align-items: flex-start;
     }
 
-    .group-card {
-        flex-wrap: wrap;
+    .task-status {
+        width: 100%;
     }
 }

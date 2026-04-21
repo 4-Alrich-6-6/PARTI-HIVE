@@ -1,0 +1,350 @@
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Inter, sans-serif;
+    color: #000;
+    background-color: var(--hive-yellow);
+    background-image: url("Background.png");
+    background-size: 120%;
+    background-repeat: no-repeat;
+    background-position: calc(50% + 120px) center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    overflow: hidden;
+}
+
+.container {
+    width: min(1220px, 100%);
+    display: grid;
+    grid-template-columns: 1fr minmax(360px, 460px);
+    align-items: center;
+    gap: 18px;
+}
+
+.left {
+    min-height: 540px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.logo-image {
+    width: min(640px, 100%);
+    height: auto;
+    display: block;
+}
+
+.right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: min(100%, 520px);
+    padding-top: 120px;
+    transform: translateX(90px);
+}
+
+.right-header {
+    position: absolute;
+    top: -150px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(100%, 420px);
+    z-index: 2;
+}
+
+.form {
+    width: 100%;
+    max-width: 520px;
+    padding: 28px 24px 30px;
+    margin-top: -100px;
+  }
+
+.form-content {
+    width: min(100%, 420px);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.form-header {
+    width: 100%;
+    margin: 0;
+    margin-bottom: 12px;
+}
+
+.banner {
+    text-align: center;
+    margin: 0;
+}
+
+.title-image {
+    width: min(300px, 100%);
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.tagline {
+    margin: 1px 0 0;
+    font-family: Montserrat, sans-serif;
+    font-size: 29px;
+    font-weight: 800;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.toggle {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 38px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.toggle-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    font-family: Montserrat, sans-serif;
+    font-size: 33px;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    cursor: pointer;
+    padding: 0 2px 5px;
+    position: relative;
+}
+
+.toggle-btn::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    border-radius: 10px;
+    background: transparent;
+}
+
+.toggle-btn.active::after {
+    background: #000;
+}
+
+.lForm,
+.sForm {
+    width: 100%;
+    display: none;
+    min-height: 380px;
+    flex-direction: column;
+}
+
+.lForm.active,
+.sForm.active {
+    display: flex;
+}
+
+.inputs {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.forgot-pass {
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #000;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.form-group {
+    width: 100%;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+input {
+    width: 100%;
+    height: 46px;
+    border-radius: 16px;
+    border: 2px solid #000;
+    background: #000;
+    color: #f5f5f5;
+    font-size: 18px;
+    padding: 0 14px;
+    font-family: Inter, sans-serif;
+}
+
+input::placeholder {
+    color: #c8c8c8;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper input {
+    padding-right: 44px;
+}
+
+.toggle-password {
+    appearance: none;
+    border: none;
+    background: transparent;
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password svg {
+    fill: #f4f4f4;
+}
+
+.submit {
+    display: block;
+    margin: 10px auto 0;
+    border: none;
+    border-radius: 16px;
+    background: #000;
+    color: #fff;
+    min-width: 190px;
+    height: 56px;
+    font-family: Montserrat, sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0 30px;
+}
+
+.lForm .submit,
+.sForm .submit {
+    margin-top: auto;
+}
+
+@media (max-width: 1180px) {
+    .container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .left {
+        min-height: 300px;
+        justify-content: center;
+    }
+
+    .logo-image {
+        width: min(420px, 100%);
+    }
+}
+
+@media (max-width: 760px) {
+    body {
+        padding: 16px;
+        background-image: none;
+        position: relative;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 100vh;
+        height: 100vw;
+        background: url("Background.png") no-repeat 75% 45% / 195%;
+        background-color: var(--hive-yellow);
+        transform: translate(-50%, -50%) rotate(90deg);
+        transform-origin: center;
+        z-index: -1;
+    }
+
+    .container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .left {
+        min-height: auto;
+        justify-content: center;
+    }
+
+    .logo-image {
+        width: 88px;
+    }
+
+    .right {
+        width: 100%;
+        transform: none;
+        padding-top: 0;
+    }
+
+    .right-header {
+        position: static;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .form {
+        max-width: 370px;
+        padding: 26px 18px 26px;
+        margin-top: 0;
+    }
+
+    .title-image {
+        width: min(180px, 100%);
+    }
+
+    .tagline {
+        font-size: 13px;
+    }
+
+    .toggle-btn {
+        font-size: 24px;
+    }
+
+    label {
+        font-size: 14px;
+    }
+
+    input {
+        font-size: 14px;
+        height: 36px;
+    }
+
+    .submit {
+        font-size: 20px;
+        font-family: Montserrat, sans-serif;
+        height: 34px;
+    }
+}

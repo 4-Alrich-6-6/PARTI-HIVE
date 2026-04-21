@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="s.dashb.css">
+</head>
+<body>
+    <div class="topbar">
+        <button class="menu-btn" type="button" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+
+        <p class="datetime">6:00 PM February 01, 2026</p>
+
+        <button class="notif-btn-mobile" type="button" aria-label="Notifications">
+            <img src="assets/Notification.png" alt="Notification icon">
+        </button>
+    </div>
+
+    <div class="layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="profile-block">
+                <div class="avatar-circle">
+                    <img src="assets/profile.png" alt="Profile">
+                </div>
+                <h3>Name</h3>
+                <h3>Email</h3>
+                <a href="#" class="profile-link">Manage Profile</a>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="btn settings" type="button">Settings</button>
+                <button class="btn logout" type="button">Log Out</button>
+            </div>
+        </aside>
+
+        <main class="main-content-container">
+            <div class="main-header">
+                <h1 class="main-content-title">STUDENT'S DASHBOARD</h1>
+
+                <div class="section-actions">
+                    <button type="button">
+                        <span><img src="assets/JoinGroup.png" alt="Join Group icon"></span>
+                        Join Groups
+                    </button>
+                    <button type="button">
+                        <span><img src="assets/AddGroup.png" alt="Add Group icon"></span>
+                        Add Groups
+                    </button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <section class="stats-row">
+                    <article class="stat-card">
+                        <p class="stat-label">Owned Groups</p>
+                        <h3>1</h3>
+                    </article>
+
+                    <article class="stat-card">
+                        <p class="stat-label">Joined Groups</p>
+                        <h3>2</h3>
+                    </article>
+
+                    <article class="stat-card">
+                        <p class="stat-label">Pending Invites</p>
+                        <h3>0</h3>
+                    </article>
+                </section>
+
+                <section class="group-section">
+                    <div class="section-title-wrap">
+                        <h2>Your Owned Groups</h2>
+                    </div>
+
+                    <article class="group-card open-group-view" role="button" tabindex="0" aria-label="Open group information">
+                        <div class="group-info">
+                            <h3>Group Name</h3>
+                            <p>Subject</p>
+                        </div>
+
+                        <div class="card-right">
+                            <strong>Occupied Members : 3</strong>
+                            <button class="more-btn" type="button" aria-label="More options">•••</button>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="group-section">
+                    <div class="section-title-wrap">
+                        <h2>Your Groups</h2>
+                    </div>
+
+                    <article class="group-card">
+                        <div class="group-info">
+                            <h3>Group Name</h3>
+                            <p>Subject</p>
+                        </div>
+
+                        <div class="card-right">
+                            <strong>Occupied Members : 3</strong>
+                            <button class="more-btn" type="button" aria-label="More options">•••</button>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="help-panel">
+                    <h2>Quick Tips</h2>
+                    <p>Use <strong>Join Groups</strong> if you already have a invite link, or <strong>Add Groups</strong> to create your own group for projects and activities.</p>
+                </section>
+            </div>
+        </main>
+
+        <aside class="right-rail" aria-hidden="true">
+            <button class="notif-btn" type="button" aria-label="Notifications">
+                <img src="assets/Notification.png" alt="Notification icon">
+            </button>
+        </aside>
+    </div>
+
+    <script src="s.dashb.js"></script>
+</body>
+</html>

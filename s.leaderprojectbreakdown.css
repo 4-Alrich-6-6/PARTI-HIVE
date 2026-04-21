@@ -354,6 +354,132 @@ button {
     width: calc(100% + 8px);
 }
 
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.post-task-modal {
+    width: min(100%, 620px);
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.post-task-modal-header {
+    background: #ffcc00;
+    padding: 14px 18px;
+}
+
+.post-task-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.post-task-form {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label,
+.form-label {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 800;
+    color: #222;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group textarea {
+    width: 100%;
+    border: 1px solid #cfcfcf;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fffdf0;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.assignee-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f9f9f9;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.assignee-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.post-task-modal-actions {
+    margin-top: 4px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    border: none;
+    min-height: 34px;
+    border-radius: 999px;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.discard-btn {
+    background: #111111;
+    color: #ffffff;
+}
+
+.post-btn {
+    background: #ffcc00;
+    color: #111111;
+}
+
 @media (max-width: 1100px) {
     .layout {
         grid-template-columns: 115px 1fr;
@@ -395,5 +521,9 @@ button {
 
     .task-status {
         width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
     }
 }

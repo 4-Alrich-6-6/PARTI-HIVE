@@ -29,7 +29,7 @@ if (groupInfoTab) {
 }
 
 if (taskCard1) {
-    taskCard1.addEventListener("click", () => {
+    const openTaskModal = () => {
         if (!overlay) {
             return;
         }
@@ -39,12 +39,31 @@ if (taskCard1) {
             const isSelected = button.dataset.status === currentStatus;
             button.classList.toggle("selected", isSelected);
         });
-    });
+    };
+
+    taskCard1.addEventListener("click", openTaskModal);
+
+    // Make clicks on the button also open the modal
+    const taskButton = taskCard1.querySelector(".task-status");
+    if (taskButton) {
+        taskButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openTaskModal();
+        });
+    }
 }
 
 if (closePopupBtn && overlay) {
     closePopupBtn.addEventListener("click", () => {
         overlay.classList.remove("open");
+    });
+}
+
+const logoutBtn = document.querySelector(".logout");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        window.location.href = "log-sign.html";
     });
 }
 

@@ -279,7 +279,7 @@ input::placeholder {
         left: 50%;
         width: 100vh;
         height: 100vw;
-        background: url("assets/Background.png") no-repeat 75% 45% / 195%;
+        background: url("Background.png") no-repeat 75% 45% / 195%;
         background-color: var(--hive-yellow);
         transform: translate(-50%, -50%) rotate(90deg);
         transform-origin: center;

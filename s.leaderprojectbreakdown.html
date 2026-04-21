@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Breakdown</title>
-    <link rel="stylesheet" href="s.projectbreakdown.css">
+    <link rel="stylesheet" href="s.leaderprojectbreakdown.css">
 </head>
 <body>
     <div class="topbar">
@@ -36,7 +36,7 @@
                 <h1 class="main-content-title">PROJECT BREAKDOWN</h1>
 
                 <div class="header-actions">
-                    <button class="action-btn post-task-btn" type="button">
+                    <button class="action-btn post-task-btn" id="openPostTaskModalBtn" type="button">
                         <span class="post-task-icon">
                             <img src="assets/Plus.png" alt="Plus icon">
                         </span>
@@ -111,6 +111,60 @@
         </aside>
     </div>
 
-    <script src="s.projectbreakdown.js"></script>
+    <div class="modal-overlay" id="postTaskModalOverlay" aria-hidden="true">
+        <div class="post-task-modal" role="dialog" aria-modal="true" aria-labelledby="postTaskModalTitle">
+            <div class="post-task-modal-header">
+                <h2 id="postTaskModalTitle">Post Task</h2>
+            </div>
+
+            <form id="postTaskForm" class="post-task-form">
+                <div class="form-group">
+                    <label for="taskNameInput">Task Name</label>
+                    <input id="taskNameInput" name="taskName" type="text" placeholder="Enter task name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskDescriptionInput">Task Description</label>
+                    <textarea id="taskDescriptionInput" name="taskDescription" rows="4" placeholder="Enter task description" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <p class="form-label">Assignee(s)</p>
+                    <div class="assignee-options">
+                        <label class="assignee-option">
+                            <input type="checkbox" name="assignees" value="for-you">
+                            <span>For You (Leader)</span>
+                        </label>
+                        <label class="assignee-option">
+                            <input type="checkbox" name="assignees" value="person-2">
+                            <span>Person 2</span>
+                        </label>
+                        <label class="assignee-option">
+                            <input type="checkbox" name="assignees" value="person-3">
+                            <span>Person 3</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dueDateInput">Due Date</label>
+                        <input id="dueDateInput" name="dueDate" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dueTimeInput">Due Time</label>
+                        <input id="dueTimeInput" name="dueTime" type="time" required>
+                    </div>
+                </div>
+
+                <div class="post-task-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="discardPostTaskBtn">Discard</button>
+                    <button type="submit" class="modal-btn post-btn">Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="s.leaderprojectbreakdown.js"></script>
 </body>
 </html>

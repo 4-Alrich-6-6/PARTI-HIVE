@@ -2,24 +2,31 @@ const toggleButtons = document.querySelectorAll(".toggle-btn");
 const loginForm = document.querySelector(".lForm");
 const signUpForm = document.querySelector(".sForm");
 
+const setMode = (targetMode) => {
+    const isSignup = targetMode === "signup";
+
+    toggleButtons.forEach((btn) => {
+        const isActive = btn.dataset.target === (isSignup ? "signup" : "login");
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    if (!loginForm || !signUpForm) {
+        return;
+    }
+
+    loginForm.classList.toggle("active", !isSignup);
+    signUpForm.classList.toggle("active", isSignup);
+};
+
+const urlMode = new URLSearchParams(window.location.search).get("mode");
+if (urlMode === "signup" || urlMode === "login") {
+    setMode(urlMode);
+}
+
 toggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
-        const target = button.dataset.target;
-        toggleButtons.forEach((btn) => {
-            btn.classList.remove("active");
-            btn.setAttribute("aria-selected", "false");
-        });
-        button.classList.add("active");
-        button.setAttribute("aria-selected", "true");
-
-        if (target === "signup") {
-            loginForm.classList.remove("active");
-            signUpForm.classList.add("active");
-            return;
-        }
-
-        signUpForm.classList.remove("active");
-        loginForm.classList.add("active");
+        setMode(button.dataset.target);
     });
 });
 
@@ -42,7 +49,13 @@ if (loginForm) {
     });
 }
 
-// Prevent browser zoom via keyboard, wheel, and gesture events.
+if (signUpForm) {
+    signUpForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        window.location.href = "signverf.html";
+    });
+}
+
 const blockedZoomKeys = ["+", "-", "=", "_", "0"];
 
 window.addEventListener(

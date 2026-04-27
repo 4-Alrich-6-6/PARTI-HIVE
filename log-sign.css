@@ -77,10 +77,49 @@ body {
     gap: 14px;
 }
 
+.form-content .back-button {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 12px;
+}
+
+.form-content .back-button a {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-content .back-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
 .form-header {
     width: 100%;
     margin: 0;
     margin-bottom: 12px;
+}
+
+.form-title {
+    font-family: Montserrat, sans-serif;
+    font-size: 33px;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+}
+
+.form-description {
+    font-family: Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: #000;
+    margin: 0;
 }
 
 .banner {
@@ -245,6 +284,32 @@ input::placeholder {
 .lForm .submit,
 .sForm .submit {
     margin-top: auto;
+}
+
+.verify-form .form-content {
+    align-items: stretch;
+    gap: 10px;
+}
+
+.verify-form .form-title,
+.verify-form .form-description {
+    text-align: center;
+}
+
+.verify-form .form-title h2 {
+    margin: 0;
+}
+
+.verify-form .form-description p {
+    margin: 4px 0 0;
+}
+
+.verify-form .lForm {
+    min-height: 0;
+}
+
+.verify-form .lForm .submit {
+    margin-top: 14px;
 }
 
 @media (max-width: 1180px) {

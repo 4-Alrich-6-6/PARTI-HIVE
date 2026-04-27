@@ -36,6 +36,9 @@
                 <h1 class="main-content-title">PROJECT BREAKDOWN</h1>
 
                 <div class="header-actions">
+                    <button class="icon-btn back" id="backToCategoriesBtn" type="button" aria-label="Back to categories">
+                        <img src="assets/Back.png" alt="Back icon">
+                    </button>
                     <button class="action-btn post-task-btn" id="openPostTaskModalBtn" type="button">
                         <span class="post-task-icon">
                             <img src="assets/Plus.png" alt="Plus icon">
@@ -73,12 +76,20 @@
                             <h3>Task: Create a slide</h3>
                             <p>
                                 Assignee(s):
-                                <span class="assignee-dot"><img src="assets/Info.png" alt="Info icon"></span>
-                                &nbsp; Due Date: ##:## -- ##/##/####
+                                <span class="assignee-info-wrap">
+                                    <img class="assignee-info-icon" src="assets/Info.png" alt="Info icon">
+                                    <span class="assignee-tooltip">Person 1, Person 2</span>
+                                </span>
+                                &nbsp; Due Date: ##:## AM -- ##/##/####
                             </p>
                         </div>
 
-                        <button class="task-status inactive" type="button">Not Active</button>
+                        <div class="task-actions">
+                            <button class="task-status inactive" type="button">Not Active</button>
+                            <button class="more-btn" type="button" aria-label="More task options">
+                                <img src="assets/More.png" alt="More options">
+                            </button>
+                        </div>
                     </article>
                 </section>
 
@@ -92,12 +103,20 @@
                             <h3>Task: Create a slide</h3>
                             <p>
                                 Assignee(s):
-                                <span class="assignee-dot"><img src="assets/Info.png" alt="Info icon"></span>
-                                &nbsp; Due Date: ##:## -- ##/##/####
+                                <span class="assignee-info-wrap">
+                                    <img class="assignee-info-icon" src="assets/Info.png" alt="Info icon">
+                                    <span class="assignee-tooltip">Person 3</span>
+                                </span>
+                                &nbsp; Due Date: ##:## AM -- ##/##/####
                             </p>
                         </div>
 
-                        <button class="task-status verify" type="button">Verify</button>
+                        <div class="task-actions">
+                            <button class="task-status verify" type="button">Verify</button>
+                            <button class="more-btn" type="button" aria-label="More task options">
+                                <img src="assets/More.png" alt="More options">
+                            </button>
+                        </div>
                     </article>
                 </section>
             </section>
@@ -119,17 +138,17 @@
 
             <form id="postTaskForm" class="post-task-form">
                 <div class="form-group">
-                    <label for="taskNameInput">Task Name</label>
+                    <label for="taskNameInput">Task Name *</label>
                     <input id="taskNameInput" name="taskName" type="text" placeholder="Enter task name" required>
                 </div>
 
                 <div class="form-group">
                     <label for="taskDescriptionInput">Task Description</label>
-                    <textarea id="taskDescriptionInput" name="taskDescription" rows="4" placeholder="Enter task description" required></textarea>
+                    <textarea id="taskDescriptionInput" name="taskDescription" rows="4" placeholder="Enter task description"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <p class="form-label">Assignee(s)</p>
+                    <p class="form-label">Assignee(s) *</p>
                     <div class="assignee-options">
                         <label class="assignee-option">
                             <input type="checkbox" name="assignees" value="for-you">
@@ -148,11 +167,11 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="dueDateInput">Due Date</label>
+                        <label for="dueDateInput">Due Date *</label>
                         <input id="dueDateInput" name="dueDate" type="date" required>
                     </div>
                     <div class="form-group">
-                        <label for="dueTimeInput">Due Time</label>
+                        <label for="dueTimeInput">Due Time *</label>
                         <input id="dueTimeInput" name="dueTime" type="time" required>
                     </div>
                 </div>
@@ -162,6 +181,136 @@
                     <button type="submit" class="modal-btn post-btn">Post</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="verifyChoiceOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true">
+            <div class="project-options-body">
+                <p style="font-weight:800;font-size:14px;margin:0 0 4px;">Task Verification</p>
+                <p style="font-size:13px;margin:0 0 12px;">What would you like to do with this task?</p>
+                <div class="project-options-actions">
+                    <button class="modal-btn post-btn" id="verifyFinishBtn" type="button">Finished</button>
+                    <button class="option-delete-btn" id="verifyReviseBtn" type="button">Revise</button>
+                    <button class="modal-btn discard-btn" id="verifyCloseBtn" type="button">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="taskSettingsOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="taskSettingsTitle">
+            <div class="project-options-body">
+                <p class="task-settings-title" id="taskSettingsTitle">Task Settings</p>
+                <div class="task-settings-actions">
+                    <button class="modal-btn post-btn" id="openEditTaskInfoBtn" type="button">Edit Info</button>
+                    <button class="modal-btn post-btn" id="openManualStatusBtn" type="button">Manually Change Status</button>
+                    <button class="option-delete-btn" id="openRemoveTaskConfirmBtn" type="button">Remove Task</button>
+                    <button class="modal-btn discard-btn" id="discardTaskSettingsBtn" type="button">Discard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editTaskInfoOverlay" aria-hidden="true">
+        <div class="post-task-modal" role="dialog" aria-modal="true" aria-labelledby="editTaskInfoTitle">
+            <div class="post-task-modal-header">
+                <h2 id="editTaskInfoTitle">Edit Task Info</h2>
+            </div>
+
+            <form id="editTaskInfoForm" class="post-task-form">
+                <div class="form-group">
+                    <label for="editTaskNameInput">Task Name *</label>
+                    <input id="editTaskNameInput" name="editTaskName" type="text" placeholder="Enter task name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editTaskDescriptionInput">Task Description</label>
+                    <textarea id="editTaskDescriptionInput" name="editTaskDescription" rows="4" placeholder="Enter task description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <p class="form-label">Assignee(s) *</p>
+                    <div class="assignee-options">
+                        <label class="assignee-option">
+                            <input type="checkbox" name="editAssignees" value="for-you">
+                            <span>For You (Leader)</span>
+                        </label>
+                        <label class="assignee-option">
+                            <input type="checkbox" name="editAssignees" value="person-2">
+                            <span>Person 2</span>
+                        </label>
+                        <label class="assignee-option">
+                            <input type="checkbox" name="editAssignees" value="person-3">
+                            <span>Person 3</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDueDateInput">Due Date *</label>
+                        <input id="editDueDateInput" name="editDueDate" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDueTimeInput">Due Time *</label>
+                        <input id="editDueTimeInput" name="editDueTime" type="time" required>
+                    </div>
+                </div>
+
+                <div class="post-task-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="discardEditTaskInfoBtn">Discard</button>
+                    <button type="submit" class="modal-btn post-btn" id="saveEditTaskInfoBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="manualStatusOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="manualStatusTitle">
+            <div class="project-options-body">
+                <p class="task-settings-title" id="manualStatusTitle">Manually Change Status</p>
+                <div class="task-settings-actions">
+                    <button class="modal-btn post-btn" data-manual-status="inactive" type="button">Not Active</button>
+                    <button class="modal-btn post-btn" data-manual-status="active" type="button">Active</button>
+                    <button class="modal-btn post-btn" data-manual-status="finished" type="button">Finished</button>
+                    <button class="modal-btn post-btn" data-manual-status="missing" type="button">Missing</button>
+                    <button class="modal-btn discard-btn" id="discardManualStatusBtn" type="button">Discard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="removeTaskConfirmOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="removeTaskTitle">
+            <div class="project-options-body">
+                <p class="task-settings-title" id="removeTaskTitle">Remove Task</p>
+                <p class="task-settings-subtitle">Are you sure you want to remove this task?</p>
+                <div class="project-options-actions">
+                    <button class="option-delete-btn" id="confirmRemoveTaskBtn" type="button">Remove</button>
+                    <button class="modal-btn discard-btn" id="discardRemoveTaskBtn" type="button">Discard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="taskDetailsOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="taskDetailsTitle">
+            <div class="project-options-body task-details-body">
+                <p class="task-settings-title" id="taskDetailsTitle">Task Information</p>
+                <p><strong>Task:</strong> <span id="detailTaskName"></span></p>
+                <p><strong>Description:</strong> <span id="detailTaskDescription"></span></p>
+                <p><strong>Assignee(s):</strong> <span id="detailTaskAssignees"></span></p>
+                <p><strong>Due Date:</strong> <span id="detailTaskDueDate"></span></p>
+                <p><strong>Due Time:</strong> <span id="detailTaskDueTime"></span></p>
+                <div class="task-details-status-wrap">
+                    <span>Current Status:</span>
+                    <button class="task-status inactive" id="detailTaskStatus" type="button" disabled>Not Active</button>
+                </div>
+                <div class="project-options-actions">
+                    <button class="modal-btn discard-btn" id="closeTaskDetailsBtn" type="button">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 

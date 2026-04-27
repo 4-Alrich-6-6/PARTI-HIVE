@@ -39,8 +39,8 @@
                     <button class="icon-btn danger" id="backBtn" type="button" aria-label="Back">
                         <img src="assets/Leave.png" alt="Back icon">
                     </button>
-                    <button class="action-btn" type="button">Add Members</button>
-                    <button class="action-btn" type="button">Kick Members</button>
+                    <button class="action-btn" id="openAddMembersModalBtn" type="button">Add Members</button>
+                    <button class="action-btn" id="openRemoveMembersModalBtn" type="button">Remove Members</button>
                 </div>
             </div>
 
@@ -57,7 +57,7 @@
                     </article>
 
                     <article class="summary-card">
-                        <p class="summary-label">Leader</p>
+                        <p class="summary-label">Projects</p>
                         <h3>1</h3>
                     </article>
                 </section>
@@ -78,9 +78,17 @@
                     <article class="info-card leader-card">
                         <div class="circle-avatar large"></div>
                         <div class="member-details">
-                            <h3>Person 1</h3>
-                            <p>Leader</p>
-                            <p>Email</p>
+                            <div class="member-info">
+                                <h3>Person 1</h3>
+                                <p>Leader</p>
+                                <p>Email</p>
+                            </div>
+                            <div class="stats">
+                                <p>Total Tasks: 5</p>
+                                <p>Completed: 3</p>
+                                <p>Pending: 2</p>
+                                <p>Missed: 0</p>
+                            </div>
                         </div>
                     </article>
 
@@ -88,18 +96,34 @@
                         <article class="info-card member-card">
                             <div class="circle-avatar medium"></div>
                             <div class="member-details">
-                                <h3>Person 2</h3>
-                                <p>Member</p>
-                                <p>Email</p>
+                                <div class="member-info">
+                                    <h3>Person 2</h3>
+                                    <p>Member</p>
+                                    <p>Email</p>
+                                </div>
+                                <div class="stats">
+                                    <p>Total Tasks: 5</p>
+                                    <p>Completed: 3</p>
+                                    <p>Pending: 2</p>
+                                    <p>Missed: 0</p>
+                                </div>
                             </div>
                         </article>
 
                         <article class="info-card member-card">
                             <div class="circle-avatar medium"></div>
                             <div class="member-details">
-                                <h3>Person 3</h3>
-                                <p>Member</p>
-                                <p>Email</p>
+                                <div class="member-info">
+                                    <h3>Person 3</h3>
+                                    <p>Member</p>
+                                    <p>Email</p>
+                                </div>
+                                <div class="stats">
+                                    <p>Total Tasks: 5</p>
+                                    <p>Completed: 3</p>
+                                    <p>Pending: 2</p>
+                                    <p>Missed: 0</p>
+                                </div>
                             </div>
                         </article>
                     </div>
@@ -113,6 +137,42 @@
                 <button class="tab tab-project-breakdown" id="projectBreakdownTab" type="button">Project Breakdown</button>
             </nav>
         </aside>
+    </div>
+
+    <div class="modal-overlay" id="addMembersModalOverlay" aria-hidden="true">
+        <div class="add-members-modal" role="dialog" aria-modal="true" aria-labelledby="addMembersModalTitle">
+            <div class="add-members-modal-header">
+                <h2 id="addMembersModalTitle">Group Link</h2>
+            </div>
+
+            <div class="add-members-modal-body">
+                <div class="form-group">
+                    <input id="groupLinkValue" type="text" readonly>
+                </div>
+
+                <div class="add-members-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="discardAddMembersBtn">Discard</button>
+                    <button type="button" class="modal-btn post-btn" id="copyGroupLinkBtn">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="removeMembersModalOverlay" aria-hidden="true">
+        <div class="remove-members-modal" role="dialog" aria-modal="true" aria-labelledby="removeMembersModalTitle">
+            <div class="remove-members-modal-header">
+                <h2 id="removeMembersModalTitle">Remove Members</h2>
+            </div>
+
+            <div class="remove-members-modal-body">
+                <div class="remove-members-list" id="removeMembersList"></div>
+
+                <div class="remove-members-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="discardRemoveMembersBtn">Discard</button>
+                    <button type="button" class="modal-btn post-btn" id="removeMembersBtn">Remove</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="s.leadergrpviewing.js"></script>

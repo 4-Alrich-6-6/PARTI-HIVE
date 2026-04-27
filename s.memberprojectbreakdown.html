@@ -34,6 +34,12 @@
         <main class="main-content-container">
             <div class="main-header">
                 <h1 class="main-content-title">PROJECT BREAKDOWN</h1>
+
+                <div class="header-actions">
+                    <button class="icon-btn back" id="backToCategoriesBtn" type="button" aria-label="Back to categories">
+                        <img src="assets/Back.png" alt="Back icon">
+                    </button>
+                </div>
             </div>
 
             <section class="main-content">
@@ -64,12 +70,17 @@
                             <h3>Task: Create a slide</h3>
                             <p>
                                 Assignee(s):
-                                <span class="assignee-dot"><img src="assets/Info.png" alt="Info icon"></span>
-                                &nbsp; Due Date: ##:## -- ##/##/####
+                                <span class="assignee-info-wrap">
+                                    <img class="assignee-info-icon" src="assets/Info.png" alt="Info icon">
+                                    <span class="assignee-tooltip">Person 1, Person 2</span>
+                                </span>
+                                &nbsp; Due Date: ##:## AM -- ##/##/####
                             </p>
                         </div>
 
-                        <button class="task-status inactive" type="button" id="task1-badge">Not Active</button>
+                        <div class="task-actions">
+                            <button class="task-status inactive" type="button" id="task1-badge">Not Active</button>
+                        </div>
                     </article>
                 </section>
 
@@ -83,12 +94,17 @@
                             <h3>Task: Create a slide</h3>
                             <p>
                                 Assignee(s):
-                                <span class="assignee-dot"><img src="assets/Info.png" alt="Info icon"></span>
-                                &nbsp; Due Date: ##:## -- ##/##/####
+                                <span class="assignee-info-wrap">
+                                    <img class="assignee-info-icon" src="assets/Info.png" alt="Info icon">
+                                    <span class="assignee-tooltip">Person 3</span>
+                                </span>
+                                &nbsp; Due Date: ##:## AM -- ##/##/####
                             </p>
                         </div>
 
-                        <button class="task-status verify" type="button">Verify</button>
+                        <div class="task-actions">
+                            <button class="task-status verify" type="button">Verify</button>
+                        </div>
                     </article>
                 </section>
             </section>
@@ -131,6 +147,19 @@
                             <button class="status-opt missing" data-status="missing" type="button">Missing</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="memberVerifyOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true">
+            <div class="project-options-body">
+                <p style="font-weight:800;font-size:14px;margin:0 0 4px;">Verify as Finished?</p>
+                <p style="font-size:13px;margin:0 0 12px;">Your task will be sent to the leader for verification.</p>
+                <div class="project-options-actions">
+                    <button class="modal-btn post-btn" id="memberVerifyConfirmBtn" type="button">Yes, Verify</button>
+                    <button class="modal-btn discard-btn" id="memberVerifyCancelBtn" type="button">Cancel</button>
                 </div>
             </div>
         </div>

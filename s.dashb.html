@@ -41,11 +41,11 @@
                 <h1 class="main-content-title">STUDENT'S DASHBOARD</h1>
 
                 <div class="section-actions">
-                    <button type="button">
+                    <button type="button" id="openJoinGroupModal">
                         <span><img src="assets/JoinGroup.png" alt="Join Group icon"></span>
                         Join Groups
                     </button>
-                    <button type="button">
+                    <button type="button" id="openAddGroupModal">
                         <span><img src="assets/AddGroup.png" alt="Add Group icon"></span>
                         Add Groups
                     </button>
@@ -65,7 +65,7 @@
                     </article>
 
                     <article class="stat-card">
-                        <p class="stat-label">Pending Invites</p>
+                        <p class="stat-label">Pending Tasks</p>
                         <h3>0</h3>
                     </article>
                 </section>
@@ -83,7 +83,7 @@
 
                         <div class="card-right">
                             <strong>Occupied Members : 3</strong>
-                            <button class="more-btn" type="button" aria-label="More options">•••</button>
+                            <button class="more-btn" id="openEditOwnedGroupModal" type="button" aria-label="Edit owned group">•••</button>
                         </div>
                     </article>
                 </section>
@@ -101,7 +101,6 @@
 
                         <div class="card-right">
                             <strong>Occupied Members : 3</strong>
-                            <button class="more-btn" type="button" aria-label="More options">•••</button>
                         </div>
                     </article>
                 </section>
@@ -118,6 +117,76 @@
                 <img src="assets/Notification.png" alt="Notification icon">
             </button>
         </aside>
+    </div>
+
+    <div class="modal-overlay" id="addGroupModal" aria-hidden="true">
+        <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="addGroupTitle">
+            <div class="group-modal-header">
+                <h2 id="addGroupTitle">Enter Group Information</h2>
+            </div>
+
+            <div class="group-modal-form">
+                <div class="group-form-field">
+                    <label for="groupNameInput">Group Name:</label>
+                    <input id="groupNameInput" type="text" placeholder="Enter group name">
+                </div>
+
+                <div class="group-form-field">
+                    <label for="groupSubjectInput">Subject:</label>
+                    <input id="groupSubjectInput" type="text" placeholder="Enter subject">
+                </div>
+
+                <div class="group-modal-actions">
+                    <button type="button" class="group-modal-btn group-discard-btn" id="discardAddGroup">Discard</button>
+                    <button type="button" class="group-modal-btn group-create-btn" id="createAddGroup">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="joinGroupModal" aria-hidden="true">
+        <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="joinGroupTitle">
+            <div class="group-modal-header">
+                <h2 id="joinGroupTitle">Enter Group Link</h2>
+            </div>
+
+            <div class="group-modal-form">
+                <div class="group-form-field">
+                    <label for="groupLinkInput">Group Link:</label>
+                    <input id="groupLinkInput" type="text" placeholder="Paste group link">
+                </div>
+
+                <div class="group-modal-actions">
+                    <button type="button" class="group-modal-btn group-discard-btn" id="discardJoinGroup">Discard</button>
+                    <button type="button" class="group-modal-btn group-create-btn" id="joinGroupBtn">Join</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editOwnedGroupModal" aria-hidden="true">
+        <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="editOwnedGroupTitle">
+            <div class="group-modal-header">
+                <h2 id="editOwnedGroupTitle">Edit Group</h2>
+            </div>
+
+            <div class="group-modal-form">
+                <div class="group-form-field">
+                    <label for="editOwnedGroupNameInput">Group Name:</label>
+                    <input id="editOwnedGroupNameInput" type="text" placeholder="Enter group name">
+                </div>
+
+                <div class="group-form-field">
+                    <label for="editOwnedGroupSubjectInput">Subject:</label>
+                    <input id="editOwnedGroupSubjectInput" type="text" placeholder="Enter subject">
+                </div>
+
+                <div class="group-modal-actions">
+                    <button type="button" class="group-modal-btn group-discard-btn" id="discardEditOwnedGroup">Discard</button>
+                    <button type="button" class="group-modal-btn group-create-btn" id="saveEditOwnedGroup">Save</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="s.dashb.js"></script>

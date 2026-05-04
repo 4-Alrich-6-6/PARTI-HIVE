@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HIVE Log-In / Sign-Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="log-sign.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <img src="../Logo.png" alt="HIVE logo" class="logo-image">
+        </div>
+
+        <div class="right">
+            <header class="right-header">
+                <div class="banner">
+                    <img src="../Title.png" alt="HIVE title" class="title-image">
+                    <p class="tagline">Where Teamwork Thrives!</p>
+                </div>
+            </header>
+
+            <section class="form" aria-label="Authentication form">
+                <div class="form-content">
+                    <div class="form-header">
+                        <div class="toggle" role="tablist" aria-label="Authentication mode">
+                            <button class="toggle-btn active" data-target="login" role="tab" aria-selected="true" type="button">Log-In</button>
+                            <button class="toggle-btn" data-target="signup" role="tab" aria-selected="false" type="button">Sign-Up</button>
+                        </div>
+                    </div>
+
+                    <form class="lForm active" autocomplete="on">
+                        <div class="inputs">
+                            <div class="form-group">
+                                <label for="login-user">Enter your Username / Email:</label>
+                                <input id="login-user" type="text" placeholder="Username" required>
+                            </div>
+                            <div class="form-group password-group">
+                                <label for="login-pass">Enter your Password:</label>
+                                <div class="password-wrapper">
+                                    <input id="login-pass" type="password" class="password-input" placeholder="************" required>
+                                    <button class="toggle-password" type="button" aria-label="Toggle password visibility">
+                                        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#" class="forgot-pass">Forget password?</a>
+                        <button class="submit" type="submit">Log-In</button>
+                    </form>
+
+                    <form class="sForm" autocomplete="on">
+                        <div class="inputs">
+                            <div class="form-group">
+                                <label for="sign-user">Enter your Username:</label>
+                                <input id="sign-user" type="text" placeholder="Username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sign-email">Enter your Email:</label>
+                                <input id="sign-email" type="email" placeholder="youremail@yourdomain.com" required>
+                            </div>
+                            <div class="form-group password-group">
+                                <label for="sign-pass">Enter your Password:</label>
+                                <div class="password-wrapper">
+                                    <input id="sign-pass" type="password" class="password-input" placeholder="************" required>
+                                    <button class="toggle-password" type="button" aria-label="Toggle password visibility">
+                                        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group password-group">
+                                <label for="confirm-pass">Confirm Password:</label>
+                                <div class="password-wrapper">
+                                    <input id="confirm-pass" type="password" class="password-input" placeholder="************" required>
+                                    <button class="toggle-password" type="button" aria-label="Toggle password visibility">
+                                        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="submit" type="submit">Sign-Up</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="log-sign.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HIVE Log-In / Sign-Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="log-sign.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <img src="../Logo.png" alt="HIVE logo" class="logo-image">
+        </div>
+
+        <div class="right">
+            <header class="right-header">
+                <div class="banner">
+                    <img src="../Title.png" alt="HIVE title" class="title-image">
+                    <p class="tagline">Where Teamwork Thrives!</p>
+                </div>
+            </header>
+
+            <section class="form verify-form" aria-label="Authentication form">
+                <div class="form-content">
+                    <div class="back-button">
+                        <a href="log-sign.html?mode=signup" id="verifyBackLink">
+                            <img src="../assets/Back.png" alt="Back" class="back-icon">
+                        </a>    
+                    </div>
+                    <div class="form-title">
+                        <h2>Verification</h2>
+                    </div>
+                    <div class="form-description">
+                        <p>Enter the OTP sent to your email...</p>
+                    </div>
+                    <form class="lForm active" autocomplete="on">
+                        <div class="inputs">
+                            <div class="form-group password-group">
+                                <label for="login-pass">Enter OTP:</label>
+                                <div class="password-wrapper">
+                                    <input id="otp" type="text" class="otp-input" placeholder="OTP Code" required>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="submit" type="submit">Submit</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="signverf.js"></script>
+</body>
+</html>

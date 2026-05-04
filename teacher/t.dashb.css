@@ -1,0 +1,5 @@
+@import url('../student/s.dashb.css');
+
+.stats-row {
+    grid-template-columns: minmax(0, 220px);
+}

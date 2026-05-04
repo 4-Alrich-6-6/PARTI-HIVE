@@ -1,0 +1,5 @@
+@import url('../students/leader/s.leaderprojectbreakdown.css');
+
+.summary-row {
+    grid-template-columns: repeat(2, minmax(0, 220px));
+}

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects</title>
+    <link rel="stylesheet" href="s.leadercategory.css">
+</head>
+<body>
+    <div class="topbar">
+        <button class="menu-btn" id="topBackBtn" type="button" aria-label="Back to dashboard">
+            <img src="../../assets/Back.png" alt="Back icon">
+        </button>
+        <p class="datetime">6:00 PM February 01, 2026</p>
+    </div>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="profile-block">
+                <div class="avatar-circle">
+                    <img src="../../assets/profile.png" alt="Profile">
+                </div>
+                <h3>Name</h3>
+                <h3>Email</h3>
+                <a href="#" class="profile-link">Manage Profile</a>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="btn settings" type="button">Settings</button>
+                <button class="btn logout" type="button">Log Out</button>
+            </div>
+        </aside>
+
+        <main class="main-content-container">
+            <div class="main-header">
+                <h1 class="main-content-title">PROJECTS</h1>
+
+                <div class="header-actions">
+                    <button class="action-btn post-category-btn" id="openPostCategoryModalBtn" type="button">
+                        <span class="post-task-icon">
+                            <img src="../../assets/Plus.png" alt="Plus icon">
+                        </span>
+                        <span>Post Project</span>
+                    </button>
+                </div>
+            </div>
+
+            <section class="main-content">
+                <div class="section-title-wrap">
+                    <h2>Select Project</h2>
+                    <p>Click a project to open the project breakdown task list.</p>
+                </div>
+
+                <div class="category-list" role="list">
+                    <div class="category-item" role="listitem" data-category="research">
+                        <button class="category-main-btn" type="button" data-category="research">
+                            <span class="category-name">Research</span>
+                            <span class="category-due-date">Due: --/--/----</span>
+                            <span class="category-count">3 Tasks</span>
+                        </button>
+                        <button class="more-btn" type="button" aria-label="More category options">
+                            <img src="../../assets/More.png" alt="More options">
+                        </button>
+                    </div>
+                    <div class="category-item" role="listitem" data-category="design">
+                        <button class="category-main-btn" type="button" data-category="design">
+                            <span class="category-name">Design</span>
+                            <span class="category-due-date">Due: --/--/----</span>
+                            <span class="category-count">2 Tasks</span>
+                        </button>
+                        <button class="more-btn" type="button" aria-label="More category options">
+                            <img src="../../assets/More.png" alt="More options">
+                        </button>
+                    </div>
+                    <div class="category-item" role="listitem" data-category="documentation">
+                        <button class="category-main-btn" type="button" data-category="documentation">
+                            <span class="category-name">Documentation</span>
+                            <span class="category-due-date">Due: --/--/----</span>
+                            <span class="category-count">1 Task</span>
+                        </button>
+                        <button class="more-btn" type="button" aria-label="More category options">
+                            <img src="../../assets/More.png" alt="More options">
+                        </button>
+                    </div>
+                    <div class="category-item" role="listitem" data-category="presentation">
+                        <button class="category-main-btn" type="button" data-category="presentation">
+                            <span class="category-name">Presentation</span>
+                            <span class="category-due-date">Due: --/--/----</span>
+                            <span class="category-count">2 Tasks</span>
+                        </button>
+                        <button class="more-btn" type="button" aria-label="More category options">
+                            <img src="../../assets/More.png" alt="More options">
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <aside class="right-rail">
+            <nav class="side-tabs" aria-label="Group sections">
+                <button class="tab tab-group-info" id="groupInfoTab" type="button">Group Information</button>
+                <button class="tab tab-project-breakdown active" type="button">Project Breakdown</button>
+            </nav>
+        </aside>
+    </div>
+
+    <div class="modal-overlay" id="postCategoryModalOverlay" aria-hidden="true">
+        <div class="post-category-modal" role="dialog" aria-modal="true" aria-labelledby="postCategoryModalTitle">
+            <div class="post-category-modal-header">
+                <h2 id="postCategoryModalTitle">Post Project</h2>
+            </div>
+
+            <form id="postCategoryForm" class="post-category-form">
+                <div class="form-group">
+                    <label for="categoryNameInput">Project Name *</label>
+                    <input id="categoryNameInput" name="categoryName" type="text" placeholder="Enter project name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoryDueDateInput">Due Date *</label>
+                    <input id="categoryDueDateInput" name="categoryDueDate" type="date" required>
+                </div>
+
+                <div class="post-category-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="discardPostCategoryBtn">Discard</button>
+                    <button type="submit" class="modal-btn post-btn">Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="projectOptionsModalOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true">
+            <div class="project-options-body">
+                <div class="form-group">
+                    <label for="editProjectNameInput">Edit Project Name</label>
+                    <input id="editProjectNameInput" type="text" placeholder="Enter new name">
+                </div>
+                <div class="form-group">
+                    <label for="editProjectDueDateInput">Edit Due Date</label>
+                    <input id="editProjectDueDateInput" type="date">
+                    <button class="modal-btn post-btn" id="saveProjectNameBtn" type="button">Save</button>
+                </div>
+                <div class="project-options-actions">
+                    <button class="option-delete-btn" id="deleteProjectBtn" type="button">Delete Project</button>
+                    <button class="modal-btn discard-btn" id="closeProjectOptionsBtn" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../lib/datetime.js"></script>
+    <script src="../../lib/manage-profile.js"></script>
+    <script src="s.leadercategory.js"></script>
+</body>
+</html>

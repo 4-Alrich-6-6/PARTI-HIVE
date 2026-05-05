@@ -93,7 +93,13 @@ if (topBackBtn) {
 
 if (backBtn) {
     backBtn.addEventListener("click", () => {
-        window.location.href = "t.dashb.html";
+        showConfirmation(
+            "Are you sure you want to leave this group?",
+            () => {
+                window.location.href = "t.dashb.html";
+            },
+            { title: "Leave Group", confirmText: "Leave", cancelText: "Cancel" }
+        );
     });
 }
 
@@ -107,6 +113,12 @@ const logoutBtn = document.querySelector(".logout");
 
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        window.location.href = "../auth/log-sign.html";
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
     });
 }

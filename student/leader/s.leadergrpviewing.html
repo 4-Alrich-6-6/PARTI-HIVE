@@ -36,8 +36,8 @@
                 <h1 class="main-content-title">GROUP INFORMATION</h1>
 
                 <div class="header-actions">
-                    <button class="icon-btn danger" id="backBtn" type="button" aria-label="Back">
-                        <img src="../../assets/Leave.png" alt="Back icon">
+                    <button class="icon-btn danger" id="leaveBtn" type="button" aria-label="Leave Group">
+                        <img src="../../assets/Leave.png" alt="Leave icon">
                     </button>
                     <button class="action-btn" id="openAddMembersModalBtn" type="button">Add Members</button>
                     <button class="action-btn" id="openRemoveMembersModalBtn" type="button">Remove Members</button>
@@ -175,8 +175,45 @@
         </div>
     </div>
 
-    <script src="../../datetime.js"></script>
-    <script src="../../manage-profile.js"></script>
+    <div class="modal-overlay" id="selectLeaderModalOverlay" aria-hidden="true">
+        <div class="select-leader-modal" role="dialog" aria-modal="true" aria-labelledby="selectLeaderModalTitle">
+            <div class="select-leader-modal-header">
+                <h2 id="selectLeaderModalTitle">Select next Leader</h2>
+            </div>
+
+            <div class="select-leader-modal-body">
+                <p class="select-leader-subtitle">Choose a member to become the new leader:</p>
+                <div class="select-leader-list" id="selectLeaderList"></div>
+
+                <div class="select-leader-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="discardSelectLeaderBtn">Discard</button>
+                    <button type="button" class="modal-btn post-btn" id="leaveGroupBtn" disabled>Leave</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmLeaveModalOverlay" aria-hidden="true">
+        <div class="confirm-leave-modal" role="dialog" aria-modal="true" aria-labelledby="confirmLeaveModalTitle">
+            <div class="confirm-leave-modal-header">
+                <h2 id="confirmLeaveModalTitle">Confirm Leave</h2>
+            </div>
+
+            <div class="confirm-leave-modal-body">
+                <p class="confirm-leave-message">Are you sure you want to leave this group? You will lose your leader privileges and become a regular member.</p>
+
+                <div class="confirm-leave-modal-actions">
+                    <button type="button" class="modal-btn discard-btn" id="cancelLeaveBtn">Cancel</button>
+                    <button type="button" class="modal-btn post-btn" id="confirmLeaveBtn">Confirm Leave</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../lib/datetime.js"></script>
+    <script src="../../lib/manage-profile.js"></script>
+    <script src="../../lib/settings.js"></script>
+    <script src="../../lib/confirmation-modal.js"></script>
     <script src="s.leadergrpviewing.js"></script>
 </body>
 </html>

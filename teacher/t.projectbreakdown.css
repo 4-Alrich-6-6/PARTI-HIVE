@@ -1,5 +1,86 @@
-@import url('../students/leader/s.leaderprojectbreakdown.css');
+@import url('../student/leader/s.leaderprojectbreakdown.css');
 
 .summary-row {
     grid-template-columns: repeat(2, minmax(0, 220px));
+}
+
+@media (max-width: 900px) {
+    .summary-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .summary-card {
+        padding: 10px 8px;
+    }
+
+    .summary-label {
+        font-size: 10px;
+    }
+
+    .summary-card h3 {
+        font-size: 20px;
+    }
+
+    .main-content-title {
+        font-size: 16px;
+    }
+
+    .header-actions .icon-btn,
+    .header-actions .action-btn {
+        font-size: 11px;
+        min-height: 28px;
+    }
+
+    .header-actions .icon-btn,
+    .header-actions .task-details-body p {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.5;
+    }
+
+    .task-details-body p strong {
+        color: #222;
+    }
+
+    .task-details-status-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 4px 0 0;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .task-settings-title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 900;
+    }
+
+    .task-section h2 {
+        font-size: 14px;
+    }
+
+    .task-left h3 {
+        font-size: 13px;
+    }
+
+    .task-left p {
+        font-size: 11px;
+    }
+
+    .task-status {
+        font-size: 11px;
+        min-height: 28px;
+    }
+
+    .help-panel h2 {
+        font-size: 14px;
+    }
+
+    .help-panel p {
+        font-size: 12px;
+    }
 }

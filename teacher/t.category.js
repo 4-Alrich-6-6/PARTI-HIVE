@@ -15,16 +15,21 @@ const loadProjects = () => {
     return saved ? JSON.parse(saved) : null;
 };
 
-const navigateToTeacherBreakdown = (projectKey) => {
+const navigateToTeacherBreakdown = (projectKey, projectName) => {
     if (projectKey) {
         localStorage.setItem("hive_selected_project", projectKey);
+    }
+    if (projectName) {
+        localStorage.setItem("hive_selected_project_name", projectName);
     }
     window.location.href = "t.projectbreakdown.html";
 };
 
 const attachCategoryBarClick = (categoryMainButton) => {
     categoryMainButton.addEventListener("click", () => {
-        navigateToTeacherBreakdown(categoryMainButton.dataset.category);
+        const projectKey = categoryMainButton.dataset.category;
+        const projectName = categoryMainButton.querySelector(".category-name")?.textContent || projectKey;
+        navigateToTeacherBreakdown(projectKey, projectName);
     });
 };
 
@@ -76,9 +81,14 @@ categoryMainButtons.forEach((categoryMainButton) => {
 });
 
 const logoutBtn = document.querySelector(".logout");
-
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        window.location.href = "../auth/log-sign.html";
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
     });
 }

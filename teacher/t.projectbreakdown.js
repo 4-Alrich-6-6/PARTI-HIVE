@@ -8,6 +8,9 @@ const detailTaskDescription = document.querySelector("#detailTaskDescription");
 const detailTaskAssignees = document.querySelector("#detailTaskAssignees");
 const detailTaskDueDate = document.querySelector("#detailTaskDueDate");
 const detailTaskDueTime = document.querySelector("#detailTaskDueTime");
+const detailTaskIntensity = document.querySelector("#detailTaskIntensity");
+const detailTaskPriority = document.querySelector("#detailTaskPriority");
+const detailTaskTimeActive = document.querySelector("#detailTaskTimeActive");
 const detailTaskStatus = document.querySelector("#detailTaskStatus");
 
 const STATUS_TEXT = {
@@ -41,6 +44,40 @@ const formatTime12h = (timeStr) => {
     return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${ampm}`;
 };
 
+const formatElapsedTime = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours}h ${minutes}m ${seconds}s`;
+};
+
+const updateTaskTimer = (task, taskIndex) => {
+    const currentStatus = task.status || "inactive";
+    const now = Date.now();
+    
+    if (!task.elapsedTime) task.elapsedTime = 0;
+    
+    if (currentStatus === "active") {
+        if (task.lastActiveTimestamp) {
+            const elapsed = now - task.lastActiveTimestamp;
+            task.elapsedTime += elapsed;
+        }
+        task.lastActiveTimestamp = now;
+    } else {
+        task.lastActiveTimestamp = null;
+    }
+    
+    const tasks = loadTasks();
+    if (tasks[taskIndex]) {
+        tasks[taskIndex].elapsedTime = task.elapsedTime;
+        tasks[taskIndex].lastActiveTimestamp = task.lastActiveTimestamp;
+        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
+    }
+    
+    return task.elapsedTime;
+};
+
 const closeTaskDetails = () => {
     if (!taskDetailsOverlay) return;
     taskDetailsOverlay.classList.remove("open");
@@ -60,11 +97,24 @@ const openTaskDetails = (taskIndex) => {
     if (detailTaskDueDate) detailTaskDueDate.textContent = task.dueDate || "N/A";
     if (detailTaskDueTime) detailTaskDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";
 
+    if (detailTaskIntensity) {
+        detailTaskIntensity.textContent = task.intensity || "Light";
+    }
+
+    if (detailTaskPriority) {
+        detailTaskPriority.textContent = task.priority || "Low";
+    }
+
     if (detailTaskStatus) {
         const status = task.status || "inactive";
         detailTaskStatus.textContent = STATUS_TEXT[status] || status;
         detailTaskStatus.className = `task-status ${status}`;
         detailTaskStatus.disabled = true;
+    }
+
+    if (detailTaskTimeActive) {
+        const elapsedTime = updateTaskTimer(task, taskIndex);
+        detailTaskTimeActive.textContent = formatElapsedTime(elapsedTime);
     }
 
     taskDetailsOverlay.classList.add("open");
@@ -85,13 +135,21 @@ const renderTask = (task, taskIndex, targetSection) => {
 
     const article = document.createElement("article");
     article.className = "task-card task-card-clickable";
+
+    const priority = (task.priority || "Low").toLowerCase();
+    if (priority === "high") {
+        article.style.backgroundColor = "#FF8383";
+    } else if (priority === "medium") {
+        article.style.backgroundColor = "#FFC193";
+    }
+
     article.innerHTML = `
         <div class="task-left">
             <h3>Task: ${task.name}</h3>
             <p>
                 Assignee(s):
                 <span class="assignee-info-wrap">
-                    <img class="assignee-info-icon" src="assets/Info.png" alt="Info icon">
+                    <img class="assignee-info-icon" src="../assets/Info.png" alt="Info icon">
                     <span class="assignee-tooltip">${assigneeList}</span>
                 </span>
                 &nbsp; Due Date: ${timeDisplay} -- ${dateDisplay}
@@ -168,8 +226,23 @@ const logoutBtn = document.querySelector(".logout");
 
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        window.location.href = "../auth/log-sign.html";
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
     });
 }
 
+const loadAndDisplayProjectName = () => {
+    const projectName = localStorage.getItem("hive_selected_project_name");
+    const projectNameDisplay = document.querySelector(".project-name-display h2");
+    if (projectName && projectNameDisplay) {
+        projectNameDisplay.textContent = projectName;
+    }
+};
+
+loadAndDisplayProjectName();
 renderAllTasks();

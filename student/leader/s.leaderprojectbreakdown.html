@@ -8,12 +8,8 @@
 </head>
 <body>
     <div class="topbar">
-        <button class="menu-btn" id="topBackBtn" type="button" aria-label="Back to dashboard">
-            <img src="../../assets/Back.png" alt="Back icon">
-        </button>
         <p class="datetime">6:00 PM February 01, 2026</p>
     </div>
-
     <div class="layout">
         <aside class="sidebar">
             <div class="profile-block">
@@ -61,10 +57,14 @@
                     </article>
 
                     <article class="summary-card">
-                        <p class="summary-label">Pending Verify</p>
+                        <p class="summary-label">Verifying</p>
                         <h3>1</h3>
                     </article>
                 </section>
+
+                <div class="project-name-display">
+                    <h2>Research</h2>
+                </div>
 
                 <section class="task-section">
                     <div class="section-title-wrap">
@@ -147,6 +147,25 @@
                     <textarea id="taskDescriptionInput" name="taskDescription" rows="4" placeholder="Enter task description"></textarea>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="intensityInput">Intensity</label>
+                        <select id="intensityInput" name="intensity">
+                            <option value="Light">Light</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Heavy">Heavy</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priorityInput">Prioritization</label>
+                        <select id="priorityInput" name="priority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <p class="form-label">Assignee(s) *</p>
                     <div class="assignee-options">
@@ -193,6 +212,20 @@
                     <button class="modal-btn post-btn" id="verifyFinishBtn" type="button">Finished</button>
                     <button class="option-delete-btn" id="verifyReviseBtn" type="button">Revise</button>
                     <button class="modal-btn discard-btn" id="verifyCloseBtn" type="button">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="pauseFinishChoiceOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true">
+            <div class="project-options-body">
+                <p style="font-weight:800;font-size:14px;margin:0 0 4px;">Task Status</p>
+                <p style="font-size:13px;margin:0 0 12px;">What would you like to do with this task?</p>
+                <div class="project-options-actions">
+                    <button class="modal-btn post-btn" id="pauseFinishPauseBtn" type="button">On Break</button>
+                    <button class="modal-btn post-btn" id="pauseFinishFinishBtn" type="button">Finish</button>
+                    <button class="modal-btn discard-btn" id="pauseFinishCloseBtn" type="button">Cancel</button>
                 </div>
             </div>
         </div>
@@ -258,6 +291,25 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editIntensityInput">Intensity</label>
+                        <select id="editIntensityInput" name="editIntensity">
+                            <option value="Light">Light</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Heavy">Heavy</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPriorityInput">Prioritization</label>
+                        <select id="editPriorityInput" name="editPriority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="post-task-modal-actions">
                     <button type="button" class="modal-btn discard-btn" id="discardEditTaskInfoBtn">Discard</button>
                     <button type="submit" class="modal-btn post-btn" id="saveEditTaskInfoBtn">Save</button>
@@ -303,6 +355,9 @@
                 <p><strong>Assignee(s):</strong> <span id="detailTaskAssignees"></span></p>
                 <p><strong>Due Date:</strong> <span id="detailTaskDueDate"></span></p>
                 <p><strong>Due Time:</strong> <span id="detailTaskDueTime"></span></p>
+                <p><strong>Intensity:</strong> <span id="detailTaskIntensity"></span></p>
+                <p><strong>Prioritization:</strong> <span id="detailTaskPriority"></span></p>
+                <p><strong>Time Active:</strong> <span id="detailTaskTimeActive">0h 0m 0s</span></p>
                 <div class="task-details-status-wrap">
                     <span>Current Status:</span>
                     <button class="task-status inactive" id="detailTaskStatus" type="button" disabled>Not Active</button>
@@ -316,6 +371,9 @@
 
     <script src="../../lib/datetime.js"></script>
     <script src="../../lib/manage-profile.js"></script>
+    <script src="../../lib/settings.js"></script>
+    <script src="../../lib/confirmation-modal.js"></script>
     <script src="s.leaderprojectbreakdown.js"></script>
 </body>
 </html>
+

@@ -8,9 +8,6 @@
 </head>
 <body>
     <div class="topbar">
-        <button class="menu-btn" id="topBackBtn" type="button" aria-label="Back to dashboard">
-            <img src="../../assets/Back.png" alt="Back icon">
-        </button>
         <p class="datetime">6:00 PM February 01, 2026</p>
     </div>
 
@@ -55,7 +52,7 @@
                     </article>
 
                     <article class="summary-card">
-                        <p class="summary-label">Pending Verify</p>
+                        <p class="summary-label">Verifying</p>
                         <h3>1</h3>
                     </article>
                 </section>
@@ -118,35 +115,38 @@
         </aside>
     </div>
 
-    <div class="overlay" id="overlay">
-        <div class="popup" id="popup" role="dialog" aria-modal="true" aria-labelledby="taskInfoTitle">
-            <div class="popup-topbar">
-                <button class="popup-back" id="closePopupBtn" type="button" aria-label="Close task information">
-                    <img src="../../assets/Back.png" alt="Back icon">
-                </button>
-                <span class="popup-time">6:00 PM February 01, 2026</span>
+    <div class="modal-overlay" id="overlay">
+        <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="taskInfoTitle">
+            <div class="project-options-body task-details-body">
+                <p class="task-settings-title" id="taskInfoTitle">Task Information</p>
+                <p><strong>Task:</strong> <span class="popup-task-name"></span></p>
+                <p><strong>Description:</strong> <span class="popup-desc-text"></span></p>
+                <p><strong>Assignee(s):</strong> <span class="popup-assignees"></span></p>
+                <p><strong>Due Date:</strong> <span id="popupDueDate"></span></p>
+                <p><strong>Due Time:</strong> <span id="popupDueTime"></span></p>
+                <p><strong>Intensity:</strong> <span id="popupIntensity"></span></p>
+                <p><strong>Prioritization:</strong> <span id="popupPriority"></span></p>
+                <p><strong>Time Active:</strong> <span id="popupTimeActive">0h 0m 0s</span></p>
+                <div class="task-details-status-wrap">
+                    <span>Current Status:</span>
+                    <button class="task-status inactive" id="popupStatusDisplay" type="button" disabled>Not Active</button>
+                </div>
+                <div class="project-options-actions">
+                    <button class="modal-btn discard-btn" id="closePopupBtn" type="button">Close</button>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div class="popup-body">
-                <div class="popup-page-title" id="taskInfoTitle">TASK INFORMATION</div>
-                <div class="popup-inner">
-                    <div class="popup-task-name">Gather Info</div>
-                    <div class="popup-desc-label">Description:</div>
-                    <div class="popup-desc-text">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam ut lorem feugiat, laoreet ipsum a, posuere libero. Sed rutrum volutpat justo, eget lacinia nisl rhoncus vel. Praesent vulputate mattis congue.
-                    </div>
-                    <div class="popup-meta-row">Assignee(s): <span class="info-icon">i</span></div>
-                    <div class="popup-meta-row">Due Date: ##/##/####  ##:##</div>
-                    <div class="popup-status-row">
-                        <div class="popup-status-label">Status:</div>
-                        <div class="status-options">
-                            <button class="status-opt not-active selected" data-status="inactive" type="button">Not Active</button>
-                            <button class="status-opt active" data-status="active" type="button">Active</button>
-                            <button class="status-opt verifying" data-status="verify" type="button">Verifying</button>
-                            <button class="status-opt finished" data-status="finished" type="button">Finished</button>
-                            <button class="status-opt missing" data-status="missing" type="button">Missing</button>
-                        </div>
-                    </div>
+    <div class="modal-overlay" id="pauseVerifyChoiceOverlay" aria-hidden="true">
+        <div class="project-options-modal" role="dialog" aria-modal="true">
+            <div class="project-options-body">
+                <p style="font-weight:800;font-size:14px;margin:0 0 4px;">Task Status</p>
+                <p style="font-size:13px;margin:0 0 12px;">What would you like to do with this task?</p>
+                <div class="project-options-actions">
+                    <button class="modal-btn post-btn" id="pauseVerifyPauseBtn" type="button">On Break</button>
+                    <button class="modal-btn post-btn" id="pauseVerifyVerifyBtn" type="button">Verify</button>
+                    <button class="modal-btn discard-btn" id="pauseVerifyCloseBtn" type="button">Cancel</button>
                 </div>
             </div>
         </div>
@@ -167,6 +167,9 @@
 
     <script src="../../lib/datetime.js"></script>
     <script src="../../lib/manage-profile.js"></script>
+    <script src="../../lib/settings.js"></script>
+    <script src="../../lib/confirmation-modal.js"></script>
     <script src="s.memberprojectbreakdown.js"></script>
 </body>
 </html>
+

@@ -1,0 +1,257 @@
+.settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2000;
+}
+
+.settings-overlay.open {
+    display: flex;
+}
+
+.settings-modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+}
+
+.settings-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #e5e5e5;
+    background: #ffcc00;
+}
+
+.settings-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    color: #111;
+}
+
+.settings-body {
+    padding: 24px;
+}
+
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-section h3 {
+    margin: 0;
+    font-family: Montserrat, sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
+}
+
+.settings-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 12px;
+}
+
+.settings-label {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+.settings-value {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+}
+
+.settings-btn {
+    border: none;
+    border-radius: 12px;
+    font-family: Montserrat, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+}
+
+.settings-btn-edit {
+    background: #000;
+    color: #fff;
+    align-self: flex-start;
+}
+
+.settings-btn-edit:hover {
+    background: #333;
+}
+
+.settings-btn-edit img {
+    width: 16px;
+    height: 16px;
+}
+
+.settings-btn-mini {
+    background: transparent;
+    color: #000;
+    padding: 6px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.settings-btn-mini:hover {
+    background: #f0f0f0;
+}
+
+.settings-btn-mini img {
+    width: 16px;
+    height: 16px;
+}
+
+.settings-btn-close {
+    background: #f0f0f0;
+    color: #000;
+}
+
+.settings-btn-close:hover {
+    background: #e0e0e0;
+}
+
+.settings-actions {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.settings-edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2100;
+}
+
+.settings-edit-overlay.open {
+    display: flex;
+}
+
+.settings-edit-modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.settings-edit-form {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-form-group label {
+    font-family: Inter, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+}
+
+.settings-form-group input {
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid #ccc;
+    background: #fff;
+    color: #000;
+    font-size: 14px;
+    padding: 0 14px;
+    font-family: Inter, sans-serif;
+}
+
+.settings-form-group input:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.settings-form-group input[readonly] {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.settings-edit-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.settings-btn-cancel {
+    background: #f0f0f0;
+    color: #000;
+}
+
+.settings-btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.settings-btn-save {
+    background: #000;
+    color: #fff;
+}
+
+.settings-btn-save:hover {
+    background: #333;
+}
+
+@media (max-width: 480px) {
+    .settings-modal,
+    .settings-edit-modal {
+        max-width: 100%;
+        border-radius: 16px;
+    }
+
+    .settings-header h2 {
+        font-size: 20px;
+    }
+
+    .settings-section h3 {
+        font-size: 16px;
+    }
+
+    .settings-btn {
+        font-size: 13px;
+        padding: 8px 16px;
+    }
+}

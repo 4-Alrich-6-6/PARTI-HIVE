@@ -2,6 +2,13 @@ const toggleButtons = document.querySelectorAll(".toggle-btn");
 const loginForm = document.querySelector(".lForm");
 const signUpForm = document.querySelector(".sForm");
 
+const generateOTP = () => {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    localStorage.setItem("hive_otp", otp);
+    localStorage.setItem("otp_timestamp", Date.now().toString());
+    return otp;
+};
+
 const setMode = (targetMode) => {
     const isSignup = targetMode === "signup";
 
@@ -52,6 +59,20 @@ if (loginForm) {
 if (signUpForm) {
     signUpForm.addEventListener("submit", (event) => {
         event.preventDefault();
+        
+        const password = document.querySelector("#sign-pass");
+        const confirmPassword = document.querySelector("#confirm-pass");
+        
+        if (password && confirmPassword && password.value !== confirmPassword.value) {
+            alert("Passwords do not match. Please try again.");
+            confirmPassword.value = "";
+            confirmPassword.focus();
+            return;
+        }
+        
+        const otp = generateOTP();
+        alert(`Your OTP is: ${otp}\n\n(In a real application, this would be sent to your email)`);
+        
         window.location.href = "signverf.html";
     });
 }

@@ -73,48 +73,33 @@ const editOwnedGroupNameInput = document.querySelector("#editOwnedGroupNameInput
 const editOwnedGroupSubjectInput = document.querySelector("#editOwnedGroupSubjectInput");
 
 const updateAddGroupCreateState = () => {
-    if (!createAddGroupBtn) {
-        return;
-    }
-
+    if (!createAddGroupBtn) return;
     const hasGroupName = groupNameInput && groupNameInput.value.trim().length > 0;
     const hasSubjectName = groupSubjectInput && groupSubjectInput.value.trim().length > 0;
     createAddGroupBtn.disabled = !(hasGroupName && hasSubjectName);
 };
 
 const updateJoinGroupState = () => {
-    if (!joinGroupBtn) {
-        return;
-    }
-
+    if (!joinGroupBtn) return;
     const hasGroupLink = groupLinkInput && groupLinkInput.value.trim().length > 0;
     joinGroupBtn.disabled = !hasGroupLink;
 };
 
 const updateEditOwnedGroupState = () => {
-    if (!saveEditOwnedGroupBtn) {
-        return;
-    }
-
+    if (!saveEditOwnedGroupBtn) return;
     const hasGroupName = editOwnedGroupNameInput && editOwnedGroupNameInput.value.trim().length > 0;
     const hasSubjectName = editOwnedGroupSubjectInput && editOwnedGroupSubjectInput.value.trim().length > 0;
     saveEditOwnedGroupBtn.disabled = !(hasGroupName && hasSubjectName);
 };
 
 const closeAddGroupModal = () => {
-    if (!addGroupModal) {
-        return;
-    }
-
+    if (!addGroupModal) return;
     addGroupModal.classList.remove("open");
     addGroupModal.setAttribute("aria-hidden", "true");
 };
 
 const openAddGroupModal = () => {
-    if (!addGroupModal) {
-        return;
-    }
-
+    if (!addGroupModal) return;
     addGroupModal.classList.add("open");
     addGroupModal.setAttribute("aria-hidden", "false");
 
@@ -148,9 +133,7 @@ if (groupSubjectInput) {
 
 if (addGroupModal) {
     addGroupModal.addEventListener("click", (event) => {
-        if (event.target === addGroupModal) {
-            closeAddGroupModal();
-        }
+        if (event.target === addGroupModal) closeAddGroupModal();
     });
 }
 
@@ -159,34 +142,32 @@ if (createAddGroupBtn) {
         const groupName = groupNameInput ? groupNameInput.value.trim() : "";
         const subjectName = groupSubjectInput ? groupSubjectInput.value.trim() : "";
 
-        if (!groupName || !subjectName) {
-            return;
-        }
+        if (!groupName || !subjectName) return;
 
-        dashbData.ownedGroup.name = groupName;
-        dashbData.ownedGroup.subject = subjectName;
-        dashbData.stats.owned += 1;
+        showConfirmation(
+            `Are you sure you want to create the group "${groupName}"?`,
+            () => {
+                dashbData.ownedGroup.name = groupName;
+                dashbData.ownedGroup.subject = subjectName;
+                dashbData.stats.owned += 1;
 
-        saveDashbData(dashbData);
-        applyDashbData(dashbData);
-        closeAddGroupModal();
+                saveDashbData(dashbData);
+                applyDashbData(dashbData);
+                closeAddGroupModal();
+            },
+            { title: "Create Group", confirmText: "Create", cancelText: "Cancel" }
+        );
     });
 }
 
 const closeJoinGroupModal = () => {
-    if (!joinGroupModal) {
-        return;
-    }
-
+    if (!joinGroupModal) return;
     joinGroupModal.classList.remove("open");
     joinGroupModal.setAttribute("aria-hidden", "true");
 };
 
 const openJoinGroupModal = () => {
-    if (!joinGroupModal) {
-        return;
-    }
-
+    if (!joinGroupModal) return;
     joinGroupModal.classList.add("open");
     joinGroupModal.setAttribute("aria-hidden", "false");
 
@@ -211,18 +192,13 @@ if (groupLinkInput) {
 }
 
 const closeEditOwnedGroupModal = () => {
-    if (!editOwnedGroupModal) {
-        return;
-    }
-
+    if (!editOwnedGroupModal) return;
     editOwnedGroupModal.classList.remove("open");
     editOwnedGroupModal.setAttribute("aria-hidden", "true");
 };
 
 const openEditOwnedGroupModal = () => {
-    if (!editOwnedGroupModal) {
-        return;
-    }
+    if (!editOwnedGroupModal) return;
 
     if (editOwnedGroupNameInput) {
         editOwnedGroupNameInput.value = dashbData.ownedGroup.name;
@@ -258,9 +234,7 @@ if (editOwnedGroupSubjectInput) {
 
 if (editOwnedGroupModal) {
     editOwnedGroupModal.addEventListener("click", (event) => {
-        if (event.target === editOwnedGroupModal) {
-            closeEditOwnedGroupModal();
-        }
+        if (event.target === editOwnedGroupModal) closeEditOwnedGroupModal();
     });
 }
 
@@ -269,24 +243,26 @@ if (saveEditOwnedGroupBtn) {
         const groupName = editOwnedGroupNameInput ? editOwnedGroupNameInput.value.trim() : "";
         const subjectName = editOwnedGroupSubjectInput ? editOwnedGroupSubjectInput.value.trim() : "";
 
-        if (!groupName || !subjectName) {
-            return;
-        }
+        if (!groupName || !subjectName) return;
 
-        dashbData.ownedGroup.name = groupName;
-        dashbData.ownedGroup.subject = subjectName;
+        showConfirmation(
+            `Are you sure you want to save the changes to group "${groupName}"?`,
+            () => {
+                dashbData.ownedGroup.name = groupName;
+                dashbData.ownedGroup.subject = subjectName;
 
-        saveDashbData(dashbData);
-        applyDashbData(dashbData);
-        closeEditOwnedGroupModal();
+                saveDashbData(dashbData);
+                applyDashbData(dashbData);
+                closeEditOwnedGroupModal();
+            },
+            { title: "Save Changes", confirmText: "Save", cancelText: "Cancel" }
+        );
     });
 }
 
 if (joinGroupModal) {
     joinGroupModal.addEventListener("click", (event) => {
-        if (event.target === joinGroupModal) {
-            closeJoinGroupModal();
-        }
+        if (event.target === joinGroupModal) closeJoinGroupModal();
     });
 }
 
@@ -294,17 +270,21 @@ if (joinGroupBtn) {
     joinGroupBtn.addEventListener("click", () => {
         const groupLink = groupLinkInput ? groupLinkInput.value.trim() : "";
 
-        if (!groupLink) {
-            return;
-        }
+        if (!groupLink) return;
 
-        dashbData.joinedGroup.name = "Joined via Link";
-        dashbData.joinedGroup.subject = groupLink;
-        dashbData.stats.joined += 1;
+        showConfirmation(
+            "Are you sure you want to join this group?",
+            () => {
+                dashbData.joinedGroup.name = "Joined via Link";
+                dashbData.joinedGroup.subject = groupLink;
+                dashbData.stats.joined += 1;
 
-        saveDashbData(dashbData);
-        applyDashbData(dashbData);
-        closeJoinGroupModal();
+                saveDashbData(dashbData);
+                applyDashbData(dashbData);
+                closeJoinGroupModal();
+            },
+            { title: "Join Group", confirmText: "Join", cancelText: "Cancel" }
+        );
     });
 }
 
@@ -355,6 +335,12 @@ const logoutBtn = document.querySelector(".logout");
 
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        window.location.href = "../auth/log-sign.html";
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
     });
 }

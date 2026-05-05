@@ -439,6 +439,64 @@ button {
     color: #111;
 }
 
+.confirmation-modal {
+    width: min(100%, 420px);
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.confirmation-modal-header {
+    background: #ffcc00;
+    padding: 14px 18px;
+}
+
+.confirmation-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.confirmation-modal-body {
+    padding: 18px;
+}
+
+.confirmation-message {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.confirmation-modal-actions {
+    padding: 0 18px 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    border: none;
+    min-height: 34px;
+    border-radius: 999px;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.modal-btn.discard-btn {
+    background: #000;
+    color: #fff;
+}
+
+.modal-btn.post-btn {
+    background: #ffcc00;
+    color: #111;
+}
+
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
@@ -469,8 +527,54 @@ button {
         transform: translateX(0);
     }
 
+    .main-content-title {
+        font-size: 16px;
+    }
+
+    .section-actions button {
+        font-size: 11px;
+        min-height: 28px;
+    }
+
     .stats-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 10px 8px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+    }
+
+    .stat-card h3 {
+        font-size: 20px;
+    }
+
+    .group-section h2 {
+        font-size: 14px;
+    }
+
+    .group-info h3 {
+        font-size: 13px;
+    }
+
+    .group-info p {
+        font-size: 11px;
+    }
+
+    .card-right strong {
+        font-size: 10px;
+    }
+
+    .help-panel h2 {
+        font-size: 14px;
+    }
+
+    .help-panel p {
+        font-size: 12px;
     }
 
     .group-card {
@@ -484,13 +588,32 @@ button {
 }
 
 @media (max-width: 600px) {
+    .group-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .group-info {
+        width: 100%;
+    }
+
+    .group-info h3 {
+        font-size: 14px;
+    }
+
+    .group-info p {
+        font-size: 12px;
+    }
+
     .card-right {
         width: 100%;
         justify-content: space-between;
+        align-items: center;
     }
 
-    .group-card {
-        flex-wrap: wrap;
+    .card-right strong {
+        font-size: 10px;
     }
 
     .group-modal-form {

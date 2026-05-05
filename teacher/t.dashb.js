@@ -109,13 +109,19 @@ if (joinGroupBtn) {
             return;
         }
 
-        dashbData.joinedGroup.name = "Joined via Link";
-        dashbData.joinedGroup.subject = groupLink;
-        dashbData.stats.groups += 1;
+        showConfirmation(
+            "Are you sure you want to join this group?",
+            () => {
+                dashbData.joinedGroup.name = "Joined via Link";
+                dashbData.joinedGroup.subject = groupLink;
+                dashbData.stats.groups += 1;
 
-        saveDashbData(dashbData);
-        applyDashbData(dashbData);
-        closeJoinGroupModal();
+                saveDashbData(dashbData);
+                applyDashbData(dashbData);
+                closeJoinGroupModal();
+            },
+            { title: "Join Group", confirmText: "Join", cancelText: "Cancel" }
+        );
     });
 }
 
@@ -148,6 +154,12 @@ const logoutBtn = document.querySelector(".logout");
 
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        window.location.href = "../auth/log-sign.html";
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
     });
 }

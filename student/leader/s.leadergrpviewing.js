@@ -11,6 +11,14 @@ const removeMembersModalOverlay = document.querySelector("#removeMembersModalOve
 const removeMembersList = document.querySelector("#removeMembersList");
 const discardRemoveMembersBtn = document.querySelector("#discardRemoveMembersBtn");
 const removeMembersBtn = document.querySelector("#removeMembersBtn");
+const leaveBtn = document.querySelector("#leaveBtn");
+const selectLeaderModalOverlay = document.querySelector("#selectLeaderModalOverlay");
+const discardSelectLeaderBtn = document.querySelector("#discardSelectLeaderBtn");
+const selectLeaderList = document.querySelector("#selectLeaderList");
+const leaveGroupBtn = document.querySelector("#leaveGroupBtn");
+const confirmLeaveModalOverlay = document.querySelector("#confirmLeaveModalOverlay");
+const cancelLeaveBtn = document.querySelector("#cancelLeaveBtn");
+const confirmLeaveBtn = document.querySelector("#confirmLeaveBtn");
 
 const STORAGE_KEY_LEADER_GROUP = "hive_leader_group";
 
@@ -104,40 +112,115 @@ const getGroupLink = () => {
 };
 
 const closeAddMembersModal = () => {
-    if (!addMembersModalOverlay) {
-        return;
-    }
-
+    if (!addMembersModalOverlay) return;
     addMembersModalOverlay.classList.remove("open");
     addMembersModalOverlay.setAttribute("aria-hidden", "true");
 };
 
 const openAddMembersModal = () => {
-    if (!addMembersModalOverlay) {
-        return;
-    }
-
+    if (!addMembersModalOverlay) return;
     if (groupLinkValue) {
         groupLinkValue.value = getGroupLink();
     }
-
     addMembersModalOverlay.classList.add("open");
     addMembersModalOverlay.setAttribute("aria-hidden", "false");
 };
 
-const updateRemoveMembersBtnState = () => {
-    if (!removeMembersBtn || !removeMembersList) {
+const closeSelectLeaderModal = () => {
+    if (!selectLeaderModalOverlay) return;
+    selectLeaderModalOverlay.classList.remove("open");
+    selectLeaderModalOverlay.setAttribute("aria-hidden", "true");
+};
+
+const openSelectLeaderModal = () => {
+    if (!selectLeaderModalOverlay) return;
+    renderSelectLeaderList();
+    selectLeaderModalOverlay.classList.add("open");
+    selectLeaderModalOverlay.setAttribute("aria-hidden", "false");
+};
+
+const renderSelectLeaderList = () => {
+    if (!selectLeaderList) return;
+
+    const data = loadLeaderGroupData();
+    const eligibleMembers = (data.members || []).filter((member) => {
+        const role = (member.role || "").trim().toLowerCase();
+        return role !== "leader" && role !== "teacher" && role !== "professor";
+    });
+
+    if (eligibleMembers.length === 0) {
+        selectLeaderList.innerHTML = "<p class='select-leader-empty'>No eligible members found to become leader.</p>";
+        if (leaveGroupBtn) leaveGroupBtn.disabled = true;
         return;
     }
 
+    selectLeaderList.innerHTML = eligibleMembers
+        .map(
+            (member) =>
+                `<label class="select-leader-item"><input type="radio" name="newLeader" value="${member.name}"><span>${member.name}</span></label>`
+        )
+        .join("");
+
+    selectLeaderList.querySelectorAll("input[type='radio']").forEach((radio) => {
+        radio.addEventListener("change", updateLeaveGroupBtnState);
+    });
+
+    updateLeaveGroupBtnState();
+};
+
+const updateLeaveGroupBtnState = () => {
+    if (!leaveGroupBtn || !selectLeaderList) return;
+    const selectedLeader = selectLeaderList.querySelector("input[type='radio']:checked");
+    leaveGroupBtn.disabled = !selectedLeader;
+};
+
+const closeConfirmLeaveModal = () => {
+    if (!confirmLeaveModalOverlay) return;
+    confirmLeaveModalOverlay.classList.remove("open");
+    confirmLeaveModalOverlay.setAttribute("aria-hidden", "true");
+};
+
+const openConfirmLeaveModal = () => {
+    if (!confirmLeaveModalOverlay) return;
+    closeSelectLeaderModal();
+    confirmLeaveModalOverlay.classList.add("open");
+    confirmLeaveModalOverlay.setAttribute("aria-hidden", "false");
+};
+
+const leaveGroup = () => {
+    const data = loadLeaderGroupData();
+    const selectedLeader = selectLeaderList.querySelector("input[type='radio']:checked");
+
+    if (!selectedLeader) return;
+
+    const newLeaderName = selectedLeader.value;
+
+    data.members = (data.members || []).map((member) => {
+        if (member.name === newLeaderName) {
+            return { ...member, role: "Leader" };
+        }
+        return member;
+    });
+
+    const oldLeader = { ...data.leader, role: "Member" };
+    data.members.push(oldLeader);
+    data.leader = data.members.find((m) => m.name === newLeaderName);
+    data.members = data.members.filter((m) => m.name !== newLeaderName);
+
+    saveLeaderGroupData(data);
+    applyLeaderGroupData(data);
+    closeConfirmLeaveModal();
+    window.location.href = "../s.dashb.html";
+};
+
+const updateRemoveMembersBtnState = () => {
+    if (!removeMembersBtn || !removeMembersList) return;
     const selectedCount = removeMembersList.querySelectorAll("input[type='checkbox']:checked").length;
     removeMembersBtn.disabled = selectedCount === 0;
 };
 
 const renderRemoveMembersList = () => {
-    if (!removeMembersList) {
-        return;
-    }
+    if (!removeMembersList) return;
 
     const data = loadLeaderGroupData();
     const removableMembers = (data.members || []).filter((member) => {
@@ -147,9 +230,7 @@ const renderRemoveMembersList = () => {
 
     if (removableMembers.length === 0) {
         removeMembersList.innerHTML = "<p class='remove-members-empty'>No removable members found.</p>";
-        if (removeMembersBtn) {
-            removeMembersBtn.disabled = true;
-        }
+        if (removeMembersBtn) removeMembersBtn.disabled = true;
         return;
     }
 
@@ -168,19 +249,13 @@ const renderRemoveMembersList = () => {
 };
 
 const closeRemoveMembersModal = () => {
-    if (!removeMembersModalOverlay) {
-        return;
-    }
-
+    if (!removeMembersModalOverlay) return;
     removeMembersModalOverlay.classList.remove("open");
     removeMembersModalOverlay.setAttribute("aria-hidden", "true");
 };
 
 const openRemoveMembersModal = () => {
-    if (!removeMembersModalOverlay) {
-        return;
-    }
-
+    if (!removeMembersModalOverlay) return;
     renderRemoveMembersList();
     removeMembersModalOverlay.classList.add("open");
     removeMembersModalOverlay.setAttribute("aria-hidden", "false");
@@ -196,33 +271,35 @@ if (discardRemoveMembersBtn) {
 
 if (removeMembersModalOverlay) {
     removeMembersModalOverlay.addEventListener("click", (event) => {
-        if (event.target === removeMembersModalOverlay) {
-            closeRemoveMembersModal();
-        }
+        if (event.target === removeMembersModalOverlay) closeRemoveMembersModal();
     });
 }
 
 if (removeMembersBtn) {
     removeMembersBtn.addEventListener("click", () => {
-        if (!removeMembersList) {
-            return;
-        }
+        if (!removeMembersList) return;
 
         const selectedNames = Array.from(
             removeMembersList.querySelectorAll("input[type='checkbox']:checked")
         ).map((input) => input.value);
 
-        if (selectedNames.length === 0) {
-            return;
-        }
+        if (selectedNames.length === 0) return;
 
-        const data = loadLeaderGroupData();
-        data.members = (data.members || []).filter((member) => !selectedNames.includes(member.name));
-        data.stats.members = data.members.length + 1;
+        const memberText = selectedNames.length === 1 ? `"${selectedNames[0]}"` : `${selectedNames.length} members`;
 
-        saveLeaderGroupData(data);
-        applyLeaderGroupData(data);
-        closeRemoveMembersModal();
+        showConfirmation(
+            `Are you sure you want to remove ${memberText} from the group?`,
+            () => {
+                const data = loadLeaderGroupData();
+                data.members = (data.members || []).filter((member) => !selectedNames.includes(member.name));
+                data.stats.members = data.members.length + 1;
+
+                saveLeaderGroupData(data);
+                applyLeaderGroupData(data);
+                closeRemoveMembersModal();
+            },
+            { title: "Remove Members", confirmText: "Remove", cancelText: "Cancel" }
+        );
     });
 }
 
@@ -256,22 +333,16 @@ if (discardAddMembersBtn) {
 
 if (addMembersModalOverlay) {
     addMembersModalOverlay.addEventListener("click", (event) => {
-        if (event.target === addMembersModalOverlay) {
-            closeAddMembersModal();
-        }
+        if (event.target === addMembersModalOverlay) closeAddMembersModal();
     });
 }
 
 if (copyGroupLinkBtn) {
     copyGroupLinkBtn.addEventListener("click", async () => {
-        if (!groupLinkValue) {
-            return;
-        }
+        if (!groupLinkValue) return;
 
         const link = groupLinkValue.value;
-        if (!link) {
-            return;
-        }
+        if (!link) return;
 
         try {
             await navigator.clipboard.writeText(link);
@@ -287,5 +358,51 @@ if (copyGroupLinkBtn) {
                 copyGroupLinkBtn.textContent = "Copy";
             }, 1200);
         }
+    });
+}
+
+if (leaveBtn) {
+    leaveBtn.addEventListener("click", openSelectLeaderModal);
+}
+
+if (discardSelectLeaderBtn) {
+    discardSelectLeaderBtn.addEventListener("click", closeSelectLeaderModal);
+}
+
+if (selectLeaderModalOverlay) {
+    selectLeaderModalOverlay.addEventListener("click", (event) => {
+        if (event.target === selectLeaderModalOverlay) closeSelectLeaderModal();
+    });
+}
+
+if (leaveGroupBtn) {
+    leaveGroupBtn.addEventListener("click", openConfirmLeaveModal);
+}
+
+if (cancelLeaveBtn) {
+    cancelLeaveBtn.addEventListener("click", closeConfirmLeaveModal);
+}
+
+if (confirmLeaveBtn) {
+    confirmLeaveBtn.addEventListener("click", leaveGroup);
+}
+
+if (confirmLeaveModalOverlay) {
+    confirmLeaveModalOverlay.addEventListener("click", (event) => {
+        if (event.target === confirmLeaveModalOverlay) closeConfirmLeaveModal();
+    });
+}
+
+const logoutBtn = document.querySelector(".logout");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
     });
 }

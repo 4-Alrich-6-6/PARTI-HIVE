@@ -14,8 +14,34 @@ if (groupInfoTab) {
     });
 }
 
+const navigateToMemberBreakdown = (projectKey, projectName) => {
+    if (projectKey) {
+        localStorage.setItem("hive_selected_project", projectKey);
+    }
+    if (projectName) {
+        localStorage.setItem("hive_selected_project_name", projectName);
+    }
+    window.location.href = "s.memberprojectbreakdown.html";
+};
+
 categoryMainButtons.forEach((categoryMainButton) => {
     categoryMainButton.addEventListener("click", () => {
-        window.location.href = "s.memberprojectbreakdown.html";
+        const projectKey = categoryMainButton.dataset.category;
+        const projectName = categoryMainButton.querySelector(".category-name")?.textContent || projectKey;
+        navigateToMemberBreakdown(projectKey, projectName);
     });
 });
+
+const logoutBtn = document.querySelector(".logout");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../../auth/log-sign.html";
+            },
+            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
+        );
+    });
+}

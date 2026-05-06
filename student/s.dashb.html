@@ -1,198 +1,385 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Student Dashboard</title>
+
     <link rel="stylesheet" href="s.dashb.css">
+
 </head>
+
 <body>
+
     <div class="topbar">
+
         <button class="menu-btn" type="button" aria-label="Toggle menu">
+
             <span></span><span></span><span></span>
+
         </button>
+
+
 
         <p class="datetime">6:00 PM February 01, 2026</p>
 
+
+
         <button class="notif-btn-mobile" type="button" aria-label="Notifications">
+
             <img src="../assets/Notification.png" alt="Notification icon">
+
         </button>
+
     </div>
+
+
 
     <div class="layout">
+
         <aside class="sidebar" id="sidebar">
+
             <div class="profile-block">
+
                 <div class="avatar-circle">
+
                     <img src="../assets/profile.png" alt="Profile">
+
                 </div>
+
                 <h3>Name</h3>
+
                 <h3>Email</h3>
+
                 <a href="#" class="profile-link">Manage Profile</a>
+
             </div>
+
+
 
             <div class="sidebar-actions">
+
                 <button class="btn settings" type="button">Settings</button>
+
                 <button class="btn logout" type="button">Log Out</button>
+
             </div>
+
         </aside>
+
+
 
         <main class="main-content-container">
+
             <div class="main-header">
+
                 <h1 class="main-content-title">STUDENT'S DASHBOARD</h1>
 
+
+
                 <div class="section-actions">
+
                     <button type="button" id="openJoinGroupModal">
+
                         <span><img src="../assets/JoinGroup.png" alt="Join Group icon"></span>
+
                         Join Groups
+
                     </button>
+
                     <button type="button" id="openAddGroupModal">
+
                         <span><img src="../assets/AddGroup.png" alt="Add Group icon"></span>
+
                         Add Groups
+
                     </button>
+
                 </div>
+
             </div>
+
+
 
             <div class="main-content">
+
                 <section class="stats-row">
+
                     <article class="stat-card">
+
                         <p class="stat-label">Owned Groups</p>
+
                         <h3>1</h3>
+
                     </article>
 
+
+
                     <article class="stat-card">
+
                         <p class="stat-label">Joined Groups</p>
+
                         <h3>2</h3>
+
                     </article>
+
+
 
                     <article class="stat-card">
+
                         <p class="stat-label">Pending Tasks</p>
+
                         <h3>0</h3>
+
                     </article>
+
                 </section>
 
-                <section class="group-section">
+
+
+                <section class="group-section" id="ownedGroupsSection">
+
                     <div class="section-title-wrap">
+
                         <h2>Your Owned Groups</h2>
+
                     </div>
 
-                    <article class="group-card open-group-view" role="button" tabindex="0" aria-label="Open group information">
-                        <div class="group-info">
-                            <h3>Group Name</h3>
-                            <p>Subject</p>
+
+
+                    <div id="ownedGroupsList">
+
+                        <!-- Empty State Placeholder -->
+
+                        <div class="empty-state">
+
+                            <img src="../assets/AddGroup.png" class="empty-state-icon" alt="No groups">
+
+                            <h3>No Owned Groups</h3>
+
+                            <p>You haven't created any groups yet. Click "Add Groups" to get started!</p>
+
                         </div>
 
-                        <div class="card-right">
-                            <strong>Occupied Members : 3</strong>
-                            <button class="more-btn" id="openEditOwnedGroupModal" type="button" aria-label="Edit owned group">•••</button>
-                        </div>
-                    </article>
+                    </div>
+
                 </section>
 
-                <section class="group-section">
+
+
+                <section class="group-section" id="joinedGroupsSection">
+
                     <div class="section-title-wrap">
+
                         <h2>Your Groups</h2>
+
                     </div>
 
-                    <article class="group-card open-member-group-view" role="button" tabindex="0" aria-label="Open group information">
-                        <div class="group-info">
-                            <h3>Group Name</h3>
-                            <p>Subject</p>
+
+
+                    <div id="joinedGroupsList">
+
+                        <!-- Empty State Placeholder -->
+
+                        <div class="empty-state">
+
+                            <img src="../assets/JoinGroup.png" class="empty-state-icon" alt="No groups">
+
+                            <h3>No Joined Groups</h3>
+
+                            <p>You haven't joined any groups yet. Use "Join Groups" with an invite link!</p>
+
                         </div>
 
-                        <div class="card-right">
-                            <strong>Occupied Members : 3</strong>
-                        </div>
-                    </article>
+                    </div>
+
                 </section>
+
+
 
                 <section class="help-panel">
+
                     <h2>Quick Tips</h2>
+
                     <p>Use <strong>Join Groups</strong> if you already have a invite link, or <strong>Add Groups</strong> to create your own group for projects and activities.</p>
+
                 </section>
+
             </div>
+
         </main>
 
+
+
         <aside class="right-rail" aria-hidden="true">
+
             <button class="notif-btn" type="button" aria-label="Notifications">
+
                 <img src="../assets/Notification.png" alt="Notification icon">
+
             </button>
+
         </aside>
+
     </div>
+
+
 
     <div class="modal-overlay" id="addGroupModal" aria-hidden="true">
+
         <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="addGroupTitle">
+
             <div class="group-modal-header">
+
                 <h2 id="addGroupTitle">Enter Group Information</h2>
+
             </div>
+
+
 
             <div class="group-modal-form">
-                <div class="group-form-field">
-                    <label for="groupNameInput">Group Name:</label>
-                    <input id="groupNameInput" type="text" placeholder="Enter group name">
-                </div>
 
                 <div class="group-form-field">
-                    <label for="groupSubjectInput">Subject:</label>
-                    <input id="groupSubjectInput" type="text" placeholder="Enter subject">
+
+                    <label for="groupNameInput">Group Name:</label>
+
+                    <input id="groupNameInput" type="text" placeholder="Enter group name">
+
                 </div>
+
+
+
+                <div class="group-form-field">
+
+                    <label for="groupSubjectInput">Subject:</label>
+
+                    <input id="groupSubjectInput" type="text" placeholder="Enter subject">
+
+                </div>
+
+
 
                 <div class="group-modal-actions">
+
                     <button type="button" class="group-modal-btn group-discard-btn" id="discardAddGroup">Discard</button>
+
                     <button type="button" class="group-modal-btn group-create-btn" id="createAddGroup">Create</button>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <div class="modal-overlay" id="joinGroupModal" aria-hidden="true">
+
         <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="joinGroupTitle">
+
             <div class="group-modal-header">
+
                 <h2 id="joinGroupTitle">Enter Group Link</h2>
+
             </div>
+
+
 
             <div class="group-modal-form">
+
                 <div class="group-form-field">
+
                     <label for="groupLinkInput">Group Link:</label>
+
                     <input id="groupLinkInput" type="text" placeholder="Paste group link">
+
                 </div>
 
+
+
                 <div class="group-modal-actions">
+
                     <button type="button" class="group-modal-btn group-discard-btn" id="discardJoinGroup">Discard</button>
+
                     <button type="button" class="group-modal-btn group-create-btn" id="joinGroupBtn">Join</button>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <div class="modal-overlay" id="editOwnedGroupModal" aria-hidden="true">
+
         <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="editOwnedGroupTitle">
+
             <div class="group-modal-header">
+
                 <h2 id="editOwnedGroupTitle">Edit Group</h2>
+
             </div>
+
+
 
             <div class="group-modal-form">
-                <div class="group-form-field">
-                    <label for="editOwnedGroupNameInput">Group Name:</label>
-                    <input id="editOwnedGroupNameInput" type="text" placeholder="Enter group name">
-                </div>
 
                 <div class="group-form-field">
-                    <label for="editOwnedGroupSubjectInput">Subject:</label>
-                    <input id="editOwnedGroupSubjectInput" type="text" placeholder="Enter subject">
+
+                    <label for="editOwnedGroupNameInput">Group Name:</label>
+
+                    <input id="editOwnedGroupNameInput" type="text" placeholder="Enter group name">
+
                 </div>
+
+
+
+                <div class="group-form-field">
+
+                    <label for="editOwnedGroupSubjectInput">Subject:</label>
+
+                    <input id="editOwnedGroupSubjectInput" type="text" placeholder="Enter subject">
+
+                </div>
+
+
 
                 <div class="group-modal-actions">
+
                     <button type="button" class="group-modal-btn group-discard-btn" id="discardEditOwnedGroup">Discard</button>
+
                     <button type="button" class="group-modal-btn group-create-btn" id="saveEditOwnedGroup">Save</button>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
+
+
     <script src="../lib/datetime.js"></script>
+
     <script src="../lib/manage-profile.js"></script>
+
     <script src="../lib/settings.js"></script>
+
     <script src="../lib/confirmation-modal.js"></script>
+
     <script src="s.dashb.js"></script>
+
 </body>
+
 </html>

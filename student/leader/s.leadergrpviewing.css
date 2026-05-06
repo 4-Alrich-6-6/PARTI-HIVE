@@ -816,6 +816,15 @@ button {
         width: 100%;
     }
 
+    .help-panel {
+        width: calc(100% - 28px) !important;
+        max-width: none !important;
+        margin: 8px 14px 0 !important;
+        border-radius: 12px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
     .member-grid {
         grid-template-columns: 1fr;
     }

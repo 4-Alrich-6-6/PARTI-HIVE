@@ -89,15 +89,14 @@ const updateTaskTimer = (task, taskIndex) => {
     return task.elapsedTime;
 };
 
+let activeTaskIndex = null;
+
 const openTaskDetails = (taskIndex) => {
     if (!overlay) return;
-
     const tasks = loadTasks();
     const task = tasks[taskIndex];
     if (!task) return;
-
     activeTaskIndex = taskIndex;
-
     if (popupTaskName) popupTaskName.textContent = task.name || "";
     if (popupDescText) popupDescText.textContent = task.description || "None";
     if (popupAssignees) popupAssignees.textContent = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
@@ -105,18 +104,15 @@ const openTaskDetails = (taskIndex) => {
     if (popupDueTime) popupDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";
     if (popupIntensity) popupIntensity.textContent = task.intensity || "Light";
     if (popupPriority) popupPriority.textContent = task.priority || "Low";
-
     if (popupStatusDisplay) {
         const currentStatus = task.status || "inactive";
         popupStatusDisplay.textContent = STATUS_TEXT[currentStatus] || currentStatus;
         popupStatusDisplay.className = `task-status ${currentStatus}`;
     }
-
     if (popupTimeActive) {
         const elapsedTime = updateTaskTimer(task, taskIndex);
         popupTimeActive.textContent = formatElapsedTime(elapsedTime);
     }
-
     if (statusOptions) {
         const currentStatus = task.status || "inactive";
         const buttons = statusOptions.querySelectorAll(".status-opt");
@@ -124,7 +120,6 @@ const openTaskDetails = (taskIndex) => {
             btn.classList.toggle("selected", btn.dataset.status === currentStatus);
         });
     }
-
     overlay.classList.add("open");
 };
 
@@ -135,23 +130,15 @@ const closeTaskDetails = () => {
 
 const renderTask = (task, taskIndex, isOwnTask, targetSection) => {
     if (!targetSection) return;
-
     const assigneeList = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
     const timeDisplay = formatTime12h(task.dueTime);
     const dateDisplay = task.dueDate || "##/##/####";
-
     let status = task.status || "inactive";
-
     const article = document.createElement("article");
     article.className = "task-card task-card-clickable";
-
     const priority = (task.priority || "Low").toLowerCase();
-    if (priority === "high") {
-        article.style.backgroundColor = "#FF8383";
-    } else if (priority === "medium") {
-        article.style.backgroundColor = "#FFC193";
-    }
-
+    if (priority === "high") article.style.backgroundColor = "#FF8383";
+    else if (priority === "medium") article.style.backgroundColor = "#FFC193";
     article.innerHTML = `
         <div class="task-left">
             <h3>Task: ${task.name}</h3>
@@ -168,31 +155,20 @@ const renderTask = (task, taskIndex, isOwnTask, targetSection) => {
             <button class="task-status ${status}" type="button">${STATUS_TEXT[status] || status}</button>
         </div>
     `;
-
     const statusBtn = article.querySelector(".task-status");
     if (isOwnTask && !isTerminal(status)) {
         statusBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            if (status === "inactive") {
-                updateTaskStatus(taskIndex, "active");
-            } else if (status === "active") {
+            if (status === "inactive") updateTaskStatus(taskIndex, "active");
+            else if (status === "active") {
                 activeTaskIndex = taskIndex;
-                openPauseVerifyChoice(
-                    () => updateTaskStatus(taskIndex, "pause"),
-                    () => openVerifyModal()
-                );
-            } else if (status === "pause") {
-                updateTaskStatus(taskIndex, "active");
-            }
+                openPauseVerifyChoice(() => updateTaskStatus(taskIndex, "pause"), () => openVerifyModal());
+            } else if (status === "pause") updateTaskStatus(taskIndex, "active");
         });
     } else {
         statusBtn.disabled = true;
     }
-
-    article.addEventListener("click", () => {
-        openTaskDetails(taskIndex);
-    });
-
+    article.addEventListener("click", () => openTaskDetails(taskIndex));
     targetSection.appendChild(article);
 };
 
@@ -207,27 +183,41 @@ const updateTaskStatus = (taskIndex, newStatus) => {
 };
 
 const renderAllTasks = () => {
-    const taskSections = document.querySelectorAll(".task-section");
-    const ownSection = taskSections[0];
-    const otherSection = taskSections[1];
-
-    if (ownSection) ownSection.querySelectorAll(".task-card").forEach(el => el.remove());
-    if (otherSection) otherSection.querySelectorAll(".task-card").forEach(el => el.remove());
-
+    const yourTasksList = document.querySelector("#yourTasksList");
+    const otherTasksList = document.querySelector("#otherTasksList");
+    if (yourTasksList) yourTasksList.innerHTML = "";
+    if (otherTasksList) otherTasksList.innerHTML = "";
     const tasks = loadTasks();
     let ownCount = 0;
     let otherCount = 0;
     let pendingCount = 0;
-
     tasks.forEach((task, index) => {
         const isOwnTask = task.assignees && task.assignees.some(a => a.toLowerCase().includes("person 2") || a.toLowerCase().includes("you"));
-        const target = isOwnTask ? ownSection : otherSection;
+        const target = isOwnTask ? yourTasksList : otherTasksList;
         renderTask(task, index, isOwnTask, target);
-
         if (isOwnTask) ownCount++;
         else otherCount++;
         if (task.status === "verifying") pendingCount++;
     });
+
+    if (yourTasksList && ownCount === 0) {
+        yourTasksList.innerHTML = `
+            <div class="empty-state">
+                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                <h3>No Tasks Assigned</h3>
+                <p>You have no personal tasks assigned to this project yet.</p>
+            </div>
+        `;
+    }
+    if (otherTasksList && otherCount === 0) {
+        otherTasksList.innerHTML = `
+            <div class="empty-state">
+                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                <h3>No Other Tasks</h3>
+                <p>There are no other tasks currently listed for this project.</p>
+            </div>
+        `;
+    }
 
     const summaryH3s = document.querySelectorAll(".summary-card h3");
     if (summaryH3s[0]) summaryH3s[0].textContent = ownCount;
@@ -235,9 +225,7 @@ const renderAllTasks = () => {
     if (summaryH3s[2]) summaryH3s[2].textContent = pendingCount;
 };
 
-let activeTaskIndex = null;
 let pauseVerifyCallback = null;
-
 const openPauseVerifyChoice = (onPause, onVerify) => {
     pauseVerifyCallback = { onPause, onVerify };
     if (pauseVerifyChoiceOverlay) {
@@ -254,34 +242,6 @@ const closePauseVerifyChoice = () => {
     pauseVerifyCallback = null;
 };
 
-const isPastDue = () => {
-    const due = localStorage.getItem(STORAGE_KEY_TASK_DUE);
-    if (!due) return false;
-    return Date.now() > new Date(due).getTime();
-};
-
-const applyBadge = (status) => {
-    if (!task1Badge) return;
-    task1Badge.textContent = STATUS_TEXT[status] || status;
-    task1Badge.className = `task-status ${status}`;
-    task1Badge.disabled = isTerminal(status) || status === "verifying";
-};
-
-let currentStatus = localStorage.getItem(STORAGE_KEY_TASK_STATUS) || "inactive";
-
-if (!isTerminal(currentStatus) && currentStatus !== "verifying" && isPastDue()) {
-    currentStatus = "missing";
-    localStorage.setItem(STORAGE_KEY_TASK_STATUS, "missing");
-}
-
-applyBadge(currentStatus);
-
-const setStatus = (newStatus) => {
-    currentStatus = newStatus;
-    localStorage.setItem(STORAGE_KEY_TASK_STATUS, newStatus);
-    applyBadge(newStatus);
-};
-
 const openVerifyModal = () => {
     if (memberVerifyOverlay) {
         memberVerifyOverlay.classList.add("open");
@@ -296,105 +256,34 @@ const closeVerifyModal = () => {
     }
 };
 
-if (task1Badge) {
-    task1Badge.addEventListener("click", () => {
-        if (isTerminal(currentStatus) || currentStatus === "verifying") return;
-        if (currentStatus === "inactive") setStatus("active");
-        else if (currentStatus === "active") openVerifyModal();
-    });
-}
-
 if (memberVerifyConfirmBtn) {
     memberVerifyConfirmBtn.addEventListener("click", () => {
-        if (activeTaskIndex !== null) {
-            updateTaskStatus(activeTaskIndex, "verifying");
-        }
+        if (activeTaskIndex !== null) updateTaskStatus(activeTaskIndex, "verifying");
         closeVerifyModal();
     });
 }
 
-if (memberVerifyCancelBtn) {
-    memberVerifyCancelBtn.addEventListener("click", closeVerifyModal);
-}
-
-if (closePopupBtn) {
-    closePopupBtn.addEventListener("click", closeTaskDetails);
-}
-
-if (overlay) {
-    overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) closeTaskDetails();
-    });
-}
-
-if (memberVerifyOverlay) {
-    memberVerifyOverlay.addEventListener("click", (e) => {
-        if (e.target === memberVerifyOverlay) closeVerifyModal();
-    });
-}
-
-if (pauseVerifyPauseBtn) {
-    pauseVerifyPauseBtn.addEventListener("click", () => {
-        if (pauseVerifyCallback && pauseVerifyCallback.onPause) pauseVerifyCallback.onPause();
-        closePauseVerifyChoice();
-    });
-}
-
-if (pauseVerifyVerifyBtn) {
-    pauseVerifyVerifyBtn.addEventListener("click", () => {
-        if (pauseVerifyCallback && pauseVerifyCallback.onVerify) pauseVerifyCallback.onVerify();
-        closePauseVerifyChoice();
-    });
-}
-
-if (pauseVerifyCloseBtn) {
-    pauseVerifyCloseBtn.addEventListener("click", closePauseVerifyChoice);
-}
-
-if (pauseVerifyChoiceOverlay) {
-    pauseVerifyChoiceOverlay.addEventListener("click", (e) => {
-        if (e.target === pauseVerifyChoiceOverlay) closePauseVerifyChoice();
-    });
-}
-
-if (topBackBtn) {
-    topBackBtn.addEventListener("click", () => {
-        window.location.href = "../.dashb.html";
-    });
-}
-
-if (groupInfoTab) {
-    groupInfoTab.addEventListener("click", () => {
-        window.location.href = "s.membergrpviewing.html";
-    });
-}
-
-if (backToCategoriesBtn) {
-    backToCategoriesBtn.addEventListener("click", () => {
-        window.location.href = "s.membercategory.html";
-    });
-}
+if (memberVerifyCancelBtn) memberVerifyCancelBtn.addEventListener("click", closeVerifyModal);
+if (closePopupBtn) closePopupBtn.addEventListener("click", closeTaskDetails);
+if (overlay) overlay.addEventListener("click", (e) => { if (e.target === overlay) closeTaskDetails(); });
+if (memberVerifyOverlay) memberVerifyOverlay.addEventListener("click", (e) => { if (e.target === memberVerifyOverlay) closeVerifyModal(); });
+if (pauseVerifyPauseBtn) pauseVerifyPauseBtn.addEventListener("click", () => { if (pauseVerifyCallback && pauseVerifyCallback.onPause) pauseVerifyCallback.onPause(); closePauseVerifyChoice(); });
+if (pauseVerifyVerifyBtn) pauseVerifyVerifyBtn.addEventListener("click", () => { if (pauseVerifyCallback && pauseVerifyCallback.onVerify) pauseVerifyCallback.onVerify(); closePauseVerifyChoice(); });
+if (pauseVerifyCloseBtn) pauseVerifyCloseBtn.addEventListener("click", closePauseVerifyChoice);
+if (pauseVerifyChoiceOverlay) pauseVerifyChoiceOverlay.addEventListener("click", (e) => { if (e.target === pauseVerifyChoiceOverlay) closePauseVerifyChoice(); });
+if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "../.dashb.html"; });
+if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "s.membergrpviewing.html"; });
+if (backToCategoriesBtn) backToCategoriesBtn.addEventListener("click", () => { window.location.href = "s.membercategory.html"; });
 
 const logoutBtn = document.querySelector(".logout");
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-        showConfirmation(
-            "Are you sure you want to log out?",
-            () => {
-                window.location.href = "../../auth/log-sign.html";
-            },
-            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
-        );
-    });
-}
+if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    showConfirmation("Are you sure you want to log out?", () => { window.location.href = "../../auth/log-sign.html"; }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
+});
 
 const loadAndDisplayProjectName = () => {
     const projectName = localStorage.getItem("hive_selected_project_name");
     const projectNameDisplay = document.querySelector(".project-name-display h2");
-    if (projectName && projectNameDisplay) {
-        projectNameDisplay.textContent = projectName;
-    }
+    if (projectName && projectNameDisplay) projectNameDisplay.textContent = projectName;
 };
 
 loadAndDisplayProjectName();

@@ -1,3 +1,5 @@
+@import url('../s.dashb.css');
+
 * {
     box-sizing: border-box;
 }
@@ -11,7 +13,7 @@ html, body {
 
 body {
     font-family: Arial, sans-serif;
-    background: #ffffff;
+    background: #fdfbdc;
     color: #111;
     overflow-x: hidden;
 }
@@ -26,6 +28,10 @@ button {
 }
 
 .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 58px;
     background: #ffcc00;
     display: flex;
@@ -33,6 +39,7 @@ button {
     justify-content: space-between;
     padding: 0 14px;
     gap: 12px;
+    z-index: 1000;
 }
 
 .menu-btn {
@@ -44,8 +51,8 @@ button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     padding: 0;
+    cursor: pointer;
 }
 
 .menu-btn img {
@@ -63,17 +70,26 @@ button {
 
 .layout {
     display: grid;
-    grid-template-columns: 115px 1fr 92px;
+    grid-template-columns: 1fr;
     min-height: calc(100vh - 58px);
     width: 100%;
+    padding-top: 58px;
+    padding-left: 115px;
+    padding-right: 92px;
 }
 
 .sidebar {
+    position: fixed;
+    top: 58px;
+    left: 0;
+    bottom: 0;
+    width: 115px;
     background: #f3f3f3;
     border-right: 1px solid #d8d8d8;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    z-index: 999;
 }
 
 .profile-block {
@@ -133,7 +149,7 @@ button {
     padding: 12px 14px 18px;
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    min-height: calc(100vh - 58px);
 }
 
 .main-header {
@@ -197,6 +213,8 @@ button {
     width: min(100%, 680px);
     margin-left: auto;
     margin-right: auto;
+    padding-left: 14px;
+    padding-right: 14px;
 }
 
 .section-title-wrap {
@@ -303,9 +321,15 @@ button {
 }
 
 .right-rail {
+    position: fixed;
+    top: 58px;
+    right: 0;
+    bottom: 0;
+    width: 92px;
     background: #f3f3f3;
     border-left: 1px solid #d8d8d8;
     padding-top: 16px;
+    z-index: 999;
 }
 
 .side-tabs {
@@ -509,12 +533,66 @@ button {
     gap: 10px;
 }
 
+/* System-Appropriate Empty State Styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: transparent;
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.empty-state-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+.empty-state h3 {
+    margin: 0 0 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #111;
+    text-transform: uppercase;
+}
+
+.empty-state p {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* List Spacing */
+.category-list:empty + .empty-state,
+.category-list:not(:empty) {
+    margin-top: 12px;
+}
+
 @media (max-width: 1100px) {
     .layout {
-        grid-template-columns: 115px 1fr;
+        grid-template-columns: 1fr;
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .right-rail {
+        display: none;
+    }
+
+    .sidebar {
         display: none;
     }
 }
@@ -522,10 +600,42 @@ button {
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .sidebar {
         display: none;
+    }
+
+    .main-content-container {
+        padding: 12px 0 18px;
+        width: 100%;
+        max-width: none;
+    }
+
+    .main-header,
+    .section-title-wrap {
+        padding-left: 14px;
+        padding-right: 14px;
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .category-list {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .category-main-btn {
+        width: calc(100% - 28px);
+        border-radius: 10px;
+        margin: 0 14px;
+        padding: 16px 14px;
     }
 
     .section-title-wrap,

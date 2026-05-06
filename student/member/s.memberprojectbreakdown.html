@@ -62,23 +62,14 @@
                         <h2>Your Task(s)</h2>
                     </div>
 
-                    <article class="task-card task-card-clickable" id="taskCard1">
-                        <div class="task-left">
-                            <h3>Task: Create a slide</h3>
-                            <p>
-                                Assignee(s):
-                                <span class="assignee-info-wrap">
-                                    <img class="assignee-info-icon" src="../../assets/Info.png" alt="Info icon">
-                                    <span class="assignee-tooltip">Person 1, Person 2</span>
-                                </span>
-                                &nbsp; Due Date: ##:## AM -- ##/##/####
-                            </p>
+                    <div id="yourTasksList">
+                        <!-- Empty State Placeholder -->
+                        <div class="empty-state">
+                            <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                            <h3>No Tasks Assigned</h3>
+                            <p>You have no personal tasks assigned to this project yet.</p>
                         </div>
-
-                        <div class="task-actions">
-                            <button class="task-status inactive" type="button" id="task1-badge">Not Active</button>
-                        </div>
-                    </article>
+                    </div>
                 </section>
 
                 <section class="task-section">
@@ -86,23 +77,14 @@
                         <h2>Other Task(s)</h2>
                     </div>
 
-                    <article class="task-card">
-                        <div class="task-left">
-                            <h3>Task: Create a slide</h3>
-                            <p>
-                                Assignee(s):
-                                <span class="assignee-info-wrap">
-                                    <img class="assignee-info-icon" src="../../assets/Info.png" alt="Info icon">
-                                    <span class="assignee-tooltip">Person 3</span>
-                                </span>
-                                &nbsp; Due Date: ##:## AM -- ##/##/####
-                            </p>
+                    <div id="otherTasksList">
+                        <!-- Empty State Placeholder -->
+                        <div class="empty-state">
+                            <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                            <h3>No Other Tasks</h3>
+                            <p>There are no other tasks currently listed for this project.</p>
                         </div>
-
-                        <div class="task-actions">
-                            <button class="task-status verify" type="button">Verify</button>
-                        </div>
-                    </article>
+                    </div>
                 </section>
             </section>
         </main>

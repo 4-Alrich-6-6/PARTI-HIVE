@@ -34,6 +34,14 @@
         <main class="main-content-container">
             <div class="main-header">
                 <h1 class="main-content-title">NOTIFICATIONS</h1>
+                <div class="header-actions">
+                    <button class="action-btn empty-notif-btn" id="emptyNotifBtn" type="button">
+                        <span class="btn-icon">
+                            <img src="../assets/Delete.png" alt="Delete icon">
+                        </span>
+                        <span>Empty Notification</span>
+                    </button>
+                </div>
             </div>
 
             <div class="main-content">
@@ -41,10 +49,14 @@
  
 
                     <div class="notif-list" id="notifList">
-                        <!-- Notification items inserted via JS -->
+                        <!-- Empty State Placeholder -->
+                        <div class="empty-state">
+                            <img src="../assets/Notification.png" class="empty-state-icon" alt="No notifications">
+                            <h3>No Notifications</h3>
+                            <p>You're all caught up! No new notifications at the moment.</p>
+                        </div>
                     </div>
 
-                    <p class="notif-empty" id="notifEmpty" hidden>No notifications yet.</p>
                 </section>
             </div>
         </main>

@@ -39,13 +39,14 @@
                     <form class="lForm active" autocomplete="on">
                         <div class="inputs">
                             <div class="form-group password-group">
-                                <label for="login-pass">Enter OTP:</label>
-                                <div class="password-wrapper">
+                                <label for="otp">Enter OTP:</label>
+                                <div class="email-wrapper">
                                     <input id="otp" type="text" class="otp-input" placeholder="123456" pattern="[0-9]{6}" maxlength="6" required>
+                                    <button type="button" id="resendOtpBtn" class="send-btn">Send</button>
                                 </div>
                             </div>
                         </div>
-                        <button class="submit" type="submit">Submit</button>
+                        <button class="submit" type="submit">Verify OTP</button>
                     </form>
                 </div>
             </section>

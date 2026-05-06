@@ -50,21 +50,19 @@
 
             <div class="main-content">
 
-                <section class="group-section">
+                <section class="group-section" id="groupsSection">
                     <div class="section-title-wrap">
                         <h2>Your Groups</h2>
                     </div>
 
-                    <article class="group-card open-member-group-view" role="button" tabindex="0" aria-label="Open group information">
-                        <div class="group-info">
-                            <h3>Group Name</h3>
-                            <p>Subject</p>
+                    <div id="groupsList">
+                        <!-- Empty State Placeholder -->
+                        <div class="empty-state">
+                            <img src="../assets/JoinGroup.png" class="empty-state-icon" alt="No groups">
+                            <h3>No Groups Found</h3>
+                            <p>You haven't joined or created any groups yet. Use "Join Groups" to get started!</p>
                         </div>
-
-                        <div class="card-right">
-                            <strong>Occupied Members : 3</strong>
-                        </div>
-                    </article>
+                    </div>
                 </section>
 
                 <section class="help-panel">

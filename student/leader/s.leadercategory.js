@@ -6,9 +6,7 @@ const discardPostCategoryBtn = document.querySelector("#discardPostCategoryBtn")
 const postCategoryForm = document.querySelector("#postCategoryForm");
 const categoryNameInput = document.querySelector("#categoryNameInput");
 const categoryDueDateInput = document.querySelector("#categoryDueDateInput");
-const postCategorySubmitBtn = postCategoryForm
-    ? postCategoryForm.querySelector("button[type='submit']")
-    : null;
+const postCategorySubmitBtn = postCategoryForm ? postCategoryForm.querySelector("button[type='submit']") : null;
 const categoryList = document.querySelector(".category-list");
 const projectOptionsOverlay = document.querySelector("#projectOptionsModalOverlay");
 const editProjectNameInput = document.querySelector("#editProjectNameInput");
@@ -30,9 +28,7 @@ let activeProjectItem = null;
 const openProjectOptions = (categoryItem) => {
     activeProjectItem = categoryItem;
     const nameEl = categoryItem.querySelector(".category-name");
-    if (editProjectNameInput && nameEl) {
-        editProjectNameInput.value = nameEl.textContent;
-    }
+    if (editProjectNameInput && nameEl) editProjectNameInput.value = nameEl.textContent;
     if (editProjectDueDateInput) {
         editProjectDueDateInput.min = todayISO();
         editProjectDueDateInput.value = categoryItem.dataset.dueDate || "";
@@ -51,9 +47,7 @@ const closeProjectOptions = () => {
     activeProjectItem = null;
 };
 
-if (closeProjectOptionsBtn) {
-    closeProjectOptionsBtn.addEventListener("click", closeProjectOptions);
-}
+if (closeProjectOptionsBtn) closeProjectOptionsBtn.addEventListener("click", closeProjectOptions);
 
 if (projectOptionsOverlay) {
     projectOptionsOverlay.addEventListener("click", (e) => {
@@ -65,23 +59,10 @@ const saveProjectName = () => {
     if (!activeProjectItem) return;
     const newName = editProjectNameInput ? editProjectNameInput.value.trim() : "";
     if (!newName) return;
-
     const newDueDate = editProjectDueDateInput ? editProjectDueDateInput.value : "";
     if (newDueDate && newDueDate < todayISO()) return;
-
-    const nameEl = activeProjectItem.querySelector(".category-name");
-    const dueEl = activeProjectItem.querySelector(".category-due-date");
     const oldKey = activeProjectItem.dataset.category;
     const newKey = newName.toLowerCase().replace(/\s+/g, "-");
-
-    if (nameEl) nameEl.textContent = newName;
-    if (dueEl) dueEl.textContent = formatDueDate(newDueDate);
-    activeProjectItem.dataset.category = newKey;
-    activeProjectItem.dataset.dueDate = newDueDate;
-
-    const mainBtn = activeProjectItem.querySelector(".category-main-btn");
-    if (mainBtn) mainBtn.dataset.category = newKey;
-
     const saved = loadProjects();
     if (saved) {
         const idx = saved.findIndex((p) => p.key === oldKey);
@@ -92,36 +73,24 @@ const saveProjectName = () => {
             saveProjects(saved);
         }
     }
-
+    renderAllProjects();
     closeProjectOptions();
 };
 
-if (saveProjectNameBtn) {
-    saveProjectNameBtn.addEventListener("click", saveProjectName);
-}
+if (saveProjectNameBtn) saveProjectNameBtn.addEventListener("click", saveProjectName);
 
 if (deleteProjectBtn) {
     deleteProjectBtn.addEventListener("click", () => {
         if (!activeProjectItem) return;
-
         const key = activeProjectItem.dataset.category;
         const nameEl = activeProjectItem.querySelector(".category-name");
         const projectName = nameEl ? nameEl.textContent : "this project";
-
-        showConfirmation(
-            `Are you sure you want to remove the project "${projectName}"?`,
-            () => {
-                activeProjectItem.remove();
-
-                const saved = loadProjects();
-                if (saved) {
-                    saveProjects(saved.filter((p) => p.key !== key));
-                }
-
-                closeProjectOptions();
-            },
-            { title: "Remove Project", confirmText: "Remove", cancelText: "Cancel" }
-        );
+        showConfirmation(`Are you sure you want to remove the project "${projectName}"?`, () => {
+            const saved = loadProjects();
+            if (saved) saveProjects(saved.filter((p) => p.key !== key));
+            renderAllProjects();
+            closeProjectOptions();
+        }, { title: "Remove Project", confirmText: "Remove", cancelText: "Cancel" });
     });
 }
 
@@ -129,37 +98,11 @@ const STORAGE_KEY_PROJECTS = "hive_leader_projects";
 
 const loadProjects = () => {
     const saved = localStorage.getItem(STORAGE_KEY_PROJECTS);
-    return saved ? JSON.parse(saved) : null;
+    return saved ? JSON.parse(saved) : [];
 };
 
 const saveProjects = (projects) => {
     localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
-};
-
-const navigateToLeaderBreakdown = (projectKey, projectName) => {
-    if (projectKey) {
-        localStorage.setItem("hive_selected_project", projectKey);
-    }
-    if (projectName) {
-        localStorage.setItem("hive_selected_project_name", projectName);
-    }
-    window.location.href = "s.leaderprojectbreakdown.html";
-};
-
-const attachCategoryBarClick = (categoryMainButton) => {
-    categoryMainButton.addEventListener("click", () => {
-        const projectKey = categoryMainButton.dataset.category;
-        const projectName =
-            categoryMainButton.querySelector(".category-name")?.textContent || projectKey;
-        navigateToLeaderBreakdown(projectKey, projectName);
-    });
-};
-
-const attachMoreBtnClick = (moreBtn, categoryItem) => {
-    moreBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openProjectOptions(categoryItem);
-    });
 };
 
 const createCategoryItem = (name, key, count, dueDate) => {
@@ -178,27 +121,41 @@ const createCategoryItem = (name, key, count, dueDate) => {
             <img src="../../assets/More.png" alt="More options">
         </button>
     `;
-
     const btn = categoryItem.querySelector(".category-main-btn");
-    if (btn) attachCategoryBarClick(btn);
-
+    if (btn) btn.addEventListener("click", () => {
+        localStorage.setItem("hive_selected_project", key);
+        localStorage.setItem("hive_selected_project_name", name);
+        window.location.href = "s.leaderprojectbreakdown.html";
+    });
     const moreBtn = categoryItem.querySelector(".more-btn");
-    if (moreBtn) attachMoreBtnClick(moreBtn, categoryItem);
-
+    if (moreBtn) moreBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProjectOptions(categoryItem);
+    });
     return categoryItem;
 };
 
-if (topBackBtn) {
-    topBackBtn.addEventListener("click", () => {
-        window.location.href = "../s.dashb.html";
+const renderAllProjects = () => {
+    if (!categoryList) return;
+    categoryList.innerHTML = "";
+    const projects = loadProjects();
+    if (projects.length === 0) {
+        categoryList.innerHTML = `
+            <div class="empty-state">
+                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No projects">
+                <h3>No Projects Yet</h3>
+                <p>Click "Post Project" to create your first project and start breaking down tasks!</p>
+            </div>
+        `;
+        return;
+    }
+    projects.forEach(p => {
+        categoryList.appendChild(createCategoryItem(p.name, p.key, p.count || 0, p.dueDate));
     });
-}
+};
 
-if (groupInfoTab) {
-    groupInfoTab.addEventListener("click", () => {
-        window.location.href = "s.leadergrpviewing.html";
-    });
-}
+if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "../s.dashb.html"; });
+if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "s.leadergrpviewing.html"; });
 
 const closePostCategoryModal = () => {
     if (!postCategoryModalOverlay) return;
@@ -230,93 +187,36 @@ if (discardPostCategoryBtn) {
     });
 }
 
-if (categoryNameInput) {
-    categoryNameInput.addEventListener("input", updatePostCategorySubmitState);
-}
-
-if (categoryDueDateInput) {
-    categoryDueDateInput.addEventListener("input", updatePostCategorySubmitState);
-}
+if (categoryNameInput) categoryNameInput.addEventListener("input", updatePostCategorySubmitState);
+if (categoryDueDateInput) categoryDueDateInput.addEventListener("input", updatePostCategorySubmitState);
 
 if (postCategoryModalOverlay) {
-    postCategoryModalOverlay.addEventListener("click", (event) => {
-        if (event.target === postCategoryModalOverlay) closePostCategoryModal();
+    postCategoryModalOverlay.addEventListener("click", (e) => {
+        if (e.target === postCategoryModalOverlay) closePostCategoryModal();
     });
 }
 
-if (postCategoryForm && categoryNameInput && categoryList) {
-    postCategoryForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const categoryName = categoryNameInput.value.trim();
-        const dueDate = categoryDueDateInput ? categoryDueDateInput.value : "";
-        if (!categoryName || !dueDate) return;
-        if (dueDate < todayISO()) return;
-
-        showConfirmation(
-            `Are you sure you want to post the project "${categoryName}"?`,
-            () => {
-                const categoryKey = categoryName.toLowerCase().replace(/\s+/g, "-");
-
-                const saved = loadProjects();
-                const projects = saved || [];
-                projects.push({ name: categoryName, key: categoryKey, count: 0, dueDate });
-                saveProjects(projects);
-
-                const categoryItem = createCategoryItem(categoryName, categoryKey, 0, dueDate);
-                categoryList.appendChild(categoryItem);
-
-                postCategoryForm.reset();
-                updatePostCategorySubmitState();
-                closePostCategoryModal();
-            },
-            { title: "Post Project", confirmText: "Post", cancelText: "Cancel" }
-        );
+if (postCategoryForm) {
+    postCategoryForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = categoryNameInput.value.trim();
+        const due = categoryDueDateInput.value;
+        if (!name || !due || due < todayISO()) return;
+        showConfirmation(`Are you sure you want to post the project "${name}"?`, () => {
+            const projects = loadProjects();
+            projects.push({ name, key: name.toLowerCase().replace(/\s+/g, "-"), count: 0, dueDate: due });
+            saveProjects(projects);
+            renderAllProjects();
+            postCategoryForm.reset();
+            updatePostCategorySubmitState();
+            closePostCategoryModal();
+        }, { title: "Post Project", confirmText: "Post", cancelText: "Cancel" });
     });
 }
-
-updatePostCategorySubmitState();
-
-const savedProjects = loadProjects();
-if (savedProjects && categoryList) {
-    const staticKeys = Array.from(categoryList.querySelectorAll(".category-item")).map(
-        (el) => el.dataset.category
-    );
-    savedProjects.forEach((project) => {
-        if (!staticKeys.includes(project.key)) {
-            const item = createCategoryItem(
-                project.name,
-                project.key,
-                project.count || 0,
-                project.dueDate
-            );
-            categoryList.appendChild(item);
-        }
-    });
-}
-
-const categoryMainButtons = Array.from(document.querySelectorAll(".category-main-btn"));
-categoryMainButtons.forEach((categoryMainButton) => {
-    attachCategoryBarClick(categoryMainButton);
-});
-
-const staticMoreBtns = Array.from(
-    categoryList ? categoryList.querySelectorAll(".category-item") : []
-);
-staticMoreBtns.forEach((item) => {
-    const moreBtn = item.querySelector(".more-btn");
-    if (moreBtn) attachMoreBtnClick(moreBtn, item);
-});
 
 const logoutBtn = document.querySelector(".logout");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-        showConfirmation(
-            "Are you sure you want to log out?",
-            () => {
-                window.location.href = "../../auth/log-sign.html";
-            },
-            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
-        );
-    });
-}
+if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    showConfirmation("Are you sure you want to log out?", () => { window.location.href = "../../auth/log-sign.html"; }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
+});
+
+renderAllProjects();

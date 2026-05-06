@@ -10,9 +10,9 @@ if (menuBtn && sidebar) {
 const STORAGE_KEY_DASHB = "hive_dashboard";
 
 const defaultDashbData = () => ({
-    ownedGroup: { name: "Group Name", subject: "Subject", members: 3 },
-    joinedGroup: { name: "Group Name", subject: "Subject", members: 3 },
-    stats: { owned: 1, joined: 2, pending: 0 }
+    ownedGroups: [],
+    joinedGroups: [],
+    stats: { owned: 0, joined: 0, pending: 0 }
 });
 
 const loadDashbData = () => {
@@ -25,30 +25,78 @@ const saveDashbData = (data) => {
 };
 
 const applyDashbData = (data) => {
-    const ownedCard = document.querySelector(".open-group-view");
-    if (ownedCard) {
-        const h3 = ownedCard.querySelector(".group-info h3");
-        const p = ownedCard.querySelector(".group-info p");
-        const strong = ownedCard.querySelector(".card-right strong");
-        if (h3) h3.textContent = data.ownedGroup.name;
-        if (p) p.textContent = data.ownedGroup.subject;
-        if (strong) strong.textContent = `Occupied Members : ${data.ownedGroup.members}`;
-    }
-
-    const joinedCard = document.querySelector(".open-member-group-view");
-    if (joinedCard) {
-        const h3 = joinedCard.querySelector(".group-info h3");
-        const p = joinedCard.querySelector(".group-info p");
-        const strong = joinedCard.querySelector(".card-right strong");
-        if (h3) h3.textContent = data.joinedGroup.name;
-        if (p) p.textContent = data.joinedGroup.subject;
-        if (strong) strong.textContent = `Occupied Members : ${data.joinedGroup.members}`;
-    }
-
+    const ownedGroupsList = document.querySelector("#ownedGroupsList");
+    const joinedGroupsList = document.querySelector("#joinedGroupsList");
     const statCards = document.querySelectorAll(".stat-card h3");
-    if (statCards[0]) statCards[0].textContent = data.stats.owned;
-    if (statCards[1]) statCards[1].textContent = data.stats.joined;
-    if (statCards[2]) statCards[2].textContent = data.stats.pending;
+
+    // Helper to create a group card
+    const createGroupCard = (group, isOwned) => {
+        const card = document.createElement("article");
+        card.className = "group-card " + (isOwned ? "open-group-view" : "open-member-group-view");
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.innerHTML = `
+            <div class="group-info">
+                <h3>${group.name}</h3>
+                <p>${group.subject}</p>
+            </div>
+            <div class="card-right">
+                <strong>Occupied Members : ${group.members}</strong>
+                ${isOwned ? '<button class="more-btn" type="button" aria-label="Edit owned group">•••</button>' : ''}
+            </div>
+        `;
+        card.addEventListener("click", () => {
+            window.location.href = isOwned ? "leader/s.leadergrpviewing.html" : "member/s.membergrpviewing.html";
+        });
+        if (isOwned) {
+            const moreBtn = card.querySelector(".more-btn");
+            moreBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openEditOwnedGroupModal(group);
+            });
+        }
+        return card;
+    };
+
+    // Render Owned Groups
+    if (ownedGroupsList) {
+        if (!data.ownedGroups || data.ownedGroups.length === 0) {
+            ownedGroupsList.innerHTML = `
+                <div class="empty-state">
+                    <img src="../assets/AddGroup.png" class="empty-state-icon" alt="No groups">
+                    <h3>No Owned Groups</h3>
+                    <p>You haven't created any groups yet. Click "Add Groups" to get started!</p>
+                </div>
+            `;
+        } else {
+            ownedGroupsList.innerHTML = "";
+            data.ownedGroups.forEach(group => {
+                ownedGroupsList.appendChild(createGroupCard(group, true));
+            });
+        }
+    }
+
+    // Render Joined Groups
+    if (joinedGroupsList) {
+        if (!data.joinedGroups || data.joinedGroups.length === 0) {
+            joinedGroupsList.innerHTML = `
+                <div class="empty-state">
+                    <img src="../assets/JoinGroup.png" class="empty-state-icon" alt="No groups">
+                    <h3>No Joined Groups</h3>
+                    <p>You haven't joined any groups yet. Use "Join Groups" with an invite link!</p>
+                </div>
+            `;
+        } else {
+            joinedGroupsList.innerHTML = "";
+            data.joinedGroups.forEach(group => {
+                joinedGroupsList.appendChild(createGroupCard(group, false));
+            });
+        }
+    }
+
+    if (statCards[0]) statCards[0].textContent = (data.ownedGroups || []).length;
+    if (statCards[1]) statCards[1].textContent = (data.joinedGroups || []).length;
+    if (statCards[2]) statCards[2].textContent = data.stats.pending || 0;
 };
 
 const dashbData = loadDashbData();
@@ -102,16 +150,13 @@ const openAddGroupModal = () => {
     if (!addGroupModal) return;
     addGroupModal.classList.add("open");
     addGroupModal.setAttribute("aria-hidden", "false");
-
     if (groupNameInput) {
         groupNameInput.value = "";
         groupNameInput.focus();
     }
-
     if (groupSubjectInput) {
         groupSubjectInput.value = "";
     }
-
     updateAddGroupCreateState();
 };
 
@@ -141,16 +186,17 @@ if (createAddGroupBtn) {
     createAddGroupBtn.addEventListener("click", () => {
         const groupName = groupNameInput ? groupNameInput.value.trim() : "";
         const subjectName = groupSubjectInput ? groupSubjectInput.value.trim() : "";
-
         if (!groupName || !subjectName) return;
-
         showConfirmation(
             `Are you sure you want to create the group "${groupName}"?`,
             () => {
-                dashbData.ownedGroup.name = groupName;
-                dashbData.ownedGroup.subject = subjectName;
-                dashbData.stats.owned += 1;
-
+                const newGroup = {
+                    name: groupName,
+                    subject: subjectName,
+                    members: 1
+                };
+                if (!dashbData.ownedGroups) dashbData.ownedGroups = [];
+                dashbData.ownedGroups.push(newGroup);
                 saveDashbData(dashbData);
                 applyDashbData(dashbData);
                 closeAddGroupModal();
@@ -170,12 +216,10 @@ const openJoinGroupModal = () => {
     if (!joinGroupModal) return;
     joinGroupModal.classList.add("open");
     joinGroupModal.setAttribute("aria-hidden", "false");
-
     if (groupLinkInput) {
         groupLinkInput.value = "";
         groupLinkInput.focus();
     }
-
     updateJoinGroupState();
 };
 
@@ -191,23 +235,50 @@ if (groupLinkInput) {
     groupLinkInput.addEventListener("input", updateJoinGroupState);
 }
 
+if (joinGroupModal) {
+    joinGroupModal.addEventListener("click", (event) => {
+        if (event.target === joinGroupModal) closeJoinGroupModal();
+    });
+}
+
+if (joinGroupBtn) {
+    joinGroupBtn.addEventListener("click", () => {
+        const groupLink = groupLinkInput ? groupLinkInput.value.trim() : "";
+        if (!groupLink) return;
+        showConfirmation(
+            "Are you sure you want to join this group?",
+            () => {
+                const newJoinedGroup = {
+                    name: "Joined via Link",
+                    subject: groupLink,
+                    members: 4
+                };
+                if (!dashbData.joinedGroups) dashbData.joinedGroups = [];
+                dashbData.joinedGroups.push(newJoinedGroup);
+                saveDashbData(dashbData);
+                applyDashbData(dashbData);
+                closeJoinGroupModal();
+            },
+            { title: "Join Group", confirmText: "Join", cancelText: "Cancel" }
+        );
+    });
+}
+
 const closeEditOwnedGroupModal = () => {
     if (!editOwnedGroupModal) return;
     editOwnedGroupModal.classList.remove("open");
     editOwnedGroupModal.setAttribute("aria-hidden", "true");
 };
 
-const openEditOwnedGroupModal = () => {
+const openEditOwnedGroupModal = (group) => {
     if (!editOwnedGroupModal) return;
-
     if (editOwnedGroupNameInput) {
-        editOwnedGroupNameInput.value = dashbData.ownedGroup.name;
+        editOwnedGroupNameInput.value = group.name;
     }
-
     if (editOwnedGroupSubjectInput) {
-        editOwnedGroupSubjectInput.value = dashbData.ownedGroup.subject;
+        editOwnedGroupSubjectInput.value = group.subject;
     }
-
+    editOwnedGroupModal.dataset.editingName = group.name;
     updateEditOwnedGroupState();
     editOwnedGroupModal.classList.add("open");
     editOwnedGroupModal.setAttribute("aria-hidden", "false");
@@ -216,7 +287,9 @@ const openEditOwnedGroupModal = () => {
 if (openEditOwnedGroupModalBtn) {
     openEditOwnedGroupModalBtn.addEventListener("click", (event) => {
         event.stopPropagation();
-        openEditOwnedGroupModal();
+        if (dashbData.ownedGroups && dashbData.ownedGroups.length > 0) {
+            openEditOwnedGroupModal(dashbData.ownedGroups[0]);
+        }
     });
 }
 
@@ -240,50 +313,23 @@ if (editOwnedGroupModal) {
 
 if (saveEditOwnedGroupBtn) {
     saveEditOwnedGroupBtn.addEventListener("click", () => {
-        const groupName = editOwnedGroupNameInput ? editOwnedGroupNameInput.value.trim() : "";
-        const subjectName = editOwnedGroupSubjectInput ? editOwnedGroupSubjectInput.value.trim() : "";
-
-        if (!groupName || !subjectName) return;
-
+        const newName = editOwnedGroupNameInput ? editOwnedGroupNameInput.value.trim() : "";
+        const newSubject = editOwnedGroupSubjectInput ? editOwnedGroupSubjectInput.value.trim() : "";
+        const oldName = editOwnedGroupModal.dataset.editingName;
+        if (!newName || !newSubject) return;
         showConfirmation(
-            `Are you sure you want to save the changes to group "${groupName}"?`,
+            `Are you sure you want to save the changes to group "${newName}"?`,
             () => {
-                dashbData.ownedGroup.name = groupName;
-                dashbData.ownedGroup.subject = subjectName;
-
-                saveDashbData(dashbData);
-                applyDashbData(dashbData);
+                const groupIndex = dashbData.ownedGroups.findIndex(g => g.name === oldName);
+                if (groupIndex !== -1) {
+                    dashbData.ownedGroups[groupIndex].name = newName;
+                    dashbData.ownedGroups[groupIndex].subject = newSubject;
+                    saveDashbData(dashbData);
+                    applyDashbData(dashbData);
+                }
                 closeEditOwnedGroupModal();
             },
             { title: "Save Changes", confirmText: "Save", cancelText: "Cancel" }
-        );
-    });
-}
-
-if (joinGroupModal) {
-    joinGroupModal.addEventListener("click", (event) => {
-        if (event.target === joinGroupModal) closeJoinGroupModal();
-    });
-}
-
-if (joinGroupBtn) {
-    joinGroupBtn.addEventListener("click", () => {
-        const groupLink = groupLinkInput ? groupLinkInput.value.trim() : "";
-
-        if (!groupLink) return;
-
-        showConfirmation(
-            "Are you sure you want to join this group?",
-            () => {
-                dashbData.joinedGroup.name = "Joined via Link";
-                dashbData.joinedGroup.subject = groupLink;
-                dashbData.stats.joined += 1;
-
-                saveDashbData(dashbData);
-                applyDashbData(dashbData);
-                closeJoinGroupModal();
-            },
-            { title: "Join Group", confirmText: "Join", cancelText: "Cancel" }
         );
     });
 }
@@ -298,7 +344,6 @@ if (groupCardLink) {
     const openGroupView = () => {
         window.location.href = "leader/s.leadergrpviewing.html";
     };
-
     groupCardLink.addEventListener("click", openGroupView);
     groupCardLink.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -314,7 +359,6 @@ if (memberGroupCardLink) {
     const openMemberGroupView = () => {
         window.location.href = "member/s.membergrpviewing.html";
     };
-
     memberGroupCardLink.addEventListener("click", openMemberGroupView);
     memberGroupCardLink.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {

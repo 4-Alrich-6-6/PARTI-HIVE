@@ -11,7 +11,7 @@ html, body {
 
 body {
     font-family: Arial, sans-serif;
-    background: #ffffff;
+    background: #fdfbdc;
     color: #111;
     overflow-x: hidden;
 }
@@ -26,6 +26,10 @@ button {
 }
 
 .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 58px;
     background: #ffcc00;
     display: flex;
@@ -33,6 +37,7 @@ button {
     justify-content: space-between;
     padding: 0 14px;
     gap: 12px;
+    z-index: 1000;
 }
 
 .menu-btn {
@@ -76,17 +81,26 @@ button {
 
 .layout {
     display: grid;
-    grid-template-columns: 115px 1fr 52px;
+    grid-template-columns: 1fr 52px;
     min-height: calc(100vh - 58px);
     width: 100%;
+    padding-top: 58px;
+    padding-left: 115px;
+    padding-right: 52px;
 }
 
 .sidebar {
+    position: fixed;
+    top: 58px;
+    left: 0;
+    bottom: 0;
+    width: 115px;
     background: #f3f3f3;
     border-right: 1px solid #d8d8d8;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    z-index: 999;
 }
 
 .profile-block {
@@ -146,6 +160,7 @@ button {
     padding: 12px 14px 18px;
     display: flex;
     flex-direction: column;
+    min-height: calc(100vh - 58px);
 }
 
 .main-header {
@@ -229,12 +244,12 @@ button {
     margin-bottom: 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 4px;
 }
 
 .section-title-wrap {
     width: min(100%, 680px);
-    margin: 0 auto 10px;
+    margin: 0 auto;
 }
 
 .group-section h2 {
@@ -316,12 +331,18 @@ button {
 }
 
 .right-rail {
+    position: fixed;
+    top: 58px;
+    right: 0;
+    bottom: 0;
+    width: 52px;
     background: #f3f3f3;
     border-left: 1px solid #d8d8d8;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     padding-top: 14px;
+    z-index: 999;
 }
 
 .notif-btn {
@@ -497,9 +518,74 @@ button {
     color: #111;
 }
 
+/* List Spacing and Separation */
+#ownedGroupsList,
+#joinedGroupsList,
+#groupsList,
+#yourTasksList,
+#otherTasksList,
+#tasksList,
+.category-list,
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Space between items in the same list */
+    margin-top: 12px;
+    margin-bottom: 24px; /* Space between different sections */
+    min-height: 20px;
+}
+
+/* System-Appropriate Empty State Styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: transparent;
+    text-align: center;
+    width: 100%;
+    margin: 20px auto; /* Added margin to separate from headers */
+    animation: fadeIn 0.4s ease-out;
+}
+
+.empty-state-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+.empty-state h3 {
+    margin: 0 0 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.empty-state p {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #888;
+    max-width: 260px;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .right-rail {
@@ -536,84 +622,105 @@ button {
         min-height: 28px;
     }
 
+    .main-content-container {
+        padding: 12px 0 18px;
+        width: 100%;
+        max-width: none;
+    }
+
+    .main-header,
+    .section-title-wrap {
+        padding-left: 14px;
+        padding-right: 14px;
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .help-panel {
+        width: calc(100% - 28px) !important;
+        max-width: none !important;
+        margin: 8px 14px 0 !important;
+        border-radius: 12px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
     .stats-row {
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
+        padding: 0 10px;
     }
 
     .stat-card {
-        padding: 10px 8px;
+        padding: 10px 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        min-height: 80px;
     }
 
     .stat-label {
-        font-size: 10px;
+        font-size: 9px;
+        margin-bottom: 4px;
     }
 
     .stat-card h3 {
-        font-size: 20px;
+        font-size: 18px;
     }
 
-    .group-section h2 {
-        font-size: 14px;
-    }
-
-    .group-info h3 {
-        font-size: 13px;
-    }
-
-    .group-info p {
-        font-size: 11px;
-    }
-
-    .card-right strong {
-        font-size: 10px;
-    }
-
-    .help-panel h2 {
-        font-size: 14px;
-    }
-
-    .help-panel p {
-        font-size: 12px;
+    .group-section {
+        width: 100%;
+        max-width: none;
     }
 
     .group-card {
-        width: 100%;
+        width: calc(100% - 28px);
+        max-width: none;
+        border-radius: 10px;
+        margin: 0 14px;
+        padding: 16px 14px;
     }
 
-    .section-title-wrap,
-    .help-panel {
+    #ownedGroupsList,
+    #joinedGroupsList,
+    #groupsList,
+    #yourTasksList,
+    #otherTasksList,
+    #tasksList,
+    .category-list,
+    .notif-list {
+        gap: 8px;
         width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
     }
 }
 
 @media (max-width: 600px) {
-    .group-card {
+    .main-header {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        align-items: stretch;
+        gap: 16px;
     }
 
-    .group-info {
+    .main-content-container {
+        padding: 12px 0 18px; /* Remove horizontal padding on main container */
+    }
+
+    .section-actions {
         width: 100%;
     }
 
-    .group-info h3 {
-        font-size: 14px;
-    }
-
-    .group-info p {
+    .section-actions button {
+        flex: 1;
+        justify-content: center;
+        padding: 10px;
         font-size: 12px;
-    }
-
-    .card-right {
-        width: 100%;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .card-right strong {
-        font-size: 10px;
     }
 
     .group-modal-form {

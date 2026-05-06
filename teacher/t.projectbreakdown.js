@@ -168,20 +168,29 @@ const renderTask = (task, taskIndex, targetSection) => {
 };
 
 const renderAllTasks = () => {
-    document.querySelectorAll(".task-card").forEach((card) => card.remove());
-
     const tasks = loadTasks();
-    const taskSection = document.querySelector(".task-section");
+    const tasksList = document.querySelector("#tasksList");
+    if (tasksList) tasksList.innerHTML = "";
 
     let pendingVerifyCount = 0;
 
     tasks.forEach((task, index) => {
-        renderTask(task, index, taskSection);
+        renderTask(task, index, tasksList);
 
         if ((task.status || "").toLowerCase() === "verifying") {
             pendingVerifyCount += 1;
         }
     });
+
+    if (tasksList && tasks.length === 0) {
+        tasksList.innerHTML = `
+            <div class="empty-state">
+                <img src="../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                <h3>No Tasks Available</h3>
+                <p>There are no tasks currently listed for this project.</p>
+            </div>
+        `;
+    }
 
     const summaryCards = document.querySelectorAll(".summary-card h3");
     if (summaryCards[0]) summaryCards[0].textContent = tasks.length;

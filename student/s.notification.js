@@ -2,6 +2,7 @@ const menuBtn = document.querySelector(".menu-btn");
 const sidebar = document.querySelector("#sidebar");
 const topBackBtn = document.querySelector("#topBackBtn");
 const notifList = document.querySelector("#notifList");
+const emptyNotifBtn = document.querySelector("#emptyNotifBtn");
 const notifEmpty = document.querySelector("#notifEmpty");
 const notifModalOverlay = document.querySelector("#notifModalOverlay");
 const notifModalTitle = document.querySelector("#notifModalTitle");
@@ -32,18 +33,45 @@ const closeNotifModal = () => {
     notifModalOverlay.setAttribute("aria-hidden", "true");
 };
 
+if (emptyNotifBtn) {
+    emptyNotifBtn.addEventListener("click", () => {
+        showConfirmation(
+            "This action will delete all your notifications.",
+            () => {
+                saveNotifications([]); // Clear all in storage
+                renderNotifications(); // Refresh UI
+            },
+            { title: "Clear All Notifications", confirmText: "Clear All", cancelText: "Cancel" }
+        );
+    });
+}
+
 const renderNotifications = () => {
     if (!notifList) return;
     notifList.innerHTML = "";
 
     const notifications = loadNotifications();
+    
+    // Toggle Empty Notification button visibility
+    if (emptyNotifBtn) {
+        emptyNotifBtn.style.display = notifications.length > 0 ? "inline-flex" : "none";
+    }
+
     if (!notifications.length) {
-        if (notifEmpty) notifEmpty.hidden = false;
+        notifList.innerHTML = `
+            <div class="empty-state">
+                <img src="../assets/Notification.png" class="empty-state-icon" alt="No notifications">
+                <h3>No Notifications</h3>
+                <p>You're all caught up! No new notifications at the moment.</p>
+            </div>
+        `;
         return;
     }
-    if (notifEmpty) notifEmpty.hidden = true;
 
     notifications.forEach((notif) => {
+        const itemWrap = document.createElement("div");
+        itemWrap.className = "notif-item-wrap";
+        
         const card = document.createElement("button");
         card.type = "button";
         card.className = "notif-card";
@@ -61,8 +89,31 @@ const renderNotifications = () => {
         card.querySelector(".notif-group").textContent = `From: ${notif.group || "—"}`;
         card.querySelector(".notif-body").textContent = truncateBody(notif.body, 120);
 
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "notif-delete-btn";
+        deleteBtn.setAttribute("aria-label", "Delete notification");
+        deleteBtn.innerHTML = `<img src="../assets/Delete.png" alt="Delete">`;
+
         card.addEventListener("click", () => openNotifModal(notif));
-        notifList.appendChild(card);
+        
+        deleteBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            showConfirmation(
+                "Are you sure you want to delete this notification?",
+                () => {
+                    const currentNotifs = loadNotifications();
+                    const filtered = currentNotifs.filter(n => n.id !== notif.id);
+                    saveNotifications(filtered);
+                    renderNotifications();
+                },
+                { title: "Delete Notification", confirmText: "Delete", cancelText: "Cancel" }
+            );
+        });
+
+        itemWrap.appendChild(card);
+        itemWrap.appendChild(deleteBtn);
+        notifList.appendChild(itemWrap);
     });
 };
 

@@ -227,6 +227,120 @@ button {
     font-weight: 900;
 }
 
+/* Section and List Spacing */
+#yourTasksList,
+#otherTasksList,
+#tasksList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+    margin-bottom: 24px;
+}
+
+/* System-Appropriate Empty State Styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: transparent;
+    text-align: center;
+    width: 100%;
+    margin: 20px auto;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.empty-state-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+.empty-state h3 {
+    margin: 0 0 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.empty-state p {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #888;
+    max-width: 260px;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section and List Spacing */
+#yourTasksList,
+#otherTasksList,
+#tasksList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+    margin-bottom: 24px;
+}
+
+/* System-Appropriate Empty State Styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: transparent;
+    text-align: center;
+    width: 100%;
+    margin: 20px auto;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.empty-state-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+.empty-state h3 {
+    margin: 0 0 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.empty-state p {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #888;
+    max-width: 260px;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .task-section {
     margin-bottom: 24px;
     display: flex;
@@ -655,7 +769,10 @@ button {
     }
 
     .task-card {
-        width: 100%;
+        width: calc(100% - 28px);
+        border-radius: 10px;
+        margin: 0 14px;
+        padding: 16px 14px;
     }
 
     .section-title-wrap {

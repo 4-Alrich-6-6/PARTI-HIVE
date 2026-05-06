@@ -124,3 +124,25 @@ if (backLink) {
         window.location.href = "log-sign.html";
     });
 }
+
+const blockedZoomKeys = ["+", "-", "=", "_", "0"];
+
+window.addEventListener(
+    "wheel",
+    (event) => {
+        if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+        }
+    },
+    { passive: false }
+);
+
+window.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && blockedZoomKeys.includes(event.key)) {
+        event.preventDefault();
+    }
+});
+
+window.addEventListener("gesturestart", (event) => event.preventDefault());
+window.addEventListener("gesturechange", (event) => event.preventDefault());
+window.addEventListener("gestureend", (event) => event.preventDefault());

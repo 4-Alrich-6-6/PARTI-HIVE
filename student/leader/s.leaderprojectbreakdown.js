@@ -319,11 +319,12 @@ const renderTask = (task, taskIndex, isOwnTask, targetSection) => {
 };
 
 const renderAllTasks = () => {
-    document.querySelectorAll(".task-card").forEach((card) => card.remove());
     const tasks = loadTasks();
-    const taskSections = document.querySelectorAll(".task-section");
-    const ownTasksSection = taskSections[0] || null;
-    const otherTasksSection = taskSections[1] || null;
+    const yourTasksList = document.querySelector("#yourTasksList");
+    const otherTasksList = document.querySelector("#otherTasksList");
+    
+    if (yourTasksList) yourTasksList.innerHTML = "";
+    if (otherTasksList) otherTasksList.innerHTML = "";
 
     let ownCount = 0;
     let otherCount = 0;
@@ -331,7 +332,7 @@ const renderAllTasks = () => {
 
     tasks.forEach((task, index) => {
         const isOwnTask = task.assignees && task.assignees.some(a => a.toLowerCase().includes("leader") || a.toLowerCase().includes("you"));
-        const targetSection = isOwnTask ? ownTasksSection : otherTasksSection;
+        const targetSection = isOwnTask ? yourTasksList : otherTasksList;
         renderTask(task, index, isOwnTask, targetSection);
 
         if (isOwnTask) {
@@ -344,6 +345,25 @@ const renderAllTasks = () => {
             pendingVerifyCount += 1;
         }
     });
+
+    if (yourTasksList && ownCount === 0) {
+        yourTasksList.innerHTML = `
+            <div class="empty-state">
+                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                <h3>No Tasks Assigned</h3>
+                <p>You have no personal tasks assigned to this project yet.</p>
+            </div>
+        `;
+    }
+    if (otherTasksList && otherCount === 0) {
+        otherTasksList.innerHTML = `
+            <div class="empty-state">
+                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
+                <h3>No Other Tasks</h3>
+                <p>There are no other tasks currently listed for this project.</p>
+            </div>
+        `;
+    }
 
     const summaryCards = document.querySelectorAll(".summary-card h3");
     if (summaryCards[0]) summaryCards[0].textContent = ownCount;
@@ -372,49 +392,33 @@ const closeEditTaskInfo = () => {
 
 const updateEditTaskSubmitState = () => {
     if (!saveEditTaskInfoBtn) return;
-
     const hasTaskName = editTaskNameInput && editTaskNameInput.value.trim().length > 0;
     const hasDueDate = editDueDateInput && editDueDateInput.value.length > 0;
     const hasDueTime = editDueTimeInput && editDueTimeInput.value.length > 0;
     const hasAssignee = editAssigneeInputs.some((input) => input.checked);
-
     saveEditTaskInfoBtn.disabled = !(hasTaskName && hasDueDate && hasDueTime && hasAssignee);
 };
 
 const openEditTaskInfo = () => {
     if (!editTaskInfoOverlay || activeTaskIndex === null) return;
-
     const tasks = loadTasks();
     const task = tasks[activeTaskIndex];
     if (!task) return;
-
-    if (editTaskNameInput) {
-        editTaskNameInput.value = task.name || "";
-    }
-    if (editTaskDescriptionInput) {
-        editTaskDescriptionInput.value = task.description || "";
-    }
+    if (editTaskNameInput) editTaskNameInput.value = task.name || "";
+    if (editTaskDescriptionInput) editTaskDescriptionInput.value = task.description || "";
     if (editDueDateInput) {
         editDueDateInput.min = new Date().toISOString().split("T")[0];
         editDueDateInput.value = task.dueDate || "";
     }
-    if (editDueTimeInput) {
-        editDueTimeInput.value = task.dueTime || "";
-    }
-    if (document.getElementById("editIntensityInput")) {
-        document.getElementById("editIntensityInput").value = task.intensity || "Light";
-    }
-    if (document.getElementById("editPriorityInput")) {
-        document.getElementById("editPriorityInput").value = task.priority || "Low";
-    }
-
+    if (editDueTimeInput) editDueTimeInput.value = task.dueTime || "";
+    if (document.getElementById("editIntensityInput")) document.getElementById("editIntensityInput").value = task.intensity || "Light";
+    if (document.getElementById("editPriorityInput")) document.getElementById("editPriorityInput").value = task.priority || "Low";
     const selectedAssignees = (task.assignees || []).map((assignee) => assignee.toLowerCase());
     editAssigneeInputs.forEach((input) => {
         const label = input.closest("label");
         const text = label ? label.querySelector("span").textContent.trim().toLowerCase() : "";
         input.checked = selectedAssignees.includes(text);
     });
-
     updateEditTaskSubmitState();
     editTaskInfoOverlay.classList.add("open");
     editTaskInfoOverlay.setAttribute("aria-hidden", "false");
@@ -446,35 +450,26 @@ const closeTaskDetails = () => {
 
 const openTaskDetails = (taskIndex) => {
     if (!taskDetailsOverlay) return;
-
     const tasks = loadTasks();
     const task = tasks[taskIndex];
     if (!task) return;
-
     if (detailTaskName) detailTaskName.textContent = task.name || "";
     if (detailTaskDescription) detailTaskDescription.textContent = task.description || "None";
     if (detailTaskAssignees) detailTaskAssignees.textContent = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
     if (detailTaskDueDate) detailTaskDueDate.textContent = task.dueDate || "N/A";
     if (detailTaskDueTime) detailTaskDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";
-    if (document.getElementById("detailTaskIntensity")) {
-        document.getElementById("detailTaskIntensity").textContent = task.intensity || "Light";
-    }
-    if (document.getElementById("detailTaskPriority")) {
-        document.getElementById("detailTaskPriority").textContent = task.priority || "Low";
-    }
-
+    if (document.getElementById("detailTaskIntensity")) document.getElementById("detailTaskIntensity").textContent = task.intensity || "Light";
+    if (document.getElementById("detailTaskPriority")) document.getElementById("detailTaskPriority").textContent = task.priority || "Low";
     if (detailTaskStatus) {
         const status = task.status || "inactive";
         detailTaskStatus.textContent = STATUS_TEXT[status] || status;
         detailTaskStatus.className = `task-status ${status}`;
         detailTaskStatus.disabled = true;
     }
-
     if (detailTaskTimeActive) {
         const elapsedTime = updateTaskTimer(task, taskIndex);
         detailTaskTimeActive.textContent = formatElapsedTime(elapsedTime);
     }
-
     taskDetailsOverlay.classList.add("open");
     taskDetailsOverlay.setAttribute("aria-hidden", "false");
 };
@@ -485,325 +480,156 @@ const openRemoveTaskConfirm = () => {
     removeTaskConfirmOverlay.setAttribute("aria-hidden", "false");
 };
 
-if (topBackBtn) {
-    topBackBtn.addEventListener("click", () => {
-        window.location.href = "../s.dashb.html";
-    });
-}
-
-if (groupInfoTab) {
-    groupInfoTab.addEventListener("click", () => {
-        window.location.href = "s.leadergrpviewing.html";
-    });
-}
-
-if (backToCategoriesBtn) {
-    backToCategoriesBtn.addEventListener("click", () => {
-        window.location.href = "s.leadercategory.html";
-    });
-}
-
-if (discardTaskSettingsBtn) {
-    discardTaskSettingsBtn.addEventListener("click", closeTaskSettings);
-}
-
-if (taskSettingsOverlay) {
-    taskSettingsOverlay.addEventListener("click", (event) => {
-        if (event.target === taskSettingsOverlay) closeTaskSettings();
-    });
-}
-
-if (openEditTaskInfoBtn) {
-    openEditTaskInfoBtn.addEventListener("click", () => {
-        closeTaskSettings();
-        openEditTaskInfo();
-    });
-}
-
-if (discardEditTaskInfoBtn) {
-    discardEditTaskInfoBtn.addEventListener("click", closeEditTaskInfo);
-}
-
-if (editTaskInfoOverlay) {
-    editTaskInfoOverlay.addEventListener("click", (event) => {
-        if (event.target === editTaskInfoOverlay) closeEditTaskInfo();
-    });
-}
-
-if (openManualStatusBtn) {
-    openManualStatusBtn.addEventListener("click", () => {
-        closeTaskSettings();
-        openManualStatus();
-    });
-}
-
-if (discardManualStatusBtn) {
-    discardManualStatusBtn.addEventListener("click", closeManualStatus);
-}
-
-if (manualStatusOverlay) {
-    manualStatusOverlay.addEventListener("click", (event) => {
-        if (event.target === manualStatusOverlay) closeManualStatus();
-    });
-}
-
-if (openRemoveTaskConfirmBtn) {
-    openRemoveTaskConfirmBtn.addEventListener("click", () => {
-        closeTaskSettings();
-        openRemoveTaskConfirm();
-    });
-}
-
-if (discardRemoveTaskBtn) {
-    discardRemoveTaskBtn.addEventListener("click", closeRemoveTaskConfirm);
-}
-
-if (removeTaskConfirmOverlay) {
-    removeTaskConfirmOverlay.addEventListener("click", (event) => {
-        if (event.target === removeTaskConfirmOverlay) closeRemoveTaskConfirm();
-    });
-}
-
-if (closeTaskDetailsBtn) {
-    closeTaskDetailsBtn.addEventListener("click", closeTaskDetails);
-}
-
-if (taskDetailsOverlay) {
-    taskDetailsOverlay.addEventListener("click", (event) => {
-        if (event.target === taskDetailsOverlay) closeTaskDetails();
-    });
-}
-
-if (confirmRemoveTaskBtn) {
-    confirmRemoveTaskBtn.addEventListener("click", () => {
-        if (activeTaskIndex === null) return;
-
-        const tasks = loadTasks();
-        tasks.splice(activeTaskIndex, 1);
-        saveTasks(tasks);
-        activeTaskIndex = null;
-        closeRemoveTaskConfirm();
-        renderAllTasks();
-    });
-}
-
-if (editTaskNameInput) {
-    editTaskNameInput.addEventListener("input", updateEditTaskSubmitState);
-}
-
-if (editDueDateInput) {
-    editDueDateInput.addEventListener("input", updateEditTaskSubmitState);
-}
-
-if (editDueTimeInput) {
-    editDueTimeInput.addEventListener("input", updateEditTaskSubmitState);
-}
-
-editAssigneeInputs.forEach((input) => {
-    input.addEventListener("change", updateEditTaskSubmitState);
+if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "../s.dashb.html"; });
+if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "s.leadergrpviewing.html"; });
+if (backToCategoriesBtn) backToCategoriesBtn.addEventListener("click", () => { window.location.href = "s.leadercategory.html"; });
+if (discardTaskSettingsBtn) discardTaskSettingsBtn.addEventListener("click", closeTaskSettings);
+if (taskSettingsOverlay) taskSettingsOverlay.addEventListener("click", (e) => { if (e.target === taskSettingsOverlay) closeTaskSettings(); });
+if (openEditTaskInfoBtn) openEditTaskInfoBtn.addEventListener("click", () => { closeTaskSettings(); openEditTaskInfo(); });
+if (discardEditTaskInfoBtn) discardEditTaskInfoBtn.addEventListener("click", closeEditTaskInfo);
+if (editTaskInfoOverlay) editTaskInfoOverlay.addEventListener("click", (e) => { if (e.target === editTaskInfoOverlay) closeEditTaskInfo(); });
+if (openManualStatusBtn) openManualStatusBtn.addEventListener("click", () => { closeTaskSettings(); openManualStatus(); });
+if (discardManualStatusBtn) discardManualStatusBtn.addEventListener("click", closeManualStatus);
+if (manualStatusOverlay) manualStatusOverlay.addEventListener("click", (e) => { if (e.target === manualStatusOverlay) closeManualStatus(); });
+if (openRemoveTaskConfirmBtn) openRemoveTaskConfirmBtn.addEventListener("click", () => { closeTaskSettings(); openRemoveTaskConfirm(); });
+if (discardRemoveTaskBtn) discardRemoveTaskBtn.addEventListener("click", closeRemoveTaskConfirm);
+if (removeTaskConfirmOverlay) removeTaskConfirmOverlay.addEventListener("click", (e) => { if (e.target === removeTaskConfirmOverlay) closeRemoveTaskConfirm(); });
+if (closeTaskDetailsBtn) closeTaskDetailsBtn.addEventListener("click", closeTaskDetails);
+if (taskDetailsOverlay) taskDetailsOverlay.addEventListener("click", (e) => { if (e.target === taskDetailsOverlay) closeTaskDetails(); });
+if (confirmRemoveTaskBtn) confirmRemoveTaskBtn.addEventListener("click", () => {
+    if (activeTaskIndex === null) return;
+    const tasks = loadTasks();
+    tasks.splice(activeTaskIndex, 1);
+    saveTasks(tasks);
+    activeTaskIndex = null;
+    closeRemoveTaskConfirm();
+    renderAllTasks();
 });
-
+if (editTaskNameInput) editTaskNameInput.addEventListener("input", updateEditTaskSubmitState);
+if (editDueDateInput) editDueDateInput.addEventListener("input", updateEditTaskSubmitState);
+if (editDueTimeInput) editDueTimeInput.addEventListener("input", updateEditTaskSubmitState);
+editAssigneeInputs.forEach((input) => input.addEventListener("change", updateEditTaskSubmitState));
 manualStatusButtons.forEach((button) => {
     button.addEventListener("click", () => {
         if (activeTaskIndex === null) return;
-
         const status = button.dataset.manualStatus;
         const tasks = loadTasks();
         if (!tasks[activeTaskIndex]) return;
-
         tasks[activeTaskIndex].status = status;
         saveTasks(tasks);
         closeManualStatus();
         renderAllTasks();
     });
 });
-
 const closePostTaskModal = () => {
     if (!postTaskModalOverlay) return;
     postTaskModalOverlay.classList.remove("open");
     postTaskModalOverlay.setAttribute("aria-hidden", "true");
 };
-
 const updatePostTaskSubmitState = () => {
     if (!postTaskSubmitBtn || !postTaskForm) return;
-
     const hasTaskName = taskNameInput && taskNameInput.value.trim().length > 0;
     const hasDueDate = dueDateInput && dueDateInput.value.length > 0;
     const hasDueTime = dueTimeInput && dueTimeInput.value.length > 0;
     const hasAssignee = assigneeInputs.some((input) => input.checked);
-
     postTaskSubmitBtn.disabled = !(hasTaskName && hasDueDate && hasDueTime && hasAssignee);
 };
-
 if (openPostTaskModalBtn && postTaskModalOverlay) {
     openPostTaskModalBtn.addEventListener("click", () => {
-        if (dueDateInput) {
-            dueDateInput.min = new Date().toISOString().split("T")[0];
-        }
+        if (dueDateInput) dueDateInput.min = new Date().toISOString().split("T")[0];
         postTaskModalOverlay.classList.add("open");
         postTaskModalOverlay.setAttribute("aria-hidden", "false");
         updatePostTaskSubmitState();
     });
 }
-
-if (discardPostTaskBtn) {
-    discardPostTaskBtn.addEventListener("click", () => {
-        if (postTaskForm) postTaskForm.reset();
-        updatePostTaskSubmitState();
-        closePostTaskModal();
-    });
-}
-
-if (taskNameInput) {
-    taskNameInput.addEventListener("input", updatePostTaskSubmitState);
-}
-
-if (dueDateInput) {
-    dueDateInput.addEventListener("input", updatePostTaskSubmitState);
-}
-
-if (dueTimeInput) {
-    dueTimeInput.addEventListener("input", updatePostTaskSubmitState);
-}
-
-assigneeInputs.forEach((input) => {
-    input.addEventListener("change", updatePostTaskSubmitState);
+if (discardPostTaskBtn) discardPostTaskBtn.addEventListener("click", () => {
+    if (postTaskForm) postTaskForm.reset();
+    updatePostTaskSubmitState();
+    closePostTaskModal();
 });
-
-if (postTaskModalOverlay) {
-    postTaskModalOverlay.addEventListener("click", (event) => {
-        if (event.target === postTaskModalOverlay) closePostTaskModal();
-    });
-}
-
-if (postTaskForm) {
-    postTaskForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const checkedAssignees = Array.from(postTaskForm.querySelectorAll("input[name='assignees']:checked"));
-
-        if (!taskNameInput || !taskNameInput.value.trim()) return;
-        if (checkedAssignees.length === 0) {
-            alert("Please select at least one assignee.");
-            return;
-        }
-        if (!dueDateInput || !dueDateInput.value) return;
-        if (!dueTimeInput || !dueTimeInput.value) return;
-
-        const taskName = taskNameInput.value.trim();
-
-        showConfirmation(
-            `Are you sure you want to post the task "${taskName}"?`,
-            () => {
-                const assigneeLabels = checkedAssignees.map((cb) => {
-                    const label = cb.closest("label");
-                    return label ? label.querySelector("span").textContent.trim() : cb.value;
-                });
-
-                const task = {
-                    name: taskName,
-                    description: taskDescriptionInput ? taskDescriptionInput.value.trim() : "",
-                    assignees: assigneeLabels,
-                    dueDate: dueDateInput.value,
-                    dueTime: dueTimeInput.value,
-                    intensity: document.getElementById("intensityInput").value,
-                    priority: document.getElementById("priorityInput").value
-                };
-
-                const tasks = loadTasks();
-                tasks.push(task);
-                saveTasks(tasks);
-
-                renderAllTasks();
-                closePostTaskModal();
-                postTaskForm.reset();
-                updatePostTaskSubmitState();
-            },
-            { title: "Post Task", confirmText: "Post", cancelText: "Cancel" }
-        );
-    });
-}
-
-if (editTaskInfoForm) {
-    editTaskInfoForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        if (activeTaskIndex === null) return;
-
-        const checkedAssignees = editAssigneeInputs.filter((input) => input.checked);
-        if (!editTaskNameInput || !editTaskNameInput.value.trim()) return;
-        if (checkedAssignees.length === 0) return;
-        if (!editDueDateInput || !editDueDateInput.value) return;
-        if (!editDueTimeInput || !editDueTimeInput.value) return;
-
-        const taskName = editTaskNameInput.value.trim();
-
-        showConfirmation(
-            `Are you sure you want to save the changes to task "${taskName}"?`,
-            () => {
-                const assigneeLabels = checkedAssignees.map((cb) => {
-                    const label = cb.closest("label");
-                    return label ? label.querySelector("span").textContent.trim() : cb.value;
-                });
-
-                const tasks = loadTasks();
-                if (!tasks[activeTaskIndex]) return;
-
-                tasks[activeTaskIndex] = {
-                    ...tasks[activeTaskIndex],
-                    name: taskName,
-                    description: editTaskDescriptionInput ? editTaskDescriptionInput.value.trim() : "",
-                    assignees: assigneeLabels,
-                    dueDate: editDueDateInput.value,
-                    dueTime: editDueTimeInput.value,
-                    intensity: document.getElementById("editIntensityInput").value,
-                    priority: document.getElementById("editPriorityInput").value
-                };
-
-                saveTasks(tasks);
-                closeEditTaskInfo();
-                renderAllTasks();
-            },
-            { title: "Save Changes", confirmText: "Save", cancelText: "Cancel" }
-        );
-    });
-}
-
+if (taskNameInput) taskNameInput.addEventListener("input", updatePostTaskSubmitState);
+if (dueDateInput) dueDateInput.addEventListener("input", updatePostTaskSubmitState);
+if (dueTimeInput) dueTimeInput.addEventListener("input", updatePostTaskSubmitState);
+assigneeInputs.forEach((input) => input.addEventListener("change", updatePostTaskSubmitState));
+if (postTaskModalOverlay) postTaskModalOverlay.addEventListener("click", (e) => { if (e.target === postTaskModalOverlay) closePostTaskModal(); });
+if (postTaskForm) postTaskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const checkedAssignees = Array.from(postTaskForm.querySelectorAll("input[name='assignees']:checked"));
+    if (!taskNameInput || !taskNameInput.value.trim()) return;
+    if (checkedAssignees.length === 0) { alert("Please select at least one assignee."); return; }
+    if (!dueDateInput || !dueDateInput.value) return;
+    if (!dueTimeInput || !dueTimeInput.value) return;
+    const taskName = taskNameInput.value.trim();
+    showConfirmation(`Are you sure you want to post the task "${taskName}"?`, () => {
+        const assigneeLabels = checkedAssignees.map((cb) => {
+            const label = cb.closest("label");
+            return label ? label.querySelector("span").textContent.trim() : cb.value;
+        });
+        const task = {
+            name: taskName,
+            description: taskDescriptionInput ? taskDescriptionInput.value.trim() : "",
+            assignees: assigneeLabels,
+            dueDate: dueDateInput.value,
+            dueTime: dueTimeInput.value,
+            intensity: document.getElementById("intensityInput").value,
+            priority: document.getElementById("priorityInput").value
+        };
+        const tasks = loadTasks();
+        tasks.push(task);
+        saveTasks(tasks);
+        renderAllTasks();
+        closePostTaskModal();
+        postTaskForm.reset();
+        updatePostTaskSubmitState();
+    }, { title: "Post Task", confirmText: "Post", cancelText: "Cancel" });
+});
+if (editTaskInfoForm) editTaskInfoForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (activeTaskIndex === null) return;
+    const checkedAssignees = editAssigneeInputs.filter((input) => input.checked);
+    if (!editTaskNameInput || !editTaskNameInput.value.trim()) return;
+    if (checkedAssignees.length === 0) return;
+    if (!editDueDateInput || !editDueDateInput.value) return;
+    if (!editDueTimeInput || !editDueTimeInput.value) return;
+    const taskName = editTaskNameInput.value.trim();
+    showConfirmation(`Are you sure you want to save the changes to task "${taskName}"?`, () => {
+        const assigneeLabels = checkedAssignees.map((cb) => {
+            const label = cb.closest("label");
+            return label ? label.querySelector("span").textContent.trim() : cb.value;
+        });
+        const tasks = loadTasks();
+        if (!tasks[activeTaskIndex]) return;
+        tasks[activeTaskIndex] = {
+            ...tasks[activeTaskIndex],
+            name: taskName,
+            description: editTaskDescriptionInput ? editTaskDescriptionInput.value.trim() : "",
+            assignees: assigneeLabels,
+            dueDate: editDueDateInput.value,
+            dueTime: editDueTimeInput.value,
+            intensity: document.getElementById("editIntensityInput").value,
+            priority: document.getElementById("editPriorityInput").value
+        };
+        saveTasks(tasks);
+        closeEditTaskInfo();
+        renderAllTasks();
+    }, { title: "Save Changes", confirmText: "Save", cancelText: "Cancel" });
+});
 updatePostTaskSubmitState();
 updateEditTaskSubmitState();
-
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-        closePostTaskModal();
-        closeTaskSettings();
-        closeEditTaskInfo();
-        closeManualStatus();
-        closeRemoveTaskConfirm();
-        closeTaskDetails();
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        closePostTaskModal(); closeTaskSettings(); closeEditTaskInfo();
+        closeManualStatus(); closeRemoveTaskConfirm(); closeTaskDetails();
     }
 });
-
 const logoutBtn = document.querySelector(".logout");
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-        showConfirmation(
-            "Are you sure you want to log out?",
-            () => {
-                window.location.href = "../../auth/log-sign.html";
-            },
-            { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
-        );
-    });
-}
-
+if (logoutBtn) logoutBtn.addEventListener("click", () => {
+    showConfirmation("Are you sure you want to log out?", () => { window.location.href = "../../auth/log-sign.html"; }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
+});
 const loadAndDisplayProjectName = () => {
     const projectName = localStorage.getItem("hive_selected_project_name");
     const projectNameDisplay = document.querySelector(".project-name-display h2");
-    if (projectName && projectNameDisplay) {
-        projectNameDisplay.textContent = projectName;
-    }
+    if (projectName && projectNameDisplay) projectNameDisplay.textContent = projectName;
 };
-
 loadAndDisplayProjectName();
 renderAllTasks();

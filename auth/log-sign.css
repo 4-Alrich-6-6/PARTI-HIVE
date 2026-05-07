@@ -387,6 +387,84 @@ input::placeholder {
     margin-top: 14px;
 }
 
+/* TERMS CHECKBOX */
+
+.terms-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.terms-check input {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    accent-color: black;
+}
+
+.terms-label {
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.terms-label span {
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* TERMS MODAL */
+
+.terms-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.terms-content {
+    background: #fff;
+    width: min(700px, 100%);
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 22px;
+    padding: 32px;
+    border: 3px solid #000;
+    position: relative;
+}
+
+.close-terms {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.terms-content h2 {
+    margin-bottom: 20px;
+    font-family: Montserrat, sans-serif;
+}
+
+.terms-body h3 {
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+.terms-body p,
+.terms-body li {
+    line-height: 1.8;
+    font-size: 14px;
+}
+
 @media (max-width: 1180px) {
     .container {
         grid-template-columns: 1fr;

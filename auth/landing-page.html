@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HIVE</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="landing.css">
+</head>
+
+<body>
+
+  <!-- navbar -->
+  <nav class="navbar">
+    <img class="title-logo" src="../Title.png" alt="HIVE Title Logo">
+
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#" id="openTerms">Terms & Condition</a></li>
+    </ul>
+
+    <a href="../../auth/log-sign.html" class="login-btn">LOG IN</a>
+  </nav>
+
+  <!-- hero -->
+  <section class="hero">
+
+    <div class="hero-left">
+
+      <div class="hero-card">
+        <h1>HIVE</h1>
+
+        <h2>GROUP PARTICIPATION TRACKING SYSTEM</h2>
+
+        <p>
+          HIVE is a web-based system designed to help
+          group leaders, students, and teachers monitor
+          group participation fairly and transparently.
+        </p>
+
+        <div class="hero-buttons">
+          <a href="../auth/log-sign.html" class="primary-btn">GET STARTED</a>
+          <a href="#about" class="secondary-btn">LEARN MORE</a>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="hero-right">
+      <img src="../Logo.png" alt="Bee Logo">
+    </div>
+
+  </section>
+
+  <!-- about -->
+  <section class="about-section" id="about">
+  
+    <h1>WHAT IS THE SYSTEM ABOUT</h1>
+  
+    <div class="line"></div>
+  
+    <div class="about-content">
+  
+      <div class="about-image">
+        <img src="../assets/group.png" alt="Group Monitoring">
+      </div>
+  
+      <div class="about-text">
+  
+        <p>
+          HIVE is a web-based Group Participation Tracking System
+          that promotes fairness, accountability, and transparency
+          by allowing users to record, review, and validate each
+          member’s contributions.
+        </p>
+  
+        <p>
+          With HIVE, every effort counts.
+        </p>
+  
+      </div>
+  
+    </div>
+  
+  </section>
+  
+  <!-- features -->
+  <section class="features-section" id="features">
+  
+    <h1>WHAT CAN THE SYSTEM DO</h1>
+  
+    <div class="line"></div>
+  
+    <div class="features-grid">
+  
+      <div class="feature-card">
+        <img src="../assets/participation.png" alt="">
+        <h3>Track Participation</h3>
+  
+        <p>
+          Leaders can record and monitor each member's participation.
+        </p>
+      </div>
+  
+      <div class="feature-card">
+        <img src="../assets/track.png" alt="">
+        <h3>Manage Tasks</h3>
+  
+        <p>
+          Create and assign tasks to members easily.
+        </p>
+      </div>
+  
+      <div class="feature-card">
+        <img src="../assets/reports.png" alt="">
+        <h3>View Reports</h3>
+  
+        <p>
+          Students can monitor their contribution records.
+        </p>
+      </div>
+  
+      <div class="feature-card">
+        <img src="../assets/validate.png" alt="">
+        <h3>Teacher Validation</h3>
+  
+        <p>
+          Teachers can review participation records fairly.
+        </p>
+      </div>
+  
+    </div>
+  
+  </section>
+
+  <!-- terms preview -->
+  <section class="terms-preview">
+
+    <div class="terms-left">
+      <h2>Terms & Conditions</h2>
+
+      <p>
+        Please read our Terms & Conditions and Privacy Policy
+        to understand your rights and responsibilities when using HIVE.
+      </p>
+    </div>
+
+    <button id="viewTermsBtn">
+      VIEW TERMS & CONDITIONS
+    </button>
+
+  </section>
+
+  <!-- footer -->
+  <footer class="footer">
+
+    <div class="footer-content">
+
+      <div>
+        <h2>HIVE</h2>
+        <p>Group Participation Tracking System</p>
+      </div>
+
+      <div>
+        <h3>Contact Us</h3>
+        <p>Email: hive.system@gmail.com</p>
+        <p>For academic project use only.</p>
+      </div>
+
+    </div>
+
+    <p class="copyright">
+      © 2026 HIVE. All rights reserved.
+    </p>
+
+  </footer>
+
+  <!-- terms modal -->
+  <div class="modal" id="termsModal">
+
+    <div class="modal-content">
+
+      <span class="close-btn" id="closeTerms">&times;</span>
+
+      <h2>TERMS & CONDITIONS</h2>
+
+      <div class="modal-body">
+
+        <h3>1. Acceptance of Terms</h3>
+          <p>
+            By using HIVE, users agree to comply with
+            the system rules and academic policies.
+          </p>
+        
+          <h3>2. User Accounts</h3>
+          <p>
+            Users must provide accurate account information
+            including email, profile picture, and credentials.
+          </p>
+        
+          <h3>3. Academic Purpose Only</h3>
+          <p>
+            HIVE is intended solely for group participation
+            tracking, task monitoring, and academic collaboration.
+          </p>
+        
+          <h3>4. Participation Records</h3>
+          <p>
+            Users must not falsify contribution records,
+            participation logs, or task activities.
+          </p>
+        
+          <h3>5. Teacher Validation</h3>
+          <p>
+            Teachers may validate participation and
+            review contribution reports to ensure fairness.
+          </p>
+        
+          <h3>6. Data Privacy</h3>
+          <>
+            HIVE follows the principles of the
+            Philippine <a href="https://www.privacy.gov.ph/data-privacy-act/" target="_blank">
+            Data Privacy Act of 2012
+          </a>
+          <p>
+            The system may collect:
+          </p>
+        
+          <ul>
+            <li>Email Address</li>
+            <li>Profile Picture</li>
+            <li>Participation Logs</li>
+            <li>Task Records</li>
+          </ul>
+        
+          <h3>7. User Responsibility</h3>
+          <p>
+            Users are responsible for maintaining
+            account security and ethical use of the system.
+          </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+
+    const modal = document.getElementById("termsModal");
+    const openBtn = document.getElementById("openTerms");
+    const viewBtn = document.getElementById("viewTermsBtn");
+    const closeBtn = document.getElementById("closeTerms");
+
+    openBtn.onclick = () => {
+      modal.style.display = "flex";
+    };
+
+    viewBtn.onclick = () => {
+      modal.style.display = "flex";
+    };
+
+    closeBtn.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    window.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+
+  </script>
+
+</body>
+</html>

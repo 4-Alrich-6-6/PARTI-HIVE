@@ -98,3 +98,26 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("gesturestart", (event) => event.preventDefault());
 window.addEventListener("gesturechange", (event) => event.preventDefault());
 window.addEventListener("gestureend", (event) => event.preventDefault());
+
+//terms modal
+const termsModal = document.getElementById("termsModal");
+const openTerms = document.getElementById("openTermsModal");
+const closeTerms = document.getElementById("closeTerms");
+
+if (openTerms && closeTerms && termsModal) {
+
+  openTerms.onclick = () => {
+    termsModal.style.display = "flex";
+  };
+
+  closeTerms.onclick = () => {
+    termsModal.style.display = "none";
+  };
+
+  window.onclick = (e) => {
+    if (e.target === termsModal) {
+      termsModal.style.display = "none";
+    }
+  };
+
+}

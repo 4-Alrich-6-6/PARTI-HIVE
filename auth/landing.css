@@ -373,32 +373,32 @@ body {
     width: 100%;
     padding: 18px 16px;
     display: flex;
-    flex-direction: column;
+    flex-direction: grid;
     gap: 18px;
     overflow: hidden;
   }
 
   .title-logo {
-    width: 170px;
-    max-width: 85%;
+    width: 120px;
+    max-width: 70px;
   }
 
   .nav-links {
-    width: 100%;
+    width: 50%;
     display: flex;
     justify-content: center;
-    gap: 14px;
+    gap: 15px;
     flex-wrap: wrap;
   }
 
   .nav-links a {
-    font-size: 11px;
+    font-size: 8px;
     white-space: nowrap;
   }
 
   .login-btn {
-    padding: 11px 24px;
-    font-size: 12px;
+    padding: 5px 18px;
+    font-size: 8px;
   }
 
 
@@ -417,16 +417,19 @@ body {
 
   .hero-card h1 {
     font-size: 52px;
+    text-align: center;
   }
 
   .hero-card h2 {
     font-size: 21px;
     line-height: 1.25;
+    text-align: center;
   }
 
   .hero-card p {
     font-size: 13px;
     line-height: 1.7;
+    text-align: justify;
   }
 
   .hero-buttons {
@@ -464,6 +467,7 @@ body {
 
   .about-text {
     padding: 24px 18px;
+    text-align: justify;
   }
 
   .about-text p {
@@ -475,7 +479,50 @@ body {
   }
 
   .terms-preview {
+    flex-direction: column;
     margin: 45px 16px;
     padding: 24px 18px;
+    text-align: justify;
   }
+
+  .footer {
+    background: #ffc800;
+    border-top: 3px solid #111;
+    padding: 10px 8%;
+  }
+
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: grid;
+    gap: 40px;
+    margin-bottom: -20px;
+  }
+
+  .footer-content .footer-brand h2 {
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .footer-content .footer-brand p {
+    font-size: 9px;
+    text-align: center;
+  }
+
+  .footer-content .footer-contact h3 {
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .footer-content .footer-contact p {
+    font-size: 8px;
+    text-align: center;
+  }
+
+  .copyright {
+    font-size: 8px;
+    text-align: center;
+  }
+
 }

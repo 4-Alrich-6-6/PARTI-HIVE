@@ -62,6 +62,7 @@ const STATUS_TEXT = {
 
 const isTerminal = (status) => status === "finished" || status === "missing";
 
+
 const isPastDue = (task) => {
     if (!task.dueDate || !task.dueTime) return false;
     const due = new Date(`${task.dueDate}T${task.dueTime}`);

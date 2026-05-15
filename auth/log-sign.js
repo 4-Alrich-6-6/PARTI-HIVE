@@ -199,6 +199,7 @@ if (signUpForm) {
 
         localStorage.setItem("hive_email", emailInput.value.trim());
         localStorage.setItem("hive_auth_mode", "signup");
+        localStorage.setItem("hive_password", passwordInput.value.trim());
 
         let error = null;
 

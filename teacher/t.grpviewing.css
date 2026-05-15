@@ -1,4 +1,5 @@
 @import url('../student/leader/s.leadergrpviewing.css');
+@import url('../student/student-theme.css');
 
 .summary-row {
     grid-template-columns: repeat(2, minmax(0, 220px));
@@ -44,5 +45,199 @@
     }
     .help-panel p {
         font-size: 12px;
+    }
+}
+
+/* Comfortable UI size pass */
+.main-content-title,
+.add-members-modal-header h2,
+.remove-members-modal-header h2,
+.select-leader-modal-header h2,
+.confirm-leave-modal-header h2,
+.confirmation-modal-header h2 {
+    font-size: 32px;
+}
+
+.header-actions .icon-btn,
+.header-actions .action-btn,
+.modal-btn {
+    min-height: 40px;
+}
+
+.header-actions .action-btn,
+.modal-btn {
+    padding-left: 18px;
+    padding-right: 18px;
+    font-size: 14px;
+}
+
+.summary-label,
+.group-label p,
+.member-details p,
+.confirm-leave-message,
+.confirmation-message {
+    font-size: 14px;
+}
+
+.summary-card h3 {
+    font-size: 32px;
+}
+
+.group-label h2,
+.help-panel h2 {
+    font-size: 24px;
+}
+
+.teacher-card h3,
+.member-details h3 {
+    font-size: 18px;
+}
+
+.group-label-wrap,
+.group-info-stack,
+.help-panel {
+    width: min(100%, 820px);
+}
+
+.info-card {
+    padding: 18px 22px;
+}
+
+.help-panel p {
+    font-size: 15px;
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.add-members-modal-header h2,
+.remove-members-modal-header h2,
+.select-leader-modal-header h2,
+.confirm-leave-modal-header h2,
+.confirmation-modal-header h2,
+.group-label h2,
+.help-panel h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.teacher-card h3,
+.member-details h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.action-btn,
+.summary-label,
+.group-label p,
+.member-details p,
+.member-details .stats,
+.help-panel p,
+.form-group input,
+.remove-member-item,
+.select-leader-subtitle,
+.select-leader-item,
+.confirm-leave-message,
+.confirmation-message,
+.modal-btn,
+.tab {
+    font-size: 15px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .add-members-modal-header h2,
+    .remove-members-modal-header h2,
+    .select-leader-modal-header h2,
+    .confirm-leave-modal-header h2,
+    .confirmation-modal-header h2,
+    .group-label h2,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    grid-template-columns: 240px 1fr 252px;
+}
+
+.sidebar {
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.right-rail {
+    width: 220px;
+    margin-right: 32px;
+    background: var(--student-white, #ffffff);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
     }
 }

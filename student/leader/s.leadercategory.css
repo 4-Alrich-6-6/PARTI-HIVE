@@ -650,3 +650,401 @@ button {
         justify-content: flex-start;
     }
 }
+
+/* Comfortable UI size pass */
+.topbar {
+    height: 64px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 128px;
+    padding-right: 104px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 128px;
+}
+
+.right-rail {
+    top: 64px;
+    width: 104px;
+}
+
+.avatar-circle {
+    width: 76px;
+    height: 76px;
+}
+
+.profile-block h3,
+.sidebar-actions .btn {
+    font-size: 13px;
+}
+
+.profile-link {
+    font-size: 11px;
+}
+
+.datetime,
+.category-due-date,
+.form-group label,
+.form-group input[type="text"],
+.form-group input[type="date"],
+.modal-btn,
+.option-delete-btn {
+    font-size: 14px;
+}
+
+.main-content-title,
+.post-category-modal-header h2,
+.confirmation-modal-header h2 {
+    font-size: 32px;
+}
+
+.action-btn,
+.modal-btn,
+.option-delete-btn {
+    min-height: 40px;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.section-title-wrap,
+.category-list {
+    width: min(100%, 820px);
+}
+
+.section-title-wrap h2,
+.category-name {
+    font-size: 24px;
+}
+
+.section-title-wrap p,
+.category-count,
+.confirmation-message,
+.empty-state p {
+    font-size: 15px;
+}
+
+.category-main-btn {
+    padding: 18px 22px;
+}
+
+.more-btn {
+    width: 44px;
+    height: 44px;
+}
+
+.more-btn img {
+    width: 18px;
+    height: 18px;
+}
+
+.tab {
+    font-size: 15px;
+    padding: 16px 8px;
+}
+
+.empty-state h3 {
+    font-size: 16px;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .section-title-wrap h2,
+    .category-name {
+        font-size: 22px;
+    }
+
+    .action-btn {
+        min-height: 38px;
+        font-size: 14px;
+    }
+}
+
+/* Unified side tab width */
+.layout {
+    padding-right: 252px;
+}
+
+.right-rail {
+    right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        padding-right: 0;
+    }
+}
+
+/* Unified sidebar width */
+.layout {
+    padding-left: 240px;
+}
+
+.sidebar {
+    width: 240px;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        padding-left: 0;
+    }
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.post-category-modal-header h2,
+.confirmation-modal-header h2,
+.section-title-wrap h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.category-name,
+.empty-state h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.action-btn,
+.category-due-date,
+.category-count,
+.section-title-wrap p,
+.empty-state p,
+.form-group label,
+.form-group input,
+.modal-btn,
+.option-delete-btn,
+.confirmation-message,
+.tab {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .post-category-modal-header h2,
+    .confirmation-modal-header h2,
+    .section-title-wrap h2 {
+        font-size: 22px;
+    }
+}
+
+/* Final side-tab alignment */
+.layout {
+    padding-right: 252px;
+}
+
+.right-rail {
+    right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        padding-right: 0;
+    }
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 240px;
+    padding-right: 252px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.right-rail {
+    top: 64px;
+    right: 32px;
+    width: 220px;
+    background: var(--student-white, #ffffff);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+}
+
+/* Final category project-card refresh */
+.section-title-wrap {
+    display: block !important;
+    text-align: left !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.section-title-wrap h2 {
+    display: block !important;
+    margin: 0 !important;
+}
+
+.section-title-wrap p {
+    display: block !important;
+    margin: 4px 0 0 !important;
+    text-align: left !important;
+}
+
+.category-list {
+    width: min(100%, 820px) !important;
+    gap: 16px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.category-item {
+    width: 100% !important;
+    gap: 10px !important;
+}
+
+.category-main-btn {
+    width: 100% !important;
+    min-height: 64px !important;
+    padding: 18px 22px !important;
+    background: var(--student-paper, #f8fff8) !important;
+    border: 3px solid var(--student-border, #111111) !important;
+    border-radius: 10px !important;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.75) !important;
+}
+
+.category-name {
+    max-width: 260px !important;
+    font-size: 18px !important;
+    line-height: 1.25 !important;
+    text-align: left !important;
+}
+
+.category-due-date {
+    margin-left: auto !important;
+    margin-right: 8px !important;
+    font-size: 15px !important;
+    white-space: nowrap !important;
+}
+
+.category-count {
+    min-height: 34px !important;
+    padding: 0 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--student-white, #ffffff) !important;
+    border: 1px solid #d8d8d8 !important;
+    border-radius: 999px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14) !important;
+    font-size: 15px !important;
+    white-space: nowrap !important;
+}
+
+@media (max-width: 900px) {
+    .category-list {
+        width: 100% !important;
+    }
+
+    .category-main-btn {
+        width: calc(100% - 28px) !important;
+        margin: 0 14px !important;
+    }
+}

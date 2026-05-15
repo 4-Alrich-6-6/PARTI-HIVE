@@ -1,4 +1,5 @@
 @import url('../student/s.dashb.css');
+@import url('../student/student-theme.css');
 
 .stats-row {
     grid-template-columns: minmax(0, 220px);
@@ -67,5 +68,179 @@
     }
     .card-right strong {
         font-size: 10px;
+    }
+}
+
+/* Comfortable UI size pass */
+.main-content-title {
+    font-size: 32px;
+}
+
+.section-actions button {
+    min-height: 40px;
+    padding-left: 18px;
+    padding-right: 18px;
+    font-size: 14px;
+}
+
+.stat-label,
+.group-info p,
+.card-right strong {
+    font-size: 14px;
+}
+
+.stat-card h3 {
+    font-size: 32px;
+}
+
+.group-section h2,
+.help-panel h2 {
+    font-size: 24px;
+}
+
+.group-info h3 {
+    font-size: 18px;
+}
+
+.group-card,
+.help-panel {
+    width: min(100%, 820px);
+}
+
+#groupsList {
+    width: min(100%, 820px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#groupsList .empty-state {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.group-card {
+    padding: 16px 20px;
+}
+
+.help-panel p {
+    font-size: 15px;
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.group-modal-header h2,
+.confirmation-modal-header h2,
+.section-title-wrap h2,
+.group-section h2,
+.help-panel h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.group-info h3,
+.empty-state h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.section-actions button,
+.stat-label,
+.group-info p,
+.card-right strong,
+.help-panel p,
+.empty-state p,
+.group-form-field label,
+.group-form-field input,
+.confirmation-message,
+.group-modal-btn,
+.modal-btn {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .group-modal-header h2,
+    .confirmation-modal-header h2,
+    .section-title-wrap h2,
+    .group-section h2,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 240px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+    }
+
+    .sidebar {
+        width: 100%;
     }
 }

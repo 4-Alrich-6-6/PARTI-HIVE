@@ -24,6 +24,7 @@ body {
 }
 
 .sidebar {
+    width: 240px;
     background: var(--student-yellow);
     border-right: 2px solid var(--student-yellow);
 }
@@ -84,11 +85,16 @@ body {
 .tab {
     background: var(--student-black);
     color: var(--student-white);
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
 }
 
 .tab-group-info,
 .tab-project-breakdown {
     background: var(--student-black);
+    border-radius: 10px;
 }
 
 .summary-card,
@@ -131,6 +137,14 @@ body {
 .save-button button {
     background: var(--student-yellow);
     color: var(--student-black);
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
 }
 
 .empty-notif-btn,

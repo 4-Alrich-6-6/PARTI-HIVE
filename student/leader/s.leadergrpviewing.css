@@ -858,3 +858,358 @@ button {
         grid-template-columns: 1fr;
     }
 }
+
+/* Comfortable UI size pass */
+.topbar {
+    height: 64px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+}
+
+.avatar-circle {
+    width: 76px;
+    height: 76px;
+}
+
+.profile-block h3,
+.sidebar-actions .btn {
+    font-size: 13px;
+}
+
+.profile-link {
+    font-size: 11px;
+}
+
+.datetime,
+.summary-label,
+.group-label p,
+.member-details p,
+.tab,
+.form-group input[type="text"],
+.remove-member-item,
+.remove-members-empty,
+.select-leader-subtitle,
+.select-leader-item,
+.select-leader-empty,
+.confirm-leave-message,
+.confirmation-message,
+.modal-btn {
+    font-size: 14px;
+}
+
+.main-content-title,
+.add-members-modal-header h2,
+.remove-members-modal-header h2,
+.select-leader-modal-header h2,
+.confirm-leave-modal-header h2,
+.confirmation-modal-header h2 {
+    font-size: 32px;
+}
+
+.icon-btn,
+.action-btn,
+.modal-btn {
+    min-height: 40px;
+}
+
+.action-btn,
+.modal-btn {
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.summary-card h3 {
+    font-size: 32px;
+}
+
+.group-label h2,
+.help-panel h2 {
+    font-size: 24px;
+}
+
+.teacher-card h3,
+.member-details h3 {
+    font-size: 18px;
+}
+
+.group-label-wrap,
+.group-info-stack,
+.help-panel {
+    width: min(100%, 820px);
+}
+
+.info-card {
+    padding: 18px 22px;
+}
+
+.help-panel p {
+    font-size: 15px;
+}
+
+.circle-avatar.small {
+    width: 44px;
+    height: 44px;
+}
+
+.circle-avatar.medium {
+    width: 64px;
+    height: 64px;
+}
+
+.circle-avatar.large {
+    width: 96px;
+    height: 96px;
+}
+
+.tab {
+    padding: 16px 8px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .header-actions .icon-btn,
+    .header-actions .action-btn {
+        min-height: 38px;
+        font-size: 14px;
+    }
+
+    .summary-label {
+        font-size: 12px;
+    }
+
+    .summary-card h3 {
+        font-size: 24px;
+    }
+
+    .group-label h2,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+
+    .teacher-card h3,
+    .member-details h3 {
+        font-size: 16px;
+    }
+
+    .group-label p,
+    .member-details p,
+    .help-panel p {
+        font-size: 14px;
+    }
+}
+
+/* Unified side tab width */
+.layout {
+    grid-template-columns: 240px 1fr 252px;
+}
+
+.right-rail {
+    margin-right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Unified sidebar width */
+.layout {
+    grid-template-columns: 240px 1fr 92px;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.add-members-modal-header h2,
+.remove-members-modal-header h2,
+.select-leader-modal-header h2,
+.confirm-leave-modal-header h2,
+.confirmation-modal-header h2,
+.group-label h2,
+.help-panel h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.teacher-card h3,
+.member-details h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.action-btn,
+.summary-label,
+.group-label p,
+.member-details p,
+.member-details .stats,
+.help-panel p,
+.form-group input,
+.remove-member-item,
+.select-leader-subtitle,
+.select-leader-item,
+.confirm-leave-message,
+.confirmation-message,
+.modal-btn,
+.tab {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .add-members-modal-header h2,
+    .remove-members-modal-header h2,
+    .select-leader-modal-header h2,
+    .confirm-leave-modal-header h2,
+    .confirmation-modal-header h2,
+    .group-label h2,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+}
+
+/* Final side-tab alignment */
+.layout {
+    grid-template-columns: 240px 1fr 252px;
+}
+
+.right-rail {
+    margin-right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    grid-template-columns: 240px 1fr 252px;
+}
+
+.sidebar {
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.right-rail {
+    width: 220px;
+    margin-right: 32px;
+    background: var(--student-white, #ffffff);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}

@@ -255,3 +255,143 @@
         margin: 0 14px;
     }
 }
+
+/* Comfortable UI size pass */
+.action-btn {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.notif-section {
+    width: min(100%, 820px);
+}
+
+.notif-list {
+    gap: 14px;
+}
+
+.notif-card {
+    padding: 18px 22px;
+}
+
+.notif-delete-btn {
+    width: 44px;
+    height: 44px;
+}
+
+.notif-delete-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.notif-title {
+    font-size: 18px;
+}
+
+.notif-date,
+.notif-group,
+.modal-btn {
+    font-size: 14px;
+}
+
+.notif-body,
+.notif-modal-body p {
+    font-size: 15px;
+}
+
+.notif-modal-header h2 {
+    font-size: 28px;
+}
+
+.notif-modal-body,
+.notif-modal-actions {
+    padding-left: 22px;
+    padding-right: 22px;
+}
+
+.modal-btn {
+    min-height: 40px;
+    padding: 0 20px;
+}
+
+/* Typography normalization */
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.notif-modal-header h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.notif-title {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.notif-date,
+.notif-group,
+.notif-body,
+.notif-empty,
+.notif-modal-body p,
+.modal-btn {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .notif-modal-header h2 {
+        font-size: 22px;
+    }
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 240px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+}

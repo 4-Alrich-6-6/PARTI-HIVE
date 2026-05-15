@@ -791,6 +791,110 @@ button {
     }
 }
 
+/* Unified sidebar width */
+.layout {
+    grid-template-columns: 240px 1fr 92px;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.confirmation-modal-header h2,
+.project-name-display h2,
+.task-section h2,
+.task-settings-title,
+.help-panel h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.task-left h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.summary-label,
+.task-left p,
+.task-status,
+.help-panel p,
+.task-details-body p,
+.popup-body,
+.confirmation-message,
+.modal-btn,
+.tab {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .confirmation-modal-header h2,
+    .project-name-display h2,
+    .task-section h2,
+    .task-settings-title,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+}
+
+/* Unified side tab width */
+.layout {
+    grid-template-columns: 240px 1fr 252px;
+}
+
+.right-rail {
+    margin-right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -884,4 +988,105 @@ button {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+/* Wider project breakdown content */
+.project-name-display,
+.section-title-wrap,
+#yourTasksList,
+#otherTasksList,
+#tasksList,
+.help-panel {
+    width: min(100%, 900px);
+}
+
+.task-card {
+    width: min(100%, 900px);
+}
+
+.project-options-modal,
+.confirmation-modal {
+    width: min(100%, 520px);
+}
+
+.task-details-body,
+.task-details-body p,
+.task-details-body span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.task-details-status-wrap {
+    flex-wrap: wrap;
+}
+
+.popup {
+    max-width: 520px;
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    grid-template-columns: 240px 1fr 252px;
+}
+
+.sidebar {
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.right-rail {
+    width: 220px;
+    margin-right: 32px;
+    background: var(--student-white, #ffffff);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
 }

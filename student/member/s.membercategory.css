@@ -534,5 +534,240 @@ button {
     }
 }
 
+/* Unified sidebar width */
+.layout {
+    padding-left: 240px;
+}
+
+.sidebar {
+    width: 240px;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+    }
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.confirmation-modal-header h2,
+.section-title-wrap h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.category-name,
+.empty-state h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.category-due-date,
+.category-count,
+.section-title-wrap p,
+.empty-state p,
+.confirmation-message {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .confirmation-modal-header h2,
+    .section-title-wrap h2 {
+        font-size: 22px;
+    }
+}
+
+/* Unified side tab width */
+.layout {
+    padding-right: 252px;
+}
+
+.right-rail {
+    right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-right: 0;
+    }
+}
+
+/* Match project card styling with the other category pages */
+.category-list {
+    width: min(100%, 820px);
+}
+
+.category-item {
+    gap: 10px;
+}
+
+.category-main-btn {
+    min-height: 64px;
+    padding: 18px 22px;
+    background: var(--student-paper, #f8fff8);
+    border: 3px solid var(--student-border, #111111);
+    border-radius: 10px;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.75);
+}
+
+.category-name {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.category-due-date,
+.category-count {
+    font-size: 15px;
+}
+
+.category-count {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 1px solid #d8d8d8;
+}
+
+@media (max-width: 900px) {
+    .category-list {
+        width: 100%;
+    }
+
+    .category-main-btn {
+        width: calc(100% - 28px);
+        margin: 0 14px;
+    }
+}
+
+/* Final side-tab alignment */
+.layout {
+    padding-right: 252px;
+}
+
+.right-rail {
+    right: 32px;
+    width: 220px;
+}
+
+.tab {
+    min-height: 56px;
+    padding: 14px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-right: 0;
+    }
+}
 
 
+
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 240px;
+    padding-right: 252px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.right-rail {
+    top: 64px;
+    right: 32px;
+    width: 220px;
+    background: var(--student-white, #ffffff);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+}

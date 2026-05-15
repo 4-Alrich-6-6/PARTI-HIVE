@@ -363,6 +363,7 @@ button {
     cursor: pointer;
 }
 
+.overlay,
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -371,9 +372,10 @@ button {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    z-index: 1000;
+    z-index: 2000;
 }
 
+.overlay.open,
 .modal-overlay.open {
     display: flex;
 }
@@ -725,5 +727,322 @@ to { opacity: 1; transform: translateY(0); }
 
     .group-modal-form {
         padding: 14px;
+    }
+}
+
+/* Comfortable UI size pass */
+.topbar {
+    height: 64px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 128px;
+    padding-right: 58px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 128px;
+}
+
+.right-rail {
+    top: 64px;
+    width: 58px;
+}
+
+.avatar-circle {
+    width: 76px;
+    height: 76px;
+}
+
+.profile-block h3,
+.sidebar-actions .btn {
+    font-size: 13px;
+}
+
+.profile-link {
+    font-size: 11px;
+}
+
+.datetime,
+.stat-label,
+.card-right strong,
+.group-form-field label,
+.modal-btn,
+.group-modal-btn {
+    font-size: 14px;
+}
+
+.main-content-title,
+.group-modal-header h2,
+.confirmation-modal-header h2 {
+    font-size: 32px;
+}
+
+.section-actions button,
+.notif-btn-mobile,
+.notif-btn {
+    min-height: 40px;
+}
+
+.section-actions button,
+.group-info p,
+.help-panel p,
+.confirmation-message,
+.group-form-field input {
+    font-size: 15px;
+}
+
+.stat-card h3 {
+    font-size: 32px;
+}
+
+.group-section h2,
+.help-panel h2 {
+    font-size: 24px;
+}
+
+.group-info h3 {
+    font-size: 18px;
+}
+
+.group-card,
+.help-panel {
+    width: min(100%, 820px);
+}
+
+.section-title-wrap {
+    width: min(100%, 820px);
+}
+
+#ownedGroupsList,
+#joinedGroupsList,
+#groupsList {
+    width: min(100%, 820px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#ownedGroupsList .empty-state,
+#joinedGroupsList .empty-state,
+#groupsList .empty-state {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.group-card {
+    padding: 16px 20px;
+    min-height: 64px;
+}
+
+.group-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.group-info h3,
+.group-info p {
+    line-height: 1.25;
+}
+
+.more-btn {
+    width: 34px;
+    height: 34px;
+}
+
+.group-modal-btn,
+.modal-btn {
+    min-height: 40px;
+    padding: 0 20px;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .sidebar {
+        top: 64px;
+        width: 200px;
+    }
+
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .section-actions button {
+        min-height: 38px;
+        font-size: 14px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    .stat-card h3 {
+        font-size: 24px;
+    }
+
+    .group-section h2,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+
+    .group-info h3 {
+        font-size: 18px;
+    }
+
+    .group-info p,
+    .help-panel p {
+        font-size: 14px;
+    }
+}
+
+/* Unified sidebar width */
+.layout {
+    padding-left: 240px;
+}
+
+.sidebar {
+    width: 240px;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+    }
+
+    .sidebar {
+        width: 240px;
+    }
+}
+
+/* Typography normalization */
+body {
+    font-size: 16px;
+    line-height: 1.45;
+}
+
+.main-content-title {
+    font-size: 32px;
+    line-height: 1.15;
+}
+
+.group-modal-header h2,
+.confirmation-modal-header h2,
+.section-title-wrap h2,
+.group-section h2,
+.help-panel h2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.group-info h3,
+.empty-state h3 {
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.datetime,
+.profile-block h3,
+.profile-link,
+.sidebar-actions .btn,
+.section-actions button,
+.stat-label,
+.group-info p,
+.card-right strong,
+.help-panel p,
+.empty-state p,
+.group-form-field label,
+.group-form-field input,
+.confirmation-message,
+.group-modal-btn,
+.modal-btn {
+    font-size: 15px;
+}
+
+@media (max-width: 900px) {
+    .main-content-title {
+        font-size: 28px;
+    }
+
+    .group-modal-header h2,
+    .confirmation-modal-header h2,
+    .section-title-wrap h2,
+    .group-section h2,
+    .help-panel h2 {
+        font-size: 22px;
+    }
+}
+
+/* Keep sidebar Settings and Log Out buttons square */
+.sidebar-actions .settings,
+.sidebar-actions .logout,
+.sidebar-actions .btn.settings,
+.sidebar-actions .btn.logout {
+    border-radius: 0;
+}
+
+/* Unified page style consistency */
+.topbar {
+    height: 64px;
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.datetime {
+    color: var(--student-white, #ffffff);
+    font-size: 15px;
+}
+
+.layout {
+    min-height: calc(100vh - 64px);
+    padding-top: 64px;
+    padding-left: 240px;
+}
+
+.sidebar {
+    top: 64px;
+    width: 240px;
+    background: var(--student-yellow, #ffcc00);
+    color: var(--student-black, #000000);
+    border-right: 2px solid var(--student-yellow, #ffcc00);
+}
+
+.right-rail {
+    top: 64px;
+    background: var(--student-white, #ffffff);
+}
+
+.settings {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+.logout {
+    background: var(--student-black, #000000);
+    color: var(--student-white, #ffffff);
+}
+
+.main-content-container,
+.main-content,
+.notif-section {
+    background: var(--student-white, #ffffff);
+    color: var(--student-black, #000000);
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0;
+    }
+
+    .sidebar {
+        width: 100%;
     }
 }

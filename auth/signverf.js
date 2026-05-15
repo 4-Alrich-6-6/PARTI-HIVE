@@ -200,8 +200,29 @@ if (verifyForm) {
       return;
     }
 
+    // Set password for signup users
+    if (authMode === "signup") {
+      const password = localStorage.getItem("hive_password");
+      if (password) {
+        try {
+          const { error: updateError } = await supabase.auth.updateUser({
+            password: password
+          });
+          if (updateError) {
+            console.error("Failed to set password:", updateError);
+            showAuthNotice("Account created but password could not be set. You may need to reset your password.", {
+              title: "Password Setup Failed",
+            });
+          }
+        } catch (updateErr) {
+          console.error("Password update error:", updateErr);
+        }
+      }
+    }
+
     localStorage.removeItem("hive_email");
     localStorage.removeItem("hive_auth_mode");
+    localStorage.removeItem("hive_password");
 
     window.location.href = "profiling.html";
   });

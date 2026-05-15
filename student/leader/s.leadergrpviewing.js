@@ -35,6 +35,7 @@ const confirmLeaveBtn = document.querySelector("#confirmLeaveBtn");
 const logoutBtn = document.querySelector(".logout");
 
 const STORAGE_KEY_LEADER_GROUP = "hive_leader_group";
+const STORAGE_KEY_TASKS = "hive_leader_tasks";
 
 /* TEMP DEFAULT DATA */
 const defaultLeaderGroupData = () => ({
@@ -85,6 +86,62 @@ const getProjectsCount = () => {
   }
 };
 
+const loadTasks = () => {
+  const saved = localStorage.getItem(STORAGE_KEY_TASKS);
+
+  try {
+    const tasks = saved ? JSON.parse(saved) : [];
+    return Array.isArray(tasks) ? tasks : [];
+  } catch {
+    return [];
+  }
+};
+
+const normalizeText = (value) => String(value || "").trim().toLowerCase();
+
+const isLeaderAssignee = (assignee) => {
+  const normalized = normalizeText(assignee);
+  return normalized.includes("leader") || normalized.includes("for you");
+};
+
+const isTaskAssignedToPerson = (task, person) => {
+  const assignees = Array.isArray(task.assignees) ? task.assignees : [];
+  const assignmentName = normalizeText(person.assignmentName);
+  const personName = normalizeText(person.name || person.fullName);
+  const personRole = normalizeText(person.role || person.roleName);
+
+  return assignees.some((assignee) => {
+    const normalizedAssignee = normalizeText(assignee);
+    if (personRole === "leader" && isLeaderAssignee(normalizedAssignee)) return true;
+    if (assignmentName && normalizedAssignee === assignmentName) return true;
+    return personName && normalizedAssignee === personName;
+  });
+};
+
+const calculateTaskStats = (person) => {
+  const tasks = loadTasks().filter((task) => isTaskAssignedToPerson(task, person));
+  const completed = tasks.filter((task) => normalizeText(task.status) === "finished").length;
+  const missed = tasks.filter((task) => normalizeText(task.status) === "missing").length;
+
+  return {
+    totalTasks: tasks.length,
+    completed,
+    pending: Math.max(tasks.length - completed - missed, 0),
+    missed,
+  };
+};
+
+const getMemberStat = (member, keys) => {
+  const key = keys.find((candidate) => member[candidate] !== undefined && member[candidate] !== null);
+  return key ? member[key] : 0;
+};
+
+const getDashboardProjectsCount = (data) => {
+  const supabaseCount = Number(data?.totalProjects ?? 0);
+  const localCount = getProjectsCount();
+  return supabaseCount > 0 ? supabaseCount : localCount;
+};
+
 /* APPLY LOCAL UI DATA */
 const applyLeaderGroupData = (data) => {
   const groupLabelH2 = document.querySelector(".group-label h2");
@@ -117,10 +174,12 @@ const applyLeaderGroupData = (data) => {
     if (stats) {
       const ps = stats.querySelectorAll("p");
 
-      if (ps[0]) ps[0].textContent = `Total Tasks: ${data.leader.totalTasks ?? 0}`;
-      if (ps[1]) ps[1].textContent = `Completed: ${data.leader.completed ?? 0}`;
-      if (ps[2]) ps[2].textContent = `Pending: ${data.leader.pending ?? 0}`;
-      if (ps[3]) ps[3].textContent = `Missed: ${data.leader.missed ?? 0}`;
+      const taskStats = calculateTaskStats(data.leader);
+
+      if (ps[0]) ps[0].textContent = `Total Tasks: ${taskStats.totalTasks}`;
+      if (ps[1]) ps[1].textContent = `Completed: ${taskStats.completed}`;
+      if (ps[2]) ps[2].textContent = `Pending: ${taskStats.pending}`;
+      if (ps[3]) ps[3].textContent = `Missed: ${taskStats.missed}`;
     }
   }
 
@@ -145,10 +204,12 @@ const applyLeaderGroupData = (data) => {
     if (stats) {
       const ps = stats.querySelectorAll("p");
 
-      if (ps[0]) ps[0].textContent = `Total Tasks: ${member.totalTasks ?? 0}`;
-      if (ps[1]) ps[1].textContent = `Completed: ${member.completed ?? 0}`;
-      if (ps[2]) ps[2].textContent = `Pending: ${member.pending ?? 0}`;
-      if (ps[3]) ps[3].textContent = `Missed: ${member.missed ?? 0}`;
+      const taskStats = calculateTaskStats(member);
+
+      if (ps[0]) ps[0].textContent = `Total Tasks: ${taskStats.totalTasks}`;
+      if (ps[1]) ps[1].textContent = `Completed: ${taskStats.completed}`;
+      if (ps[2]) ps[2].textContent = `Pending: ${taskStats.pending}`;
+      if (ps[3]) ps[3].textContent = `Missed: ${taskStats.missed}`;
     }
   });
 };
@@ -184,7 +245,7 @@ const loadDashboardStats = async () => {
   const summaryH3s = document.querySelectorAll(".summary-card h3");
   summaryH3s[0].textContent = data.totalTeachers ?? 0;
   summaryH3s[1].textContent = data.totalMembers ?? 0;
-  summaryH3s[2].textContent = data.totalProjects ?? 0;
+  summaryH3s[2].textContent = getDashboardProjectsCount(data);
 
   renderGroupMembers(data.members || []);
 };
@@ -208,17 +269,24 @@ const renderGroupMembers = (members) => {
 
     ${
       leader
-        ? createMemberCard(leader, "leader-card", "large")
+        ? createMemberCard({ ...leader, assignmentName: "For You (Leader)" }, "leader-card", "large")
         : `<article class="info-card leader-card"><h3>No leader found</h3></article>`
     }
 
     <div class="member-grid">
-      ${normalMembers.map(member => createMemberCard(member, "member-card", "medium")).join("")}
+      ${normalMembers.map((member, index) => (
+        createMemberCard({ ...member, assignmentName: `Person ${index + 2}` }, "member-card", "medium")
+      )).join("")}
     </div>
   `;
 };
 
 const createMemberCard = (member, cardClass, avatarSize) => {
+  const totalTasks = getMemberStat(member, ["totalTasks", "total_tasks"]);
+  const completedTasks = getMemberStat(member, ["completedTasks", "completed", "completed_tasks"]);
+  const pendingTasks = getMemberStat(member, ["pendingTasks", "pending", "pending_tasks"]);
+  const missedTasks = getMemberStat(member, ["missedTasks", "missed", "missed_tasks"]);
+
   return `
     <article class="info-card ${cardClass}">
       <div class="circle-avatar ${avatarSize}"></div>
@@ -229,10 +297,10 @@ const createMemberCard = (member, cardClass, avatarSize) => {
           <p>${member.email || "No email"}</p>
         </div>
         <div class="stats">
-          <p>Total Tasks: ${member.totalTasks ?? 0}</p>
-          <p>Completed: ${member.completedTasks ?? 0}</p>
-          <p>Pending: ${member.pendingTasks ?? 0}</p>
-          <p>Missed: ${member.missedTasks ?? 0}</p>
+          <p>Total Tasks: ${totalTasks}</p>
+          <p>Completed: ${completedTasks}</p>
+          <p>Pending: ${pendingTasks}</p>
+          <p>Missed: ${missedTasks}</p>
         </div>
       </div>
     </article>

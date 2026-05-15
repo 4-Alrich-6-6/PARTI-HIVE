@@ -595,6 +595,7 @@ button {
 }
 
 .form-group input[type="text"],
+.form-group input[type="url"],
 .form-group input[type="date"],
 .form-group input[type="time"],
 .form-group textarea,
@@ -618,6 +619,11 @@ button {
     cursor: pointer;
 }
 
+.form-group input[type="text"]:focus,
+.form-group input[type="url"]:focus,
+.form-group input[type="date"]:focus,
+.form-group input[type="time"]:focus,
+.form-group textarea:focus,
 .form-group select:focus {
     outline: none;
     border-color: #ffcc00;

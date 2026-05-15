@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Breakdown</title>
     <link rel="stylesheet" href="s.leaderprojectbreakdown.css">
+    <link rel="stylesheet" href="../../lib/loading.css">
 </head>
 <body>
     <div class="topbar">
@@ -111,6 +112,11 @@
                 <div class="form-group">
                     <label for="taskDescriptionInput">Task Description</label>
                     <textarea id="taskDescriptionInput" name="taskDescription" rows="4" placeholder="Enter task description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskResourcesInput">Resources / Link</label>
+                    <input id="taskResourcesInput" name="taskResources" type="url" placeholder="Paste your link or resources here">
                 </div>
 
                 <div class="form-row">
@@ -229,6 +235,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="editTaskResourcesInput">Resources / Link</label>
+                    <input id="editTaskResourcesInput" name="editTaskResources" type="url" placeholder="Paste a helpful link or resource">
+                </div>
+
+                <div class="form-group">
                     <p class="form-label">Assignee(s) *</p>
                     <div class="assignee-options">
                         <label class="assignee-option">
@@ -318,6 +329,7 @@
                 <p class="task-settings-title" id="taskDetailsTitle">Task Information</p>
                 <p><strong>Task:</strong> <span id="detailTaskName"></span></p>
                 <p><strong>Description:</strong> <span id="detailTaskDescription"></span></p>
+                <p><strong>Resources:</strong> <span id="detailTaskResources"></span></p>
                 <p><strong>Assignee(s):</strong> <span id="detailTaskAssignees"></span></p>
                 <p><strong>Due Date:</strong> <span id="detailTaskDueDate"></span></p>
                 <p><strong>Due Time:</strong> <span id="detailTaskDueTime"></span></p>
@@ -335,6 +347,7 @@
         </div>
     </div>
 
+    <script src="../../lib/loading.js"></script>
     <script src="../../lib/datetime.js"></script>
     <script src="../../lib/manage-profile.js"></script>
     <script src="../../lib/settings.js"></script>
@@ -342,4 +355,3 @@
     <script src="s.leaderprojectbreakdown.js"></script>
 </body>
 </html>
-

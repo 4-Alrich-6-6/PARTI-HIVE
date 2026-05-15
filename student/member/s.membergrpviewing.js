@@ -1,7 +1,14 @@
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabaseUrl = "https://rwijmgzxwyrktsjczpbp.supabase.co";
+const supabaseKey = "sb_publishable_8zB-1PnnV7wK7WMkC8qgQA_UD0fFfEC";
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 const topBackBtn = document.querySelector("#topBackBtn");
 const projectBreakdownTab = document.querySelector("#projectBreakdownTab");
 
 const STORAGE_KEY_LEADER_GROUP = "hive_leader_group";
+const STORAGE_KEY_TASKS = "hive_leader_tasks";
 
 const defaultGroupData = () => ({
     groupName: "Group Name",
@@ -30,6 +37,149 @@ const getProjectsCount = () => {
     }
 };
 
+const loadTasks = () => {
+    const saved = localStorage.getItem(STORAGE_KEY_TASKS);
+    try {
+        const tasks = saved ? JSON.parse(saved) : [];
+        return Array.isArray(tasks) ? tasks : [];
+    } catch {
+        return [];
+    }
+};
+
+const normalizeText = (value) => String(value || "").trim().toLowerCase();
+
+const isLeaderAssignee = (assignee) => {
+    const normalized = normalizeText(assignee);
+    return normalized.includes("leader") || normalized.includes("for you");
+};
+
+const isTaskAssignedToPerson = (task, person) => {
+    const assignees = Array.isArray(task.assignees) ? task.assignees : [];
+    const assignmentName = normalizeText(person.assignmentName);
+    const personName = normalizeText(person.name || person.fullName);
+    const personRole = normalizeText(person.role || person.roleName);
+
+    return assignees.some((assignee) => {
+        const normalizedAssignee = normalizeText(assignee);
+        if (personRole === "leader" && isLeaderAssignee(normalizedAssignee)) return true;
+        if (assignmentName && normalizedAssignee === assignmentName) return true;
+        return personName && normalizedAssignee === personName;
+    });
+};
+
+const calculateTaskStats = (person) => {
+    const tasks = loadTasks().filter((task) => isTaskAssignedToPerson(task, person));
+    const completed = tasks.filter((task) => normalizeText(task.status) === "finished").length;
+    const missed = tasks.filter((task) => normalizeText(task.status) === "missing").length;
+
+    return {
+        totalTasks: tasks.length,
+        completed,
+        pending: Math.max(tasks.length - completed - missed, 0),
+        missed
+    };
+};
+
+const getGroupId = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("grpId") || localStorage.getItem("grpId") || 1;
+};
+
+const getMemberStat = (member, keys) => {
+    const key = keys.find((candidate) => member[candidate] !== undefined && member[candidate] !== null);
+    return key ? member[key] : 0;
+};
+
+const getDashboardProjectsCount = (data) => {
+    const supabaseCount = Number(data?.totalProjects ?? 0);
+    const localCount = getProjectsCount();
+    return supabaseCount > 0 ? supabaseCount : localCount;
+};
+
+const createMemberCard = (member, cardClass, avatarSize) => {
+    const totalTasks = getMemberStat(member, ["totalTasks", "total_tasks"]);
+    const completedTasks = getMemberStat(member, ["completedTasks", "completed", "completed_tasks"]);
+    const pendingTasks = getMemberStat(member, ["pendingTasks", "pending", "pending_tasks"]);
+    const missedTasks = getMemberStat(member, ["missedTasks", "missed", "missed_tasks"]);
+
+    return `
+        <article class="info-card ${cardClass}">
+            <div class="circle-avatar ${avatarSize}"></div>
+            <div class="member-details">
+                <div class="member-info">
+                    <h3>${member.fullName || member.name || "No Name"}</h3>
+                    <p>${member.roleName || member.role || "Member"}</p>
+                    <p>${member.email || "No email"}</p>
+                </div>
+                <div class="stats">
+                    <p>Total Tasks: ${totalTasks}</p>
+                    <p>Completed: ${completedTasks}</p>
+                    <p>Pending: ${pendingTasks}</p>
+                    <p>Missed: ${missedTasks}</p>
+                </div>
+            </div>
+        </article>
+    `;
+};
+
+const renderGroupMembers = (members) => {
+    const container = document.querySelector("#groupInfoStack");
+    if (!container) return;
+
+    const teacher = members.find((member) => normalizeText(member.roleName || member.role) === "teacher");
+    const leader = members.find((member) => normalizeText(member.roleName || member.role) === "leader");
+    const normalMembers = members.filter((member) => {
+        const role = normalizeText(member.roleName || member.role);
+        return role !== "teacher" && role !== "leader";
+    });
+
+    container.innerHTML = `
+        <article class="info-card teacher-card">
+            <div class="circle-avatar small"></div>
+            <h3>${teacher ? `${teacher.fullName || teacher.name || "Teacher"}<br><small>${teacher.email || "No email"}</small>` : "You currently have no teacher"}</h3>
+        </article>
+
+        ${
+            leader
+                ? createMemberCard(leader, "leader-card", "large")
+                : `<article class="info-card leader-card"><h3>No leader found</h3></article>`
+        }
+
+        <div class="member-grid">
+            ${normalMembers.map((member) => createMemberCard(member, "member-card", "medium")).join("")}
+        </div>
+    `;
+};
+
+const loadDashboardStats = async () => {
+    const grpId = getGroupId();
+
+    const { data, error } = await supabase
+        .from("DASHBOARD_STATS")
+        .select("*")
+        .eq("grpId", grpId)
+        .single();
+
+    if (error) {
+        console.error("Error loading group info:", error);
+        applyGroupData(loadGroupData());
+        return;
+    }
+
+    const groupLabelH2 = document.querySelector(".group-label h2");
+    const groupLabelP = document.querySelector(".group-label p");
+    if (groupLabelH2) groupLabelH2.textContent = data.grpName || "Group Name";
+    if (groupLabelP) groupLabelP.textContent = data.subjectName || data.subject || "Subject";
+
+    const summaryH3s = document.querySelectorAll(".summary-card h3");
+    if (summaryH3s[0]) summaryH3s[0].textContent = data.totalTeachers ?? 0;
+    if (summaryH3s[1]) summaryH3s[1].textContent = data.totalMembers ?? 0;
+    if (summaryH3s[2]) summaryH3s[2].textContent = getDashboardProjectsCount(data);
+
+    renderGroupMembers(data.members || []);
+};
+
 const applyGroupData = (data) => {
     const groupLabelH2 = document.querySelector(".group-label h2");
     const groupLabelP = document.querySelector(".group-label p");
@@ -53,10 +203,11 @@ const applyGroupData = (data) => {
         }
         if (stats) {
             const ps = stats.querySelectorAll("p");
-            if (ps[0]) ps[0].textContent = `Total Tasks: ${data.leader.totalTasks}`;
-            if (ps[1]) ps[1].textContent = `Completed: ${data.leader.completed}`;
-            if (ps[2]) ps[2].textContent = `Pending: ${data.leader.pending}`;
-            if (ps[3]) ps[3].textContent = `Missed: ${data.leader.missed}`;
+            const taskStats = calculateTaskStats(data.leader);
+            if (ps[0]) ps[0].textContent = `Total Tasks: ${taskStats.totalTasks}`;
+            if (ps[1]) ps[1].textContent = `Completed: ${taskStats.completed}`;
+            if (ps[2]) ps[2].textContent = `Pending: ${taskStats.pending}`;
+            if (ps[3]) ps[3].textContent = `Missed: ${taskStats.missed}`;
         }
     }
 
@@ -74,15 +225,16 @@ const applyGroupData = (data) => {
         }
         if (stats) {
             const ps = stats.querySelectorAll("p");
-            if (ps[0]) ps[0].textContent = `Total Tasks: ${member.totalTasks}`;
-            if (ps[1]) ps[1].textContent = `Completed: ${member.completed}`;
-            if (ps[2]) ps[2].textContent = `Pending: ${member.pending}`;
-            if (ps[3]) ps[3].textContent = `Missed: ${member.missed}`;
+            const taskStats = calculateTaskStats(member);
+            if (ps[0]) ps[0].textContent = `Total Tasks: ${taskStats.totalTasks}`;
+            if (ps[1]) ps[1].textContent = `Completed: ${taskStats.completed}`;
+            if (ps[2]) ps[2].textContent = `Pending: ${taskStats.pending}`;
+            if (ps[3]) ps[3].textContent = `Missed: ${taskStats.missed}`;
         }
     });
 };
 
-applyGroupData(loadGroupData());
+loadDashboardStats();
 
 if (topBackBtn) {
     topBackBtn.addEventListener("click", () => {

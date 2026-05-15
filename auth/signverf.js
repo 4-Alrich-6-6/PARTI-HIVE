@@ -1,100 +1,227 @@
 const verifyForm = document.querySelector(".lForm");
-const verifyBackLink = document.querySelector("#verifyBackLink");
 const resendOtpBtn = document.querySelector("#resendOtpBtn");
+const verifyBackLink = document.querySelector("#verifyBackLink");
 
 let cooldownInterval = null;
 
-const generateOTP = () => {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    localStorage.setItem("hive_otp", otp);
-    localStorage.setItem("otp_timestamp", Date.now().toString());
-    return otp;
+// Get email from signup/login page
+const userEmail = localStorage.getItem("hive_email");
+const authMode = localStorage.getItem("hive_auth_mode") || "signup";
+const getSupabase = () => {
+  if (!window.hiveSupabase) {
+    throw new Error("Supabase is not ready. Please check your internet connection and try again.");
+  }
+
+  return window.hiveSupabase;
+};
+
+const getFriendlyAuthMessage = (error) => {
+  const message = error?.message || "";
+  const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes("confirmation email") || lowerMessage.includes("email")) {
+    return "We could not send the OTP email right now. Please check your email address, then try again in a moment.";
+  }
+
+  if (lowerMessage.includes("rate limit") || lowerMessage.includes("too many")) {
+    return "Too many OTP requests. Please wait a little before trying again.";
+  }
+
+  return "Something went wrong while sending your OTP. Please try again.";
+};
+
+const showAuthNotice = (message, options = {}) => {
+  const { title = "Notice", type = "info", onClose = null } = options;
+  let notice = document.querySelector("#authNotice");
+
+  if (!notice) {
+    notice = document.createElement("div");
+    notice.className = "auth-notice";
+    notice.id = "authNotice";
+    notice.setAttribute("aria-hidden", "true");
+    notice.innerHTML = `
+      <div class="auth-notice-content" role="dialog" aria-modal="true" aria-labelledby="authNoticeTitle">
+        <div class="auth-notice-header">
+          <span class="auth-notice-icon" aria-hidden="true">!</span>
+          <h2 class="auth-notice-title" id="authNoticeTitle"></h2>
+        </div>
+        <p class="auth-notice-message"></p>
+        <div class="auth-notice-actions">
+          <button class="auth-notice-ok" type="button">OK</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(notice);
+  }
+
+  const icon = notice.querySelector(".auth-notice-icon");
+  const titleEl = notice.querySelector(".auth-notice-title");
+  const messageEl = notice.querySelector(".auth-notice-message");
+  const okBtn = notice.querySelector(".auth-notice-ok");
+
+  if (icon) icon.textContent = type === "success" ? "✓" : "!";
+  if (titleEl) titleEl.textContent = title;
+  if (messageEl) messageEl.textContent = message;
+
+  const closeNotice = () => {
+    notice.classList.remove("open");
+    notice.setAttribute("aria-hidden", "true");
+    okBtn.removeEventListener("click", closeNotice);
+    notice.removeEventListener("click", handleOverlayClick);
+    if (onClose) onClose();
+  };
+
+  const handleOverlayClick = (event) => {
+    if (event.target === notice) closeNotice();
+  };
+
+  okBtn.addEventListener("click", closeNotice);
+  notice.addEventListener("click", handleOverlayClick);
+  notice.classList.add("open");
+  notice.setAttribute("aria-hidden", "false");
+  okBtn.focus();
 };
 
 const startCooldown = () => {
-    let secondsLeft = 60;
-    resendOtpBtn.disabled = true;
-    resendOtpBtn.textContent = `Resend (${secondsLeft}s)`;
-    
-    if (cooldownInterval) clearInterval(cooldownInterval);
-    
-    cooldownInterval = setInterval(() => {
-        secondsLeft--;
-        if (secondsLeft <= 0) {
-            clearInterval(cooldownInterval);
-            resendOtpBtn.disabled = false;
-            resendOtpBtn.textContent = "Resend";
-        } else {
-            resendOtpBtn.textContent = `Resend (${secondsLeft}s)`;
-        }
-    }, 1000);
+  if (!resendOtpBtn) return;
+
+  let secondsLeft = 60;
+  resendOtpBtn.disabled = true;
+  resendOtpBtn.textContent = `Resend (${secondsLeft}s)`;
+
+  if (cooldownInterval) clearInterval(cooldownInterval);
+
+  cooldownInterval = setInterval(() => {
+    secondsLeft--;
+
+    if (secondsLeft <= 0) {
+      clearInterval(cooldownInterval);
+      resendOtpBtn.disabled = false;
+      resendOtpBtn.textContent = "Resend";
+    } else {
+      resendOtpBtn.textContent = `Resend (${secondsLeft}s)`;
+    }
+  }, 1000);
 };
 
-if (resendOtpBtn) {
-    resendOtpBtn.addEventListener("click", () => {
-        const otp = generateOTP();
-        alert(`Your OTP is: ${otp}\n\n(In a real application, this would be sent to your email)`);
-        startCooldown();
+// SEND OTP EMAIL
+const sendOtp = async () => {
+  if (!userEmail) {
+    showAuthNotice("Email not found. Please go back and enter your email again.", {
+      title: "Missing Email",
+      onClose: () => {
+        window.location.href = "log-sign.html";
+      },
     });
+    return;
+  }
+
+  let error = null;
+
+  try {
+    const supabase = getSupabase();
+    const result = await supabase.auth.signInWithOtp({
+      email: userEmail,
+      options: {
+        shouldCreateUser: authMode === "signup",
+      },
+    });
+    error = result.error;
+  } catch (authError) {
+    console.error("Resend OTP request failed:", authError);
+    showAuthNotice(getFriendlyAuthMessage(authError), { title: "OTP Not Sent" });
+    return;
+  }
+
+  if (error) {
+    console.error("Resend OTP request failed:", error);
+    showAuthNotice(getFriendlyAuthMessage(error), { title: "OTP Not Sent" });
+    return;
+  }
+
+  showAuthNotice("OTP sent to your email.", {
+    title: "Check Your Email",
+    type: "success",
+  });
+  startCooldown();
+};
+
+// RESEND OTP
+if (resendOtpBtn) {
+  resendOtpBtn.addEventListener("click", sendOtp);
 }
 
+// VERIFY OTP
 if (verifyForm) {
-    verifyForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        
-        const otpInput = document.querySelector("#otp");
-        const storedOTP = localStorage.getItem("hive_otp");
-        
-        if (!otpInput || !storedOTP) {
-            alert("OTP expired or not found. Please click 'Send' to get a new one.");
-            return;
-        }
-        
-        if (otpInput.value !== storedOTP) {
-            alert("Invalid OTP. Please try again.");
-            otpInput.value = "";
-            otpInput.focus();
-            return;
-        }
-        
-        localStorage.removeItem("hive_otp");
-        localStorage.removeItem("otp_timestamp");
-        
-        window.location.href = "profiling.html";
-    });
-}
+  verifyForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-if (verifyBackLink) {
-    verifyBackLink.addEventListener("click", (event) => {
-        event.preventDefault();
-        window.location.href = "log-sign.html?mode=signup";
-    });
-}
+    const otpInput = document.querySelector("#otp");
 
-// Start cooldown immediately on page load since OTP was sent upon redirection
-if (resendOtpBtn) {
-    startCooldown();
-}
-
-// Zoom Prevention
-const blockedZoomKeys = ["+", "-", "=", "_", "0"];
-
-window.addEventListener(
-    "wheel",
-    (event) => {
-        if (event.ctrlKey || event.metaKey) {
-            event.preventDefault();
-        }
-    },
-    { passive: false }
-);
-
-window.addEventListener("keydown", (event) => {
-    if ((event.ctrlKey || event.metaKey) && blockedZoomKeys.includes(event.key)) {
-        event.preventDefault();
+    if (!userEmail) {
+      showAuthNotice("Email not found. Please go back and enter your email again.", {
+        title: "Missing Email",
+        onClose: () => {
+          window.location.href = "log-sign.html";
+        },
+      });
+      return;
     }
-});
 
-window.addEventListener("gesturestart", (event) => event.preventDefault());
-window.addEventListener("gesturechange", (event) => event.preventDefault());
-window.addEventListener("gestureend", (event) => event.preventDefault());
+    if (!otpInput || !otpInput.value.trim()) {
+      showAuthNotice("Please enter your OTP.", { title: "Missing OTP" });
+      return;
+    }
+
+    let error = null;
+
+    try {
+      const supabase = getSupabase();
+      const result = await supabase.auth.verifyOtp({
+        email: userEmail,
+        token: otpInput.value.trim(),
+        type: "email",
+      });
+      error = result.error;
+    } catch (authError) {
+      console.error("OTP verification failed:", authError);
+      showAuthNotice("We could not verify your OTP right now. Please try again.", {
+        title: "Verification Failed",
+      });
+      return;
+    }
+
+    if (error) {
+      showAuthNotice("Invalid or expired OTP. Please try again.", {
+        title: "Verification Failed",
+      });
+      otpInput.value = "";
+      otpInput.focus();
+      return;
+    }
+
+    localStorage.removeItem("hive_email");
+    localStorage.removeItem("hive_auth_mode");
+
+    window.location.href = "profiling.html";
+  });
+}
+
+// BACK
+if (verifyBackLink) {
+  verifyBackLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    window.location.href = `log-sign.html?mode=${authMode}`;
+  });
+}
+
+if (!userEmail) {
+  showAuthNotice("Email not found. Please go back and enter your email again.", {
+    title: "Missing Email",
+    onClose: () => {
+      window.location.href = "log-sign.html";
+    },
+  });
+} else {
+  startCooldown();
+}

@@ -11,6 +11,7 @@ const dueDateInput = postTaskForm ? postTaskForm.querySelector("#dueDateInput") 
 const dueTimeInput = postTaskForm ? postTaskForm.querySelector("#dueTimeInput") : null;
 const assigneeInputs = postTaskForm ? Array.from(postTaskForm.querySelectorAll("input[name='assignees']")) : [];
 const taskDescriptionInput = postTaskForm ? postTaskForm.querySelector("#taskDescriptionInput") : null;
+const taskResourcesInput = postTaskForm ? postTaskForm.querySelector("#taskResourcesInput") : null;
 const verifyChoiceOverlay = document.querySelector("#verifyChoiceOverlay");
 const verifyFinishBtn = document.querySelector("#verifyFinishBtn");
 const verifyReviseBtn = document.querySelector("#verifyReviseBtn");
@@ -30,6 +31,7 @@ const discardEditTaskInfoBtn = document.querySelector("#discardEditTaskInfoBtn")
 const saveEditTaskInfoBtn = document.querySelector("#saveEditTaskInfoBtn");
 const editTaskNameInput = editTaskInfoForm ? editTaskInfoForm.querySelector("#editTaskNameInput") : null;
 const editTaskDescriptionInput = editTaskInfoForm ? editTaskInfoForm.querySelector("#editTaskDescriptionInput") : null;
+const editTaskResourcesInput = editTaskInfoForm ? editTaskInfoForm.querySelector("#editTaskResourcesInput") : null;
 const editDueDateInput = editTaskInfoForm ? editTaskInfoForm.querySelector("#editDueDateInput") : null;
 const editDueTimeInput = editTaskInfoForm ? editTaskInfoForm.querySelector("#editDueTimeInput") : null;
 const editAssigneeInputs = editTaskInfoForm ? Array.from(editTaskInfoForm.querySelectorAll("input[name='editAssignees']")) : [];
@@ -43,6 +45,7 @@ const taskDetailsOverlay = document.querySelector("#taskDetailsOverlay");
 const closeTaskDetailsBtn = document.querySelector("#closeTaskDetailsBtn");
 const detailTaskName = document.querySelector("#detailTaskName");
 const detailTaskDescription = document.querySelector("#detailTaskDescription");
+const detailTaskResources = document.querySelector("#detailTaskResources");
 const detailTaskAssignees = document.querySelector("#detailTaskAssignees");
 const detailTaskDueDate = document.querySelector("#detailTaskDueDate");
 const detailTaskDueTime = document.querySelector("#detailTaskDueTime");
@@ -407,6 +410,7 @@ const openEditTaskInfo = () => {
     if (!task) return;
     if (editTaskNameInput) editTaskNameInput.value = task.name || "";
     if (editTaskDescriptionInput) editTaskDescriptionInput.value = task.description || "";
+    if (editTaskResourcesInput) editTaskResourcesInput.value = task.resources || "";
     if (editDueDateInput) {
         editDueDateInput.min = new Date().toISOString().split("T")[0];
         editDueDateInput.value = task.dueDate || "";
@@ -456,6 +460,7 @@ const openTaskDetails = (taskIndex) => {
     if (!task) return;
     if (detailTaskName) detailTaskName.textContent = task.name || "";
     if (detailTaskDescription) detailTaskDescription.textContent = task.description || "None";
+    if (detailTaskResources) detailTaskResources.textContent = task.resources || "None";
     if (detailTaskAssignees) detailTaskAssignees.textContent = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
     if (detailTaskDueDate) detailTaskDueDate.textContent = task.dueDate || "N/A";
     if (detailTaskDueTime) detailTaskDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";
@@ -569,6 +574,7 @@ if (postTaskForm) postTaskForm.addEventListener("submit", (e) => {
         const task = {
             name: taskName,
             description: taskDescriptionInput ? taskDescriptionInput.value.trim() : "",
+            resources: taskResourcesInput ? taskResourcesInput.value.trim() : "",
             assignees: assigneeLabels,
             dueDate: dueDateInput.value,
             dueTime: dueTimeInput.value,
@@ -604,6 +610,7 @@ if (editTaskInfoForm) editTaskInfoForm.addEventListener("submit", (e) => {
             ...tasks[activeTaskIndex],
             name: taskName,
             description: editTaskDescriptionInput ? editTaskDescriptionInput.value.trim() : "",
+            resources: editTaskResourcesInput ? editTaskResourcesInput.value.trim() : "",
             assignees: assigneeLabels,
             dueDate: editDueDateInput.value,
             dueTime: editDueTimeInput.value,

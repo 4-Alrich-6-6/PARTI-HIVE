@@ -14,6 +14,7 @@ const overlay = document.querySelector("#overlay");
 
 const popupTaskName = document.querySelector(".popup-task-name");
 const popupDescText = document.querySelector(".popup-desc-text");
+const popupResourcesText = document.querySelector(".popup-resources-text");
 const popupAssignees = document.querySelector(".popup-assignees");
 const popupDueDate = document.querySelector("#popupDueDate");
 const popupDueTime = document.querySelector("#popupDueTime");
@@ -99,6 +100,7 @@ const openTaskDetails = (taskIndex) => {
     activeTaskIndex = taskIndex;
     if (popupTaskName) popupTaskName.textContent = task.name || "";
     if (popupDescText) popupDescText.textContent = task.description || "None";
+    if (popupResourcesText) popupResourcesText.textContent = task.resources || "None";
     if (popupAssignees) popupAssignees.textContent = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
     if (popupDueDate) popupDueDate.textContent = task.dueDate || "N/A";
     if (popupDueTime) popupDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";

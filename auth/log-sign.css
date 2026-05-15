@@ -465,6 +465,96 @@ input::placeholder {
     font-size: 14px;
 }
 
+/* AUTH NOTICE MODAL */
+
+.auth-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.48);
+}
+
+.auth-notice.open {
+    display: flex;
+}
+
+.auth-notice-content {
+    width: min(430px, 100%);
+    border: 3px solid #000;
+    border-radius: 20px;
+    background: #fff;
+    color: #000;
+    padding: 26px 24px 22px;
+    box-shadow: 0 16px 0 rgba(0, 0, 0, 0.18);
+}
+
+.auth-notice-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.auth-notice-icon {
+    width: 42px;
+    height: 42px;
+    border: 3px solid #000;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: #ffcf24;
+    font-family: Montserrat, sans-serif;
+    font-size: 25px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.auth-notice-title {
+    margin: 0;
+    font-family: Montserrat, sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.auth-notice-message {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.auth-notice-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 22px;
+}
+
+.auth-notice-ok {
+    min-width: 108px;
+    height: 44px;
+    border: none;
+    border-radius: 14px;
+    background: #000;
+    color: #fff;
+    font-family: Montserrat, sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0 22px;
+}
+
+.auth-notice-ok:focus-visible {
+    outline: 3px solid #ffcf24;
+    outline-offset: 3px;
+}
+
 @media (max-width: 1180px) {
     .container {
         grid-template-columns: 1fr;
@@ -631,5 +721,18 @@ input::placeholder {
         font-family: Montserrat, sans-serif;
         height: 38px;
         min-width: 150px;
+    }
+
+    .auth-notice-content {
+        padding: 22px 20px 20px;
+        border-radius: 18px;
+    }
+
+    .auth-notice-title {
+        font-size: 20px;
+    }
+
+    .auth-notice-message {
+        font-size: 14px;
     }
 }

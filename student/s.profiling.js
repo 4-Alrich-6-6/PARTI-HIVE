@@ -1,5 +1,3 @@
-const PROFILE_KEY = "hive_user_profile";
-
 const backButton = document.querySelector(".back-button");
 const saveButton = document.querySelector(".save-button button");
 const editProfilePicBtn = document.querySelector("#editProfilePicBtn");
@@ -8,35 +6,34 @@ const profilePicPreview = document.querySelector("#profilePicPreview");
 const displayNameInput = document.querySelector("#displayNameInput");
 const programSelect = document.querySelector("#program");
 
-const loadProfile = () => {
-    const saved = localStorage.getItem(PROFILE_KEY);
-    if (saved) {
-        try {
-            return JSON.parse(saved);
-        } catch {
-            return {};
-        }
-    }
-    return {};
-};
+let avatarFile = null;
 
-const existing = loadProfile();
-if (existing.displayName && displayNameInput) displayNameInput.value = existing.displayName;
-if (existing.program && programSelect) programSelect.value = existing.program;
-if (existing.avatar && profilePicPreview) profilePicPreview.src = existing.avatar;
+// Populate program dropdown from DB
+(async () => {
+    if (!programSelect) return;
+    const supabase = window.hiveSupabase;
+    if (!supabase) return;
+    const { data, error } = await supabase
+        .from("PROGRAM")
+        .select("progId, progName")
+        .order("progId", { ascending: true });
+    if (error || !data) return;
+    data.forEach(prog => {
+        const opt = document.createElement("option");
+        opt.value = prog.progId;
+        opt.textContent = prog.progName;
+        programSelect.appendChild(opt);
+    });
+})();
 
 if (editProfilePicBtn && profilePicInput) {
-    editProfilePicBtn.addEventListener("click", () => {
-        profilePicInput.click();
-    });
-
+    editProfilePicBtn.addEventListener("click", () => profilePicInput.click());
     profilePicInput.addEventListener("change", () => {
         const file = profilePicInput.files && profilePicInput.files[0];
         if (!file) return;
+        avatarFile = file;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            if (profilePicPreview) profilePicPreview.src = e.target.result;
-        };
+        reader.onload = (e) => { if (profilePicPreview) profilePicPreview.src = e.target.result; };
         reader.readAsDataURL(file);
     });
 }
@@ -48,16 +45,55 @@ if (backButton) {
 }
 
 if (saveButton) {
-    saveButton.addEventListener("click", () => {
-        const profile = {
-            displayName: displayNameInput ? displayNameInput.value.trim() : "",
-            program: programSelect ? programSelect.value : "",
-            avatar: profilePicPreview && profilePicPreview.src && profilePicPreview.src.startsWith("data:")
-                ? profilePicPreview.src
-                : (existing.avatar || ""),
-            role: "student"
+    saveButton.addEventListener("click", async () => {
+        const supabase = window.hiveSupabase;
+        if (!supabase) { alert("Supabase not ready."); return; }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { alert("Not logged in."); return; }
+
+        const displayName = displayNameInput ? displayNameInput.value.trim() : "";
+        const progId = programSelect && programSelect.value ? Number(programSelect.value) : null;
+
+        if (!displayName) { alert("Please enter a display name."); return; }
+        if (!progId) { alert("Please select a program."); return; }
+
+        const posId = localStorage.getItem("hive_posId")
+            ? Number(localStorage.getItem("hive_posId"))
+            : null;
+
+        // Upload avatar if selected
+        let avatarPath = null;
+        if (avatarFile) {
+            const filePath = `avatars/${user.id}`;
+            const { error: uploadErr } = await supabase.storage
+                .from("profilePicture")
+                .upload(filePath, avatarFile, { upsert: true, contentType: avatarFile.type });
+            if (!uploadErr) {
+                const { data: urlData } = supabase.storage
+                    .from("profilePicture")
+                    .getPublicUrl(filePath);
+                avatarPath = urlData?.publicUrl || null;
+            }
+        }
+
+        const payload = {
+            userId: user.id,
+            userEmail: user.email,
+            userDisplayName: displayName,
+            posId,
+            progId,
         };
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+        if (avatarPath) payload.avatarPath = avatarPath;
+
+        const { error } = await supabase
+            .from("USER")
+            .upsert(payload, { onConflict: "userId" });
+
+        if (error) { alert("Failed to save profile: " + error.message); return; }
+
+        localStorage.removeItem("hive_posId");
+        localStorage.removeItem("hive_role");
         window.location.href = "s.dashb.html";
     });
 }

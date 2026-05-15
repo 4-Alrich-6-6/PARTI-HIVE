@@ -224,7 +224,32 @@ if (verifyForm) {
     localStorage.removeItem("hive_auth_mode");
     localStorage.removeItem("hive_password");
 
-    window.location.href = "profiling.html";
+    // Check if USER row already exists in DB
+    const supabase = getSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: existingUser } = await supabase
+      .from("USER")
+      .select("userId, posId")
+      .eq("userId", user.id)
+      .maybeSingle();
+
+    if (existingUser && existingUser.posId) {
+      // Returning user — check role and redirect to correct dashboard
+      const { data: pos } = await supabase
+        .from("POSITION")
+        .select("posName")
+        .eq("posId", existingUser.posId)
+        .maybeSingle();
+      const role = pos?.posName?.toLowerCase();
+      if (role === "teacher" || role === "professor") {
+        window.location.href = "../teacher/t.dashb.html";
+      } else {
+        window.location.href = "../student/s.dashb.html";
+      }
+    } else {
+      // New user — go through profiling
+      window.location.href = "profiling.html";
+    }
   });
 }
 

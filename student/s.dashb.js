@@ -189,14 +189,85 @@ if (createAddGroupBtn) {
         if (!groupName || !subjectName) return;
         showConfirmation(
             `Are you sure you want to create the group "${groupName}"?`,
-            () => {
-                const newGroup = {
+            async () => {
+                const supabase = window.hiveSupabase;
+                if (!supabase) {
+                    alert("Cannot connect to database. Please refresh and try again.");
+                    return;
+                }
+
+                // 1. Get the currently logged-in user
+                const { data: { user }, error: userErr } = await supabase.auth.getUser();
+                if (!user || userErr) {
+                    alert("You must be logged in to create a group.");
+                    return;
+                }
+
+                // 2. Get the user's progId from the USER table
+                const { data: userData, error: profileErr } = await supabase
+                    .from("USER")
+                    .select("progId")
+                    .eq("userId", user.id)
+                    .maybeSingle();
+
+                if (profileErr || !userData) {
+                    alert("Could not load your profile. Please try again.");
+                    return;
+                }
+
+                // 3. Insert the new group into GROUP table
+                //    grpName = group name, progId from user's profile
+                const { data: newGroup, error: grpErr } = await supabase
+                    .from("GROUP")
+                    .insert({
+                        grpName: groupName,
+                        progId: userData.progId || null
+                    })
+                    .select("grpId")
+                    .single();
+
+                if (grpErr || !newGroup) {
+                    alert("Failed to create group: " + (grpErr?.message || "Unknown error"));
+                    return;
+                }
+
+                // 4. Get the "Leader" roleId from the ROLE table
+                const { data: leaderRole, error: roleErr } = await supabase
+                    .from("ROLE")
+                    .select("roleId")
+                    .eq("roleName", "Leader")
+                    .maybeSingle();
+
+                if (roleErr || !leaderRole) {
+                    alert("Could not find Leader role. Please contact your administrator.");
+                    // Rollback: delete the group we just created
+                    await supabase.from("GROUP").delete().eq("grpId", newGroup.grpId);
+                    return;
+                }
+
+                // 5. Insert the creator into GROUPMEMBER as Leader
+                const { error: memErr } = await supabase
+                    .from("GROUPMEMBER")
+                    .insert({
+                        userId: user.id,
+                        grpId: newGroup.grpId,
+                        roleId: leaderRole.roleId
+                    });
+
+                if (memErr) {
+                    alert("Group created but failed to assign Leader role: " + memErr.message);
+                    return;
+                }
+
+                // 6. Update local dashboard display
+                const localGroup = {
                     name: groupName,
                     subject: subjectName,
-                    members: 1
+                    members: 1,
+                    grpId: newGroup.grpId
                 };
                 if (!dashbData.ownedGroups) dashbData.ownedGroups = [];
-                dashbData.ownedGroups.push(newGroup);
+                dashbData.ownedGroups.push(localGroup);
                 saveDashbData(dashbData);
                 applyDashbData(dashbData);
                 closeAddGroupModal();

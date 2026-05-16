@@ -101,10 +101,6 @@ button {
     margin: 2px 0;
     font-size: 11px;
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 4px;
 }
 
 .profile-link {
@@ -267,8 +263,12 @@ button {
 
 .member-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+    align-items: stretch;
+    grid-auto-rows: 1fr;
+    width: 100%;
+    max-width: 100%;
 }
 
 .circle-avatar {
@@ -305,6 +305,15 @@ button {
 .member-info {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.member-card {
+    min-height: 102px;
+    height: 100%;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .member-details h3 {
@@ -323,7 +332,7 @@ button {
 
 .stats {
     text-align: right;
-    flex: 0 0 auto;
+    flex: 0 0 96px;
 }
 
 .stats p {
@@ -595,6 +604,24 @@ body {
     }
 }
 
+/* Confirmation modal overlay */
+#confirmationModalOverlay.modal-overlay,
+#memberNoticeModalOverlay.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 3000;
+}
+
+#confirmationModalOverlay.modal-overlay.open,
+#memberNoticeModalOverlay.modal-overlay.open {
+    display: flex;
+}
+
 /* Confirmation Modal Styles */
 .confirmation-modal {
     width: min(100%, 420px);
@@ -631,6 +658,30 @@ body {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+#confirmationModalOverlay .modal-btn,
+#memberNoticeModalOverlay .modal-btn {
+    border: none;
+    min-height: 34px;
+    border-radius: 999px;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+#confirmationModalOverlay .discard-btn,
+#memberNoticeModalOverlay .discard-btn {
+    background: #111111;
+    color: #ffffff;
+}
+
+#confirmationModalOverlay .post-btn,
+#memberNoticeModalOverlay .post-btn {
+    background: #ffcc00;
+    color: #111111;
 }
 
 /* Keep sidebar Settings and Log Out buttons square */

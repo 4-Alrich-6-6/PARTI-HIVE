@@ -1,292 +1,190 @@
 const topBackBtn = document.querySelector("#topBackBtn");
 const backToCategoriesBtn = document.querySelector("#backToCategoriesBtn");
 const groupInfoTab = document.querySelector("#groupInfoTab");
-const task1Badge = document.querySelector("#task1-badge");
-const memberVerifyOverlay = document.querySelector("#memberVerifyOverlay");
-const memberVerifyConfirmBtn = document.querySelector("#memberVerifyConfirmBtn");
-const memberVerifyCancelBtn = document.querySelector("#memberVerifyCancelBtn");
-const pauseVerifyChoiceOverlay = document.querySelector("#pauseVerifyChoiceOverlay");
-const pauseVerifyPauseBtn = document.querySelector("#pauseVerifyPauseBtn");
-const pauseVerifyVerifyBtn = document.querySelector("#pauseVerifyVerifyBtn");
-const pauseVerifyCloseBtn = document.querySelector("#pauseVerifyCloseBtn");
-const closePopupBtn = document.querySelector("#closePopupBtn");
-const overlay = document.querySelector("#overlay");
+const logoutBtn = document.querySelector(".logout");
 
-const popupTaskName = document.querySelector(".popup-task-name");
-const popupDescText = document.querySelector(".popup-desc-text");
-const popupResourcesText = document.querySelector(".popup-resources-text");
-const popupAssignees = document.querySelector(".popup-assignees");
-const popupDueDate = document.querySelector("#popupDueDate");
-const popupDueTime = document.querySelector("#popupDueTime");
-const popupIntensity = document.querySelector("#popupIntensity");
-const popupPriority = document.querySelector("#popupPriority");
-const popupTimeActive = document.querySelector("#popupTimeActive");
-const popupStatusDisplay = document.querySelector("#popupStatusDisplay");
-const statusOptions = document.querySelector(".status-options");
+const supa = () => window.hiveSupabase;
 
-const STORAGE_KEY_TASKS = "hive_leader_tasks";
-const STORAGE_KEY_TASK_STATUS = "hive_member_task1_status";
-const STORAGE_KEY_TASK_DUE = "hive_member_task1_due";
+const getGrpId = () => 
+    new URLSearchParams(window.location.search).get("grpId") ||
+    sessionStorage.getItem("hive_grpId");
 
-const STATUS_TEXT = {
-    inactive: "Not Active",
-    active: "Active",
-    pause: "On Break",
-    verifying: "Verifying",
-    finished: "Finished",
-    missing: "Missing"
+const getProjId = () => 
+    new URLSearchParams(window.location.search).get("projId") ||
+    sessionStorage.getItem("hive_selected_project");
+
+const getCurrentUserId = async () => {
+    const { data: { user } } = await supa().auth.getUser();
+    return user?.id || null;
 };
+
+const STAT_SLUG = { 1: "inactive", 2: "active", 3: "pause", 4: "verifying", 5: "finished", 6: "missing" };
+const STATUS_TEXT = { inactive: "Not Active", active: "Active", pause: "On Break", verifying: "Verifying", finished: "Finished", missing: "Missing" };
 
 const isTerminal = (s) => s === "finished" || s === "missing";
+const isPastDue = (t) => !(!t.dueDate || !t.dueTime) && Date.now() > new Date(`${t.dueDate}T${t.dueTime}`).getTime();
 
-const loadTasks = () => {
-    const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-    return saved ? JSON.parse(saved) : [];
-};
-
-const saveTasks = (tasks) => {
-    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-};
-
-const formatTime12h = (timeStr) => {
-    if (!timeStr) return "##:## AM";
-    const [h, m] = timeStr.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
+const formatTime12h = (t) => {
+    if (!t) return "##:## AM";
+    const [h, m] = t.split(":").map(Number);
+    const ap = h >= 12 ? "PM" : "AM";
     const h12 = h % 12 || 12;
-    return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${ampm}`;
+    return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${ap}`;
 };
 
 const formatElapsedTime = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours}h ${minutes}m ${seconds}s`;
+    const s = Math.floor((ms || 0) / 1000);
+    return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ${s % 60}s`;
 };
 
-const updateTaskTimer = (task, taskIndex) => {
-    const currentStatus = task.status || "inactive";
-    const now = Date.now();
-    
-    if (!task.elapsedTime) task.elapsedTime = 0;
-    
-    if (currentStatus === "active") {
-        if (task.lastActiveTimestamp) {
-            const elapsed = now - task.lastActiveTimestamp;
-            task.elapsedTime += elapsed;
-        }
-        task.lastActiveTimestamp = now;
-    } else {
-        task.lastActiveTimestamp = null;
-    }
-    
-    const tasks = loadTasks();
-    if (tasks[taskIndex]) {
-        tasks[taskIndex].elapsedTime = task.elapsedTime;
-        tasks[taskIndex].lastActiveTimestamp = task.lastActiveTimestamp;
-        saveTasks(tasks);
-    }
-    
-    return task.elapsedTime;
+const loadTasks = async () => {
+    const projId = getProjId();
+    if (!projId) return [];
+    const { data, error } = await supa()
+        .from("TASK")
+        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskSpan, taskAcmD, statId, GROUPMEMBER(grpmemId, userId, USER(userDisplayName))")
+        .eq("projId", Number(projId));
+    if (error || !data) return [];
+    return data.map(t => ({
+        taskId: t.taskId,
+        name: t.taskName,
+        description: t.taskDesc || "",
+        dueDate: t.taskDueD ? t.taskDueD.split("T")[0] : "",
+        dueTime: t.taskDueD ? t.taskDueD.split("T")[1]?.slice(0, 5) : "",
+        intensity: t.taskIntensity || "Light",
+        priority: t.taskPrio || "Low",
+        resources: t.taskResource || "",
+        spanMs: intervalToMs(t.taskSpan),
+        acmD: t.taskAcmD || null,
+        status: STAT_SLUG[t.statId] || "inactive",
+        statId: t.statId || 1,
+        assignees: Object.values(
+            (t.GROUPMEMBER || []).reduce((seen, m) => {
+                if (!seen[m.userId]) seen[m.userId] = { grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" };
+                return seen;
+            }, {})
+        )
+    }));
 };
 
-let activeTaskIndex = null;
-
-const openTaskDetails = (taskIndex) => {
-    if (!overlay) return;
-    const tasks = loadTasks();
-    const task = tasks[taskIndex];
-    if (!task) return;
-    activeTaskIndex = taskIndex;
-    if (popupTaskName) popupTaskName.textContent = task.name || "";
-    if (popupDescText) popupDescText.textContent = task.description || "None";
-    if (popupResourcesText) popupResourcesText.textContent = task.resources || "None";
-    if (popupAssignees) popupAssignees.textContent = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
-    if (popupDueDate) popupDueDate.textContent = task.dueDate || "N/A";
-    if (popupDueTime) popupDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";
-    if (popupIntensity) popupIntensity.textContent = task.intensity || "Light";
-    if (popupPriority) popupPriority.textContent = task.priority || "Low";
-    if (popupStatusDisplay) {
-        const currentStatus = task.status || "inactive";
-        popupStatusDisplay.textContent = STATUS_TEXT[currentStatus] || currentStatus;
-        popupStatusDisplay.className = `task-status ${currentStatus}`;
+const intervalToMs = (interval) => {
+    if (!interval) return 0;
+    const match = interval.match(/(?:(\d+) days? ?)?(\d+):(\d+):(\d+)/);
+    if (match) {
+        const days = parseInt(match[1] || 0);
+        const h = parseInt(match[2]);
+        const m = parseInt(match[3]);
+        const s = parseInt(match[4]);
+        return ((days * 86400) + (h * 3600) + (m * 60) + s) * 1000;
     }
-    if (popupTimeActive) {
-        const elapsedTime = updateTaskTimer(task, taskIndex);
-        popupTimeActive.textContent = formatElapsedTime(elapsedTime);
-    }
-    if (statusOptions) {
-        const currentStatus = task.status || "inactive";
-        const buttons = statusOptions.querySelectorAll(".status-opt");
-        buttons.forEach(btn => {
-            btn.classList.toggle("selected", btn.dataset.status === currentStatus);
-        });
-    }
-    overlay.classList.add("open");
+    const secMatch = interval.match(/(\d+(?:\.\d+)?)\s*seconds?/);
+    if (secMatch) return Math.floor(parseFloat(secMatch[1]) * 1000);
+    return 0;
 };
 
-const closeTaskDetails = () => {
-    if (overlay) overlay.classList.remove("open");
-    activeTaskIndex = null;
+const getTotalElapsedMs = (task) => {
+    let total = task.spanMs || 0;
+    if ((task.status === "active") && task.acmD) {
+        total += Date.now() - new Date(task.acmD).getTime();
+    }
+    return total;
 };
 
-const renderTask = (task, taskIndex, isOwnTask, targetSection) => {
-    if (!targetSection) return;
-    const assigneeList = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
-    const timeDisplay = formatTime12h(task.dueTime);
-    const dateDisplay = task.dueDate || "##/##/####";
-    let status = task.status || "inactive";
+const renderTask = async (task, idx, isOwnTask, target, currentUserId) => {
+    if (!target) return;
+    if (!isTerminal(task.status) && task.status !== "verifying" && isPastDue(task)) {
+        task.status = "missing";
+    }
+    const assigneeNames = task.assignees.map(a => a.name).join(", ") || "None";
+    const status = task.status || "inactive";
     const article = document.createElement("article");
-    article.className = "task-card task-card-clickable";
-    const priority = (task.priority || "Low").toLowerCase();
-    if (priority === "high") article.style.backgroundColor = "#FF8383";
-    else if (priority === "medium") article.style.backgroundColor = "#FFC193";
+    article.className = "task-card";
+    const timeHtml = status === "active"
+        ? `<span class="task-time-active" data-task-id="${task.taskId}" data-acm-d="${task.acmD || ""}" data-span-ms="${task.spanMs || 0}">${formatElapsedTime(getTotalElapsedMs(task))}</span>`
+        : (task.spanMs > 0 ? `<span class="task-time-active">${formatElapsedTime(task.spanMs)}</span>` : "");
     article.innerHTML = `
         <div class="task-left">
             <h3>Task: ${task.name}</h3>
-            <p>
-                Assignee(s):
-                <span class="assignee-info-wrap">
-                    <img class="assignee-info-icon" src="../../assets/Info.png" alt="Info icon">
-                    <span class="assignee-tooltip">${assigneeList}</span>
-                </span>
-                &nbsp; Due Date: ${timeDisplay} -- ${dateDisplay}
-            </p>
+            <p>Assignee(s): <span class="assignee-info-wrap"><img class="assignee-info-icon" src="../../assets/Info.png" alt="Info"><span class="assignee-tooltip">${assigneeNames}</span></span> &nbsp; Due Date: ${formatTime12h(task.dueTime)} -- ${task.dueDate || "##/##/####"}</p>
+            ${timeHtml}
         </div>
         <div class="task-actions">
-            <button class="task-status ${status}" type="button">${STATUS_TEXT[status] || status}</button>
-        </div>
-    `;
-    const statusBtn = article.querySelector(".task-status");
-    if (isOwnTask && !isTerminal(status)) {
-        statusBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (status === "inactive") updateTaskStatus(taskIndex, "active");
-            else if (status === "active") {
-                activeTaskIndex = taskIndex;
-                openPauseVerifyChoice(() => updateTaskStatus(taskIndex, "pause"), () => openVerifyModal());
-            } else if (status === "pause") updateTaskStatus(taskIndex, "active");
+            <button class="task-status ${status}" type="button" disabled>${STATUS_TEXT[status] || status}</button>
+        </div>`;
+    target.appendChild(article);
+};
+
+const renderAllTasks = async (currentUserId) => {
+    const tasks = await loadTasks();
+    const yl = document.querySelector("#yourTasksList");
+    const ol = document.querySelector("#otherTasksList");
+    if (yl) yl.innerHTML = "";
+    if (ol) ol.innerHTML = "";
+    let own = 0, other = 0, verify = 0;
+    for (let i = 0; i < tasks.length; i++) {
+        const t = tasks[i];
+        const mine = t.assignees.some(a => a.userId === currentUserId);
+        await renderTask(t, i, mine, mine ? yl : ol, currentUserId);
+        if (mine) own++;
+        else other++;
+        if (t.status === "verifying") verify++;
+    }
+    if (yl && own === 0) yl.innerHTML = `<div class="empty-state"><img src="../../assets/Plus.png" class="empty-state-icon"><h3>No Tasks Assigned</h3><p>You have no personal tasks assigned to this project yet.</p></div>`;
+    if (ol && other === 0) ol.innerHTML = `<div class="empty-state"><img src="../../assets/Plus.png" class="empty-state-icon"><h3>No Other Tasks</h3><p>There are no other tasks currently listed for this project.</p></div>`;
+    const sc = document.querySelectorAll(".summary-card h3");
+    if (sc[0]) sc[0].textContent = own;
+    if (sc[1]) sc[1].textContent = other;
+    if (sc[2]) sc[2].textContent = verify;
+};
+
+if (!window._globalTaskTicker) {
+    window._globalTaskTicker = setInterval(() => {
+        document.querySelectorAll(".task-time-active[data-task-id]").forEach(el => {
+            const acmD = el.dataset.acmD;
+            const spanMs = Number(el.dataset.spanMs || 0);
+            if (!acmD) return;
+            const total = spanMs + (Date.now() - new Date(acmD).getTime());
+            el.textContent = formatElapsedTime(total);
         });
-    } else {
-        statusBtn.disabled = true;
-    }
-    article.addEventListener("click", () => openTaskDetails(taskIndex));
-    targetSection.appendChild(article);
-};
+    }, 1000);
+}
 
-const updateTaskStatus = (taskIndex, newStatus) => {
-    const tasks = loadTasks();
-    if (tasks[taskIndex]) {
-        tasks[taskIndex].status = newStatus;
-        updateTaskTimer(tasks[taskIndex], taskIndex);
-        saveTasks(tasks);
-        renderAllTasks();
-    }
-};
-
-const renderAllTasks = () => {
-    const yourTasksList = document.querySelector("#yourTasksList");
-    const otherTasksList = document.querySelector("#otherTasksList");
-    if (yourTasksList) yourTasksList.innerHTML = "";
-    if (otherTasksList) otherTasksList.innerHTML = "";
-    const tasks = loadTasks();
-    let ownCount = 0;
-    let otherCount = 0;
-    let pendingCount = 0;
-    tasks.forEach((task, index) => {
-        const isOwnTask = task.assignees && task.assignees.some(a => a.toLowerCase().includes("person 2") || a.toLowerCase().includes("you"));
-        const target = isOwnTask ? yourTasksList : otherTasksList;
-        renderTask(task, index, isOwnTask, target);
-        if (isOwnTask) ownCount++;
-        else otherCount++;
-        if (task.status === "verifying") pendingCount++;
-    });
-
-    if (yourTasksList && ownCount === 0) {
-        yourTasksList.innerHTML = `
-            <div class="empty-state">
-                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
-                <h3>No Tasks Assigned</h3>
-                <p>You have no personal tasks assigned to this project yet.</p>
-            </div>
-        `;
-    }
-    if (otherTasksList && otherCount === 0) {
-        otherTasksList.innerHTML = `
-            <div class="empty-state">
-                <img src="../../assets/Plus.png" class="empty-state-icon" alt="No tasks">
-                <h3>No Other Tasks</h3>
-                <p>There are no other tasks currently listed for this project.</p>
-            </div>
-        `;
-    }
-
-    const summaryH3s = document.querySelectorAll(".summary-card h3");
-    if (summaryH3s[0]) summaryH3s[0].textContent = ownCount;
-    if (summaryH3s[1]) summaryH3s[1].textContent = otherCount;
-    if (summaryH3s[2]) summaryH3s[2].textContent = pendingCount;
-};
-
-let pauseVerifyCallback = null;
-const openPauseVerifyChoice = (onPause, onVerify) => {
-    pauseVerifyCallback = { onPause, onVerify };
-    if (pauseVerifyChoiceOverlay) {
-        pauseVerifyChoiceOverlay.classList.add("open");
-        pauseVerifyChoiceOverlay.setAttribute("aria-hidden", "false");
-    }
-};
-
-const closePauseVerifyChoice = () => {
-    if (pauseVerifyChoiceOverlay) {
-        pauseVerifyChoiceOverlay.classList.remove("open");
-        pauseVerifyChoiceOverlay.setAttribute("aria-hidden", "true");
-    }
-    pauseVerifyCallback = null;
-};
-
-const openVerifyModal = () => {
-    if (memberVerifyOverlay) {
-        memberVerifyOverlay.classList.add("open");
-        memberVerifyOverlay.setAttribute("aria-hidden", "false");
-    }
-};
-
-const closeVerifyModal = () => {
-    if (memberVerifyOverlay) {
-        memberVerifyOverlay.classList.remove("open");
-        memberVerifyOverlay.setAttribute("aria-hidden", "true");
-    }
-};
-
-if (memberVerifyConfirmBtn) {
-    memberVerifyConfirmBtn.addEventListener("click", () => {
-        if (activeTaskIndex !== null) updateTaskStatus(activeTaskIndex, "verifying");
-        closeVerifyModal();
+if (topBackBtn) {
+    topBackBtn.addEventListener("click", () => {
+        window.location.href = "../s.dashb.html";
     });
 }
 
-if (memberVerifyCancelBtn) memberVerifyCancelBtn.addEventListener("click", closeVerifyModal);
-if (closePopupBtn) closePopupBtn.addEventListener("click", closeTaskDetails);
-if (overlay) overlay.addEventListener("click", (e) => { if (e.target === overlay) closeTaskDetails(); });
-if (memberVerifyOverlay) memberVerifyOverlay.addEventListener("click", (e) => { if (e.target === memberVerifyOverlay) closeVerifyModal(); });
-if (pauseVerifyPauseBtn) pauseVerifyPauseBtn.addEventListener("click", () => { if (pauseVerifyCallback && pauseVerifyCallback.onPause) pauseVerifyCallback.onPause(); closePauseVerifyChoice(); });
-if (pauseVerifyVerifyBtn) pauseVerifyVerifyBtn.addEventListener("click", () => { if (pauseVerifyCallback && pauseVerifyCallback.onVerify) pauseVerifyCallback.onVerify(); closePauseVerifyChoice(); });
-if (pauseVerifyCloseBtn) pauseVerifyCloseBtn.addEventListener("click", closePauseVerifyChoice);
-if (pauseVerifyChoiceOverlay) pauseVerifyChoiceOverlay.addEventListener("click", (e) => { if (e.target === pauseVerifyChoiceOverlay) closePauseVerifyChoice(); });
-if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "../.dashb.html"; });
-if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "s.membergrpviewing.html"; });
-if (backToCategoriesBtn) backToCategoriesBtn.addEventListener("click", () => { window.location.href = "s.membercategory.html"; });
+if (backToCategoriesBtn) {
+    backToCategoriesBtn.addEventListener("click", () => {
+        window.location.href = "s.membercategory.html";
+    });
+}
 
-const logoutBtn = document.querySelector(".logout");
-if (logoutBtn) logoutBtn.addEventListener("click", () => {
-    showConfirmation("Are you sure you want to log out?", () => { window.location.href = "../../auth/log-sign.html"; }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
+if (groupInfoTab) {
+    groupInfoTab.addEventListener("click", () => {
+        const grpId = getGrpId();
+        window.location.href = grpId ? `s.membergrpviewing.html?grpId=${grpId}` : "s.membergrpviewing.html";
+    });
+}
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        showConfirmation(
+            "Are you sure you want to log out?",
+            () => {
+                window.location.href = "../../auth/log-sign.html";
+            },
+            {
+                title: "Log Out",
+                confirmText: "Log Out",
+                cancelText: "Cancel",
+            }
+        );
+    });
+}
+
+window.addEventListener("load", async () => {
+    const currentUserId = await getCurrentUserId();
+    await renderAllTasks(currentUserId);
 });
-
-const loadAndDisplayProjectName = () => {
-    const projectName = localStorage.getItem("hive_selected_project_name");
-    const projectNameDisplay = document.querySelector(".project-name-display h2");
-    if (projectName && projectNameDisplay) projectNameDisplay.textContent = projectName;
-};
-
-loadAndDisplayProjectName();
-renderAllTasks();

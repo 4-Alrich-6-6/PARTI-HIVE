@@ -101,10 +101,6 @@ button {
     margin: 2px 0;
     font-size: 11px;
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 4px;
 }
 
 .profile-link {
@@ -1092,5 +1088,114 @@ body {
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ===== QUICK FIX: STICKY NAVBAR + ALIGNED CARDS ===== */
+
+/* sticky top navbar */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+}
+
+/* prevent right/left panels from scrolling away weirdly */
+.sidebar,
+.right-rail {
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+}
+
+/* main content alignment */
+.main-content {
+    width: 100%;
+}
+
+/* make stats and task sections use same center width */
+.summary-row,
+.project-name-display,
+.section-title-wrap,
+#yourTasksList,
+#otherTasksList,
+#tasksList,
+.task-card {
+    width: min(100%, 900px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* stats cards aligned properly */
+.summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    justify-content: center;
+    margin-bottom: 28px;
+}
+
+/* task cards same width as stats */
+.task-card {
+    box-sizing: border-box;
+}
+
+/* empty state box same width as cards */
+.empty-state {
+    width: min(100%, 900px);
+    min-height: 120px;
+    border: 3px solid #111;
+    background: #f7fff7;
+}
+
+/* keep section title aligned with cards */
+.section-title-wrap {
+    margin-top: 18px;
+    margin-bottom: 12px;
+}
+
+/* fix main padding so content does not look too far left */
+.main-content-container {
+    padding-left: 28px;
+    padding-right: 28px;
+}
+
+/* make right buttons sticky too */
+.right-rail {
+    padding-top: 16px;
+}
+
+/* mobile fix */
+@media (max-width: 900px) {
+    .topbar {
+        position: sticky;
+        top: 0;
+    }
+
+    .sidebar,
+    .right-rail {
+        position: static;
+        height: auto;
+    }
+
+    .main-content-container {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .summary-row {
+        width: 100%;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .task-card,
+    .empty-state,
+    .section-title-wrap,
+    #yourTasksList,
+    #otherTasksList,
+    #tasksList {
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
     }
 }

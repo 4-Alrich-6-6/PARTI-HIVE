@@ -119,7 +119,8 @@ const loadGroupFromDB = async () => {
 /* ── FETCH MEMBER TASK STATS ──────────────────────────────────────────────── */
 const getMemberTaskStats = async (member) => {
   const supabase = getSupabase();
-  if (!supabase) return { total: 0, completed: 0, pending: 0, missed: 0 };
+  const grpId = getGroupId();
+  if (!supabase || !grpId) return { total: 0, completed: 0, pending: 0, missed: 0 };
 
   try {
     // Get status IDs
@@ -129,11 +130,12 @@ const getMemberTaskStats = async (member) => {
 
     const pendingStatusId = statuses?.find(s => normalizeText(s.statName) === "pending")?.statId;
 
-    // Get all taskIds for this member (from GROUPMEMBER)
+    // Get all taskIds for this member in this specific group
     const { data: memberTasks } = await supabase
       .from("GROUPMEMBER")
       .select("taskId")
       .eq("userId", member.userId)
+      .eq("grpId", grpId)
       .not("taskId", "is", null);
 
     if (!memberTasks || memberTasks.length === 0) {
@@ -338,16 +340,17 @@ const leaveGroup = async () => {
   const grpId = getGroupId();
 
   const { data: leaderRole } = await supabase.from("ROLE").select("roleId").eq("roleName", "Leader").maybeSingle();
-  const { data: memberRole  } = await supabase.from("ROLE").select("roleId").eq("roleName", "Member").maybeSingle();
 
+  // Promote the selected member to leader
   await supabase.from("GROUPMEMBER")
     .update({ roleId: leaderRole?.roleId })
     .eq("userId", newLeaderUserId).eq("grpId", grpId);
 
+  // Remove the current user (old leader) completely from the group
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     await supabase.from("GROUPMEMBER")
-      .update({ roleId: memberRole?.roleId })
+      .delete()
       .eq("userId", user.id).eq("grpId", grpId);
   }
 

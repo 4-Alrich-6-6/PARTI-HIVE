@@ -15,8 +15,134 @@ const getGroupId = () => {
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();
 
-const truncateEmail = (email, maxLen = 25) => {
-  return email && email.length > maxLen ? email.slice(0, maxLen) + "..." : email;
+const escapeHTML = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+}[char]));
+
+const shortenText = (value, max = 14) => {
+  const text = String(value || "");
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+};
+
+const renderShortText = (value, max = 14) =>
+  `<span title="${escapeHTML(value)}">${escapeHTML(shortenText(value, max))}</span>`;
+
+const shortenName = (value, max = 8) => {
+  const text = String(value || "");
+  if (text.length <= max) return text;
+  const firstWord = text.trim().split(/\s+/)[0] || text;
+  return `${firstWord.slice(0, max).trim()}...`;
+};
+
+const renderShortName = (value, max = 8) =>
+  `<span title="${escapeHTML(value)}">${escapeHTML(shortenName(value, max))}</span>`;
+
+const shortenEmail = (email, max = 16) => {
+  const value = String(email || "");
+  return value.length > max ? `${value.slice(0, max)}...` : value;
+};
+
+const renderEmail = (email) => `<span title="${escapeHTML(email)}">${escapeHTML(shortenEmail(email))}</span>`;
+
+const safeConfirm = (message, onConfirm, options = {}) => {
+  if (typeof showConfirmation === "function") {
+    showConfirmation(message, onConfirm, options);
+    return;
+  }
+  if (confirm(message)) onConfirm();
+};
+
+const showNotice = (message, options = {}) => {
+  const { title = "Notice", okText = "OK" } = options;
+  let modal = document.querySelector("#memberNoticeModalOverlay");
+
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "memberNoticeModalOverlay";
+    modal.className = "modal-overlay";
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="memberNoticeTitle">
+        <div class="confirmation-modal-header">
+          <h2 id="memberNoticeTitle"></h2>
+        </div>
+        <div class="confirmation-modal-body">
+          <p class="confirmation-message"></p>
+        </div>
+        <div class="confirmation-modal-actions">
+          <button type="button" class="modal-btn post-btn" id="memberNoticeOkBtn"></button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const titleEl = modal.querySelector("#memberNoticeTitle");
+  const messageEl = modal.querySelector(".confirmation-message");
+  const okBtn = modal.querySelector("#memberNoticeOkBtn");
+
+  if (titleEl) titleEl.textContent = title;
+  if (messageEl) messageEl.textContent = message;
+  if (okBtn) okBtn.textContent = okText;
+
+  const closeNotice = () => {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    okBtn?.removeEventListener("click", closeNotice);
+  };
+
+  okBtn?.addEventListener("click", closeNotice);
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+};
+
+const roleRank = (roleName) => ({ teacher: 3, leader: 2, member: 1 }[normalizeText(roleName)] || 0);
+
+const uniqueMembersByUser = (members) => {
+  const byUser = new Map();
+  members.forEach((member) => {
+    const key = member.userId || member.grpmemId;
+    const existing = byUser.get(key);
+    if (!existing || roleRank(member.roleName) > roleRank(existing.roleName)) {
+      byUser.set(key, member);
+    }
+  });
+  return Array.from(byUser.values());
+};
+
+const getProjectCountForGroup = async (supabase, grpId, grp) => {
+  const projectIds = new Set();
+
+  if (grp?.progId) {
+    const { data } = await supabase
+      .from("PROJECT")
+      .select("progId")
+      .eq("progId", grp.progId);
+    (data || []).forEach((project) => projectIds.add(project.progId));
+  }
+
+  const { data: taskLinks } = await supabase
+    .from("GROUPMEMBER")
+    .select("taskId")
+    .eq("grpId", grpId)
+    .not("taskId", "is", null);
+
+  const taskIds = Array.from(new Set((taskLinks || []).map((row) => row.taskId).filter(Boolean)));
+  if (taskIds.length) {
+    const { data: tasks } = await supabase
+      .from("TASK")
+      .select("projId")
+      .in("taskId", taskIds);
+    (tasks || []).forEach((task) => {
+      if (task.projId) projectIds.add(task.projId);
+    });
+  }
+
+  return projectIds.size;
 };
 
 /* ── DB LOAD ──────────────────────────────────────────────────────────────── */
@@ -50,7 +176,7 @@ const loadGroupFromDB = async () => {
     return;
   }
 
-  const allMembers = members.map((m) => ({
+  const allMemberRows = members.map((m) => ({
     grpmemId: m.grpmemId,
     userId:   m.userId,
     roleId:   m.roleId,
@@ -59,16 +185,9 @@ const loadGroupFromDB = async () => {
     email:    m.USER?.userEmail         || "No email",
     avatarPath: m.USER?.avatarPath      || null,
   }));
+  const allMembers = uniqueMembersByUser(allMemberRows);
 
-  // 3. Project count — FIX: PROJECT has no grpId column; link through GROUP.progId
-  let projCount = 0;
-  if (grp?.progId) {
-    const { count } = await supabase
-      .from("PROJECT")
-      .select("progId", { count: "exact", head: true })
-      .eq("progId", grp.progId);
-    projCount = count || 0;
-  }
+  const projCount = await getProjectCountForGroup(supabase, grpId, grp);
 
   // 4. Summary cards
   const teachers   = allMembers.filter((m) => normalizeText(m.roleName) === "teacher");
@@ -85,21 +204,23 @@ const loadGroupFromDB = async () => {
 /* ── FETCH MEMBER TASK STATS ──────────────────────────────────────────────── */
 const getMemberTaskStats = async (member) => {
   const supabase = getSupabase();
-  if (!supabase) return { total: 0, completed: 0, pending: 0, missed: 0 };
+  const grpId = getGroupId();
+  if (!supabase || !grpId) return { total: 0, completed: 0, pending: 0, missed: 0 };
 
   try {
-    // Get all taskIds for this member (from GROUPMEMBER)
+    // Get all taskIds for this member in this specific group
     const { data: memberTasks } = await supabase
       .from("GROUPMEMBER")
       .select("taskId")
       .eq("userId", member.userId)
+      .eq("grpId", grpId)
       .not("taskId", "is", null);
 
     if (!memberTasks || memberTasks.length === 0) {
       return { total: 0, completed: 0, pending: 0, missed: 0 };
     }
 
-    const taskIds = memberTasks.map(mt => mt.taskId);
+    const taskIds = Array.from(new Set(memberTasks.map(mt => mt.taskId).filter(Boolean)));
 
     // Get full task details
     const { data: tasks } = await supabase
@@ -136,6 +257,7 @@ const getMemberTaskStats = async (member) => {
 
 /* ── RENDER MEMBERS ───────────────────────────────────────────────────────── */
 const createMemberCard = (member, cardClass, avatarSize) => {
+  const nameLimit = cardClass.includes("leader-card") ? 18 : 8;
   const avatarStyle = member.avatarPath 
     ? `style="background-image: url('${member.avatarPath}'); background-size: cover; background-position: center;"` 
     : "";
@@ -150,9 +272,9 @@ const createMemberCard = (member, cardClass, avatarSize) => {
     </div>
     <div class="member-details">
       <div class="member-info">
-        <h3>${member.fullName}</h3>
-        <p>${member.roleName}</p>
-        <p title="${member.email}">${truncateEmail(member.email)}</p>
+        <h3>${renderShortName(member.fullName, nameLimit)}</h3>
+        <p>${escapeHTML(member.roleName)}</p>
+        <p>${renderEmail(member.email)}</p>
       </div>
       <div class="stats">
         <p>Total Tasks: ${member.taskStats?.total || 0}</p>
@@ -190,7 +312,7 @@ const renderGroupMembers = async (members) => {
         ${!teacher || !teacher.avatarPath ? `<img src="../../assets/profile.png" alt="Teacher">` : ""}
       </div>
       <h3>${teacher
-        ? `${teacher.fullName}<br><small>${teacher.email}</small>`
+        ? `${renderShortText(teacher.fullName, 20)}<br><small>${renderEmail(teacher.email)}</small>`
         : "You currently have no teacher"
       }</h3>
     </article>
@@ -228,25 +350,84 @@ if (logoutBtn) {
   });
 }
 
+const sendLeaveRequest = async () => {
+  const supabase = getSupabase();
+  const grpId = getGroupId();
+  if (!grpId || !supabase) {
+    showNotice("Cannot connect to the group right now.", { title: "Ask to Leave" });
+    return;
+  }
+
+  if (leaveBtn) leaveBtn.disabled = true;
+
+  try {
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (!user || userErr) {
+      showNotice("You must be logged in to ask to leave.", { title: "Ask to Leave" });
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("USER")
+      .select("userDisplayName, userEmail")
+      .eq("userId", user.id)
+      .maybeSingle();
+
+    const { data: memberships, error: membershipErr } = await supabase
+      .from("GROUPMEMBER")
+      .select("grpmemId, taskId")
+      .eq("userId", user.id)
+      .eq("grpId", Number(grpId));
+
+    if (membershipErr || !memberships || memberships.length === 0) {
+      showNotice("Could not find your group membership.", { title: "Ask to Leave" });
+      return;
+    }
+
+    const ownMembership =
+      memberships.find((row) => row.taskId === null) ||
+      memberships[0];
+
+    const displayName = profile?.userDisplayName || profile?.userEmail || user.email || "A member";
+    const notification = {
+      notiTitle: "Leave Request",
+      notiBody: `${displayName} is asking to leave the group.`,
+      "notiDate&Time": new Date().toISOString(),
+      notiIsRead: false,
+      grpmemId: ownMembership.grpmemId,
+      grpId: Number(grpId)
+    };
+
+    let { error } = await supabase
+      .from("NOTIFICATION")
+      .insert(notification);
+
+    if (error && String(error.message || "").includes("notiDate")) {
+      const { ["notiDate&Time"]: _notiDateTime, ...notificationWithoutDate } = notification;
+      const retry = await supabase
+        .from("NOTIFICATION")
+        .insert(notificationWithoutDate);
+      error = retry.error;
+    }
+
+    if (error) {
+      console.error("Leave request notification failed:", error);
+      showNotice("Failed to send leave request: " + error.message, { title: "Ask to Leave" });
+      return;
+    }
+
+    showNotice("Leave request sent.", { title: "Ask to Leave" });
+  } finally {
+    if (leaveBtn) leaveBtn.disabled = false;
+  }
+};
+
 if (leaveBtn) {
   leaveBtn.addEventListener("click", () => {
-    showConfirmation(
-      "Are you sure you want to leave this group?",
-      async () => {
-        const supabase = getSupabase();
-        const grpId = getGroupId();
-        if (!grpId || !supabase) return;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { error } = await supabase
-          .from("GROUPMEMBER")
-          .delete()
-          .eq("userId", user.id)
-          .eq("grpId", grpId);
-        if (error) { alert("Failed to leave group: " + error.message); return; }
-        window.location.href = "../s.dashb.html";
-      },
-      { title: "Leave Group", confirmText: "Leave", cancelText: "Cancel" }
+    safeConfirm(
+      "Send a leave request to your group leader or teacher?",
+      sendLeaveRequest,
+      { title: "Ask to Leave", confirmText: "Send Request", cancelText: "Cancel" }
     );
   });
 }

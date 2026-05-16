@@ -31,16 +31,23 @@ const loadDashbData = async () => {
     for (const m of memberships) {
         const grp = m.GROUP;
         if (!grp) continue;
-        const { count: memberCount } = await supabase
+        
+        // Count members in the group - ensure grpId is a number
+        const grpId = Number(grp.grpId);
+        const { count: memberCount, error: countErr } = await supabase
             .from("GROUPMEMBER")
             .select("grpmemId", { count: "exact", head: true })
-            .eq("grpId", grp.grpId);
+            .eq("grpId", grpId);
+
+        if (countErr) {
+            console.error(`Error counting members for group ${grpId}:`, countErr);
+        }
 
         groups.push({
-            grpId: grp.grpId,
+            grpId: grpId,
             name: grp.grpName || "Unnamed Group",
             subject: grp.grpSubject || "",
-            members: memberCount || 0
+            members: (memberCount !== null && memberCount !== undefined) ? memberCount : 0
         });
     }
 
@@ -116,15 +123,29 @@ if (joinGroupBtn) {
                 const supabase = window.hiveSupabase;
                 if (!supabase) { alert("Cannot connect to database."); return; }
 
-                const grpId = Number(groupLink);
-                if (!grpId || isNaN(grpId)) { alert("Invalid group ID. Please enter the numeric group ID."); return; }
+                // Extract group ID from URL or use as-is if numeric
+                let grpId;
+                if (groupLink.includes("?invite=")) {
+                    // Extract from URL like: domain/student/join-group.html?invite=123
+                    const url = new URL(groupLink);
+                    grpId = Number(url.searchParams.get("invite"));
+                } else if (groupLink.includes("invite=")) {
+                    // Handle URL without full domain
+                    const match = groupLink.match(/invite=(\d+)/);
+                    grpId = match ? Number(match[1]) : Number(groupLink);
+                } else {
+                    // Assume it's just the numeric ID
+                    grpId = Number(groupLink);
+                }
+
+                if (!grpId || isNaN(grpId)) { alert("Invalid group link. Please enter a valid invite link or numeric group ID."); return; }
 
                 const { data: { user }, error: userErr } = await supabase.auth.getUser();
                 if (!user || userErr) { alert("You must be logged in."); return; }
 
                 const { data: grp, error: grpErr } = await supabase
                     .from("GROUP").select("grpId, grpName").eq("grpId", grpId).maybeSingle();
-                if (grpErr || !grp) { alert("Group not found."); return; }
+                if (grpErr || !grp) { alert("Group not found. Check the invite link and try again."); return; }
 
                 const { data: existing } = await supabase
                     .from("GROUPMEMBER").select("grpmemId").eq("userId", user.id).eq("grpId", grpId).maybeSingle();

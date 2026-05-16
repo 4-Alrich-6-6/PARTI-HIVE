@@ -27,29 +27,31 @@ const formatDueDate = (iso) => {
 
 let activeProjectItem = null;
 
-// ── Get the progId for the current group ─────────────────────────────────
-const getProgId = async () => {
-    const grpId = getGrpId();
-    if (!grpId) return null;
-    const { data, error } = await supa()
-        .from("GROUP")
-        .select("progId")
-        .eq("grpId", Number(grpId))
-        .maybeSingle();
-    if (error || !data) return null;
-    return data.progId;
-};
 
-// ── Load projects from Supabase via progId ────────────────────────────────
+// ── Load projects from Supabase ───────────────────────────────────────────
 const loadProjects = async () => {
-    const progId = await getProgId();
-    if (!progId) return [];
     const { data, error } = await supa()
         .from("PROJECT")
-        .select("projId, projName")
-        .eq("progId", progId);
+        .select("projId, projName, projDueD");
     if (error || !data) return [];
-    return data.map(p => ({ key: String(p.projId), name: p.projName, projId: p.projId }));
+    
+    // Fetch task count for each project
+    const projectsWithCounts = await Promise.all(
+        data.map(async (p) => {
+            const { count } = await supa()
+                .from("TASK")
+                .select("taskId", { count: "exact", head: true })
+                .eq("projId", p.projId);
+            return {
+                key: String(p.projId),
+                name: p.projName,
+                projId: p.projId,
+                dueDate: p.projDueD || null,
+                count: count || 0
+            };
+        })
+    );
+    return projectsWithCounts;
 };
 
 // ── Create category card ──────────────────────────────────────────────────
@@ -96,7 +98,7 @@ const renderAllProjects = async () => {
         return;
     }
     projects.forEach(p => {
-        categoryList.appendChild(createCategoryItem(p.name, p.key, p.count || 0, p.dueDate));
+        categoryList.appendChild(createCategoryItem(p.name, p.key, p.count, p.dueDate));
     });
 };
 
@@ -122,13 +124,14 @@ const closeProjectOptions = () => {
 if (closeProjectOptionsBtn) closeProjectOptionsBtn.addEventListener("click", closeProjectOptions);
 if (projectOptionsOverlay) projectOptionsOverlay.addEventListener("click", (e) => { if (e.target === projectOptionsOverlay) closeProjectOptions(); });
 
-// ── Edit project name ─────────────────────────────────────────────────────
+// ── Edit project ──────────────────────────────────────────────────────────
 const saveProjectName = async () => {
     if (!activeProjectItem) return;
     const newName = editProjectNameInput ? editProjectNameInput.value.trim() : "";
+    const newDue  = editProjectDueDateInput ? editProjectDueDateInput.value : "";
     if (!newName) return;
     const projId = Number(activeProjectItem.dataset.category);
-    const { error } = await supa().from("PROJECT").update({ projName: newName }).eq("projId", projId);
+    const { error } = await supa().from("PROJECT").update({ projName: newName, projDueD: newDue || null }).eq("projId", projId);
     if (error) { alert("Failed to update project: " + error.message); return; }
     await renderAllProjects();
     closeProjectOptions();
@@ -193,12 +196,9 @@ if (postCategoryForm) {
         const due  = categoryDueDateInput.value;
         if (!name || !due || due < todayISO()) return;
         showConfirmation(`Are you sure you want to post the project "${name}"?`, async () => {
-            // Get the progId for this group — that's the FK on PROJECT
-            const progId = await getProgId();
-            if (!progId) { alert("Could not determine the program for this group. Please go back and try again."); return; }
             const { error } = await supa()
                 .from("PROJECT")
-                .insert({ projName: name, progId: Number(progId) });
+                .insert({ projName: name, projDueD: due });
             if (error) { alert("Failed to create project: " + error.message); return; }
             await renderAllProjects();
             postCategoryForm.reset();
@@ -209,7 +209,10 @@ if (postCategoryForm) {
 }
 
 if (topBackBtn)    topBackBtn.addEventListener("click",    () => { window.location.href = "../s.dashb.html"; });
-if (groupInfoTab)  groupInfoTab.addEventListener("click",  () => { window.location.href = "s.leadergrpviewing.html"; });
+if (groupInfoTab)  groupInfoTab.addEventListener("click",  () => {
+    const grpId = getGrpId();
+    window.location.href = `s.leadergrpviewing.html${grpId ? "?grpId=" + grpId : ""}`;
+});
 
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) logoutBtn.addEventListener("click", () => {

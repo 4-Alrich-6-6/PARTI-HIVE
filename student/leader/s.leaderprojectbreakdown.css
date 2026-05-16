@@ -1363,3 +1363,12 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.task-time-active {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #2a7a2a;
+    letter-spacing: 0.03em;
+}

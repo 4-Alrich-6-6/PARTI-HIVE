@@ -30,10 +30,10 @@ const loadProjects = async () => {
     if (!progId) return [];
     const { data, error } = await supa()
         .from("PROJECT")
-        .select("projId, projName")
+        .select("progId, projName, projDueD")
         .eq("progId", progId);
     if (error || !data) return [];
-    return data.map(p => ({ key: String(p.projId), name: p.projName, projId: p.projId }));
+    return data.map(p => ({ key: String(p.progId), name: p.projName, progId: p.progId, dueDate: p.projDueD || null }));
 };
 
 const createCategoryItem = (name, key, count, dueDate) => {
@@ -48,7 +48,7 @@ const createCategoryItem = (name, key, count, dueDate) => {
     `;
     const btn = categoryItem.querySelector(".category-main-btn");
     btn.addEventListener("click", () => {
-        sessionStorage.setItem("hive_selected_project", key);
+        sessionStorage.setItem("hive_selected_project", key);        // stores progId
         sessionStorage.setItem("hive_selected_project_name", name);
         window.location.href = "t.projectbreakdown.html";
     });

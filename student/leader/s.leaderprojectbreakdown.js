@@ -70,12 +70,12 @@ const applyStatusToBtn = (btn, status) => {
 };
 
 const loadTasks = async () => {
-    const projId = getProjId();
+    const projId = getProjId(); // now stores progId — the PK of PROJECT
     if (!projId) return [];
     const { data, error } = await supa()
         .from("TASK")
-        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, statId, GROUPMEMBER(grpmemId, userId, USER(userDisplayName))")
-        .eq("projId", projId);
+        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskSpan, taskAcmD, statId, GROUPMEMBER(grpmemId, userId, USER(userDisplayName))")
+        .eq("projId", Number(projId)); // TASK.projId FK references PROJECT.progId
     if (error || !data) return [];
     return data.map(t => ({
         taskId: t.taskId,
@@ -85,14 +85,77 @@ const loadTasks = async () => {
         dueTime: t.taskDueD ? t.taskDueD.split("T")[1]?.slice(0,5) : "",
         intensity: t.taskIntensity || "Light",
         priority: t.taskPrio || "Low",
+        resources: t.taskResource || "",
+        // taskSpan is stored as a Postgres interval string e.g. "01:23:45" or null
+        // Convert to milliseconds for JS arithmetic
+        spanMs: intervalToMs(t.taskSpan),
+        acmD: t.taskAcmD || null,   // ISO timestamp of last activation, or null
         status: STAT_SLUG[t.statId] || "inactive",
         statId: t.statId || 1,
-        assignees: (t.GROUPMEMBER || []).map(m => ({ grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" }))
+        assignees: Object.values(
+            (t.GROUPMEMBER || []).reduce((seen, m) => {
+                if (!seen[m.userId]) seen[m.userId] = { grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" };
+                return seen;
+            }, {})
+        )
     }));
 };
 
-const updateTaskStatus = async (taskId, slugStatus) => {
-    await supa().from("TASK").update({ statId: STAT_ID[slugStatus] || 1 }).eq("taskId", taskId);
+// Convert a Postgres interval string ("HH:MM:SS" or "X seconds" etc.) to milliseconds
+const intervalToMs = (interval) => {
+    if (!interval) return 0;
+    // Postgres returns interval as "HH:MM:SS" or "X days HH:MM:SS"
+    const match = interval.match(/(?:(\d+) days? ?)?(\d+):(\d+):(\d+)/);
+    if (match) {
+        const days = parseInt(match[1] || 0);
+        const h = parseInt(match[2]);
+        const m = parseInt(match[3]);
+        const s = parseInt(match[4]);
+        return ((days * 86400) + (h * 3600) + (m * 60) + s) * 1000;
+    }
+    // fallback: "X seconds"
+    const secMatch = interval.match(/(\d+(?:\.\d+)?)\s*seconds?/);
+    if (secMatch) return Math.floor(parseFloat(secMatch[1]) * 1000);
+    return 0;
+};
+
+// Convert milliseconds to a Postgres interval string "HH:MM:SS"
+const msToInterval = (ms) => {
+    const totalSec = Math.floor((ms || 0) / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+};
+
+// Get the current total elapsed ms for a task (accumulated + live segment if active)
+const getTotalElapsedMs = (task) => {
+    let total = task.spanMs || 0;
+    if ((task.status === "active") && task.acmD) {
+        total += Date.now() - new Date(task.acmD).getTime();
+    }
+    return total;
+};
+
+const updateTaskStatus = async (taskId, slugStatus, task) => {
+    const updates = { statId: STAT_ID[slugStatus] || 1 };
+    const now = new Date().toISOString();
+
+    if (slugStatus === "active") {
+        // Starting/resuming — record activation timestamp; don't touch accumulated span
+        updates.taskAcmD = now;
+    } else if (task && task.acmD && task.status === "active") {
+        // Stopping from active — accumulate elapsed time into taskSpan, clear activation time
+        const elapsed = Date.now() - new Date(task.acmD).getTime();
+        const newSpanMs = (task.spanMs || 0) + elapsed;
+        updates.taskSpan = msToInterval(newSpanMs);
+        updates.taskAcmD = null;
+        // Update in-memory task so UI reflects it immediately
+        task.spanMs = newSpanMs;
+        task.acmD = null;
+    }
+
+    await supa().from("TASK").update(updates).eq("taskId", taskId);
 };
 
 const loadGroupMembers = async () => {
@@ -100,7 +163,14 @@ const loadGroupMembers = async () => {
     if (!grpId) return [];
     const { data, error } = await supa().from("GROUPMEMBER").select("grpmemId, userId, USER(userDisplayName)").eq("grpId", grpId);
     if (error || !data) return [];
-    return data.map(m => ({ grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" }));
+    const seen = {};
+    return data.reduce((acc, m) => {
+        if (!seen[m.userId]) {
+            seen[m.userId] = true;
+            acc.push({ grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" });
+        }
+        return acc;
+    }, []);
 };
 
 const populateAssigneeCheckboxes = async (containerSelector, inputName, onChange) => {
@@ -134,7 +204,43 @@ if (pauseFinishCloseBtn)   pauseFinishCloseBtn.addEventListener("click",   close
 if (pauseFinishChoiceOverlay) pauseFinishChoiceOverlay.addEventListener("click", e => { if(e.target===pauseFinishChoiceOverlay) closePauseFinishChoice(); });
 
 const attachLeaderStatusBtn = (btn, task, isOwnTask) => {
-    const setStatus = async (s) => { task.status=s; await updateTaskStatus(task.taskId,s); applyStatusToBtn(btn,s); };
+    const setStatus = async (s) => {
+        await updateTaskStatus(task.taskId, s, task);
+        task.status = s;
+        if (s === "active") { task.acmD = new Date().toISOString(); }
+        else { task.acmD = null; }
+        applyStatusToBtn(btn, s);
+
+        // Update this card's timer span in-place so the global ticker
+        // immediately has the right data-acm-d / data-span-ms for THIS task only
+        const card = btn.closest("article");
+        const taskLeft = card?.querySelector(".task-left");
+        if (!taskLeft) return;
+        let timerEl = card.querySelector(`.task-time-active[data-task-id="${task.taskId}"]`);
+        if (s === "active") {
+            if (!timerEl) {
+                timerEl = document.createElement("span");
+                timerEl.className = "task-time-active";
+                timerEl.dataset.taskId = task.taskId;
+                taskLeft.appendChild(timerEl);
+            }
+            timerEl.dataset.acmD = task.acmD;
+            timerEl.dataset.spanMs = task.spanMs || 0;
+            timerEl.textContent = formatElapsedTime(getTotalElapsedMs(task));
+        } else {
+            // Remove the live ticker attribute so the global ticker stops ticking it
+            if (timerEl) {
+                delete timerEl.dataset.acmD;
+                timerEl.dataset.taskId = "";   // remove from ticker's querySelector
+                timerEl.dataset.spanMs = task.spanMs || 0;
+                if (task.spanMs > 0) {
+                    timerEl.textContent = formatElapsedTime(task.spanMs);
+                } else {
+                    timerEl.remove();
+                }
+            }
+        }
+    };
     btn.addEventListener("click", async e => {
         e.stopPropagation();
         const cur = task.status || "inactive";
@@ -161,7 +267,7 @@ const formatElapsedTime = (ms) => { const s=Math.floor((ms||0)/1000); return `${
 const renderTask = async (task, idx, isOwnTask, target) => {
     if (!target) return;
     if (!isTerminal(task.status) && task.status!=="verifying" && isPastDue(task)) {
-        task.status="missing"; await updateTaskStatus(task.taskId,"missing");
+        task.status="missing"; await updateTaskStatus(task.taskId,"missing",task);
     }
     const assigneeNames = task.assignees.map(a=>a.name).join(", ")||"None";
     const status = task.status||"inactive";
@@ -170,10 +276,14 @@ const renderTask = async (task, idx, isOwnTask, target) => {
     article.className="task-card task-card-clickable"; article.setAttribute("data-dynamic","true");
     if (priority==="high") article.style.backgroundColor="#FF8383";
     else if (priority==="medium") article.style.backgroundColor="#FFC193";
+    const timeHtml = status==="active"
+        ? `<span class="task-time-active" data-task-id="${task.taskId}" data-acm-d="${task.acmD||""}" data-span-ms="${task.spanMs||0}">${formatElapsedTime(getTotalElapsedMs(task))}</span>`
+        : (task.spanMs > 0 ? `<span class="task-time-active">${formatElapsedTime(task.spanMs)}</span>` : "");
     article.innerHTML=`
         <div class="task-left">
             <h3>Task: ${task.name}</h3>
             <p>Assignee(s): <span class="assignee-info-wrap"><img class="assignee-info-icon" src="../../assets/Info.png" alt="Info"><span class="assignee-tooltip">${assigneeNames}</span></span> &nbsp; Due Date: ${formatTime12h(task.dueTime)} -- ${task.dueDate||"##/##/####"}</p>
+            ${timeHtml}
         </div>
         <div class="task-actions">
             <button class="task-status ${status}" type="button">${STATUS_TEXT[status]||status}</button>
@@ -204,6 +314,26 @@ const renderAllTasks = async () => {
     if(sc[0]) sc[0].textContent=own; if(sc[1]) sc[1].textContent=other; if(sc[2]) sc[2].textContent=verify;
 };
 
+// Global ticker — updates all active task cards + the open details modal every second
+// Stored on window so it is never started more than once
+if (!window._globalTaskTicker) {
+    window._globalTaskTicker = setInterval(() => {
+        // Tick every [data-task-id] span on active cards
+        document.querySelectorAll(".task-time-active[data-task-id]").forEach(el => {
+            const taskId = Number(el.dataset.taskId);
+            // Find the acmD from the element's stored snapshot (set below)
+            const acmD = el.dataset.acmD;            const spanMs = Number(el.dataset.spanMs || 0);
+            if (!acmD) return;
+            const total = spanMs + (Date.now() - new Date(acmD).getTime());
+            el.textContent = formatElapsedTime(total);
+        });
+        // Also tick the details modal if it's open on an active task
+        if (window._detailTaskRef && window._detailTaskRef.status === "active" && detailTaskTimeActive) {
+            detailTaskTimeActive.textContent = formatElapsedTime(getTotalElapsedMs(window._detailTaskRef));
+        }
+    }, 1000);
+}
+
 const closeTaskSettings=()=>{taskSettingsOverlay?.classList.remove("open");taskSettingsOverlay?.setAttribute("aria-hidden","true");};
 const openTaskSettings=(i)=>{activeTaskIndex=i;taskSettingsOverlay?.classList.add("open");taskSettingsOverlay?.setAttribute("aria-hidden","false");};
 const closeEditTaskInfo=()=>{editTaskInfoOverlay?.classList.remove("open");editTaskInfoOverlay?.setAttribute("aria-hidden","true");};
@@ -211,7 +341,11 @@ const closeManualStatus=()=>{manualStatusOverlay?.classList.remove("open");manua
 const openManualStatus=()=>{if(!manualStatusOverlay||activeTaskIndex===null)return;manualStatusOverlay.classList.add("open");manualStatusOverlay.setAttribute("aria-hidden","false");};
 const closeRemoveTaskConfirm=()=>{removeTaskConfirmOverlay?.classList.remove("open");removeTaskConfirmOverlay?.setAttribute("aria-hidden","true");};
 const openRemoveTaskConfirm=()=>{if(!removeTaskConfirmOverlay||activeTaskIndex===null)return;removeTaskConfirmOverlay.classList.add("open");removeTaskConfirmOverlay.setAttribute("aria-hidden","false");};
-const closeTaskDetails=()=>{taskDetailsOverlay?.classList.remove("open");taskDetailsOverlay?.setAttribute("aria-hidden","true");};
+const closeTaskDetails=()=>{
+    taskDetailsOverlay?.classList.remove("open");
+    taskDetailsOverlay?.setAttribute("aria-hidden","true");
+    window._detailTaskRef = null;
+};
 
 const updateEditTaskSubmitState=()=>{
     if(!saveEditTaskInfoBtn)return;
@@ -248,7 +382,12 @@ const openTaskDetails=async(idx)=>{
     const di=document.getElementById("detailTaskIntensity"); if(di) di.textContent=task.intensity||"Light";
     const dp=document.getElementById("detailTaskPriority"); if(dp) dp.textContent=task.priority||"Low";
     if(detailTaskStatus){const s=task.status||"inactive";detailTaskStatus.textContent=STATUS_TEXT[s]||s;detailTaskStatus.className=`task-status ${s}`;detailTaskStatus.disabled=true;}
-    if(detailTaskTimeActive) detailTaskTimeActive.textContent=formatElapsedTime(0);
+
+    // Store task ref so the global ticker can update the modal while it's open
+    window._detailTaskRef = task;
+    if(detailTaskTimeActive){
+        detailTaskTimeActive.textContent=formatElapsedTime(getTotalElapsedMs(task));
+    }
     taskDetailsOverlay.classList.add("open");taskDetailsOverlay.setAttribute("aria-hidden","false");
 };
 
@@ -285,7 +424,7 @@ manualStatusButtons.forEach(btn=>{
     btn.addEventListener("click",async()=>{
         if(activeTaskIndex===null)return;
         const tasks=await loadTasks(); const task=tasks[activeTaskIndex]; if(!task)return;
-        await updateTaskStatus(task.taskId,btn.dataset.manualStatus);
+        await updateTaskStatus(task.taskId,btn.dataset.manualStatus,task);
         closeManualStatus(); await renderAllTasks();
     });
 });
@@ -324,13 +463,43 @@ if(postTaskForm){
                 taskName:name,
                 taskDesc:taskDescriptionInput?.value.trim()||"",
                 taskDueD:dueISO,
+                taskResource:taskResourcesInput?.value.trim()||null,
                 taskIntensity:document.getElementById("intensityInput")?.value||"Light",
                 taskPrio:document.getElementById("priorityInput")?.value||"Low",
                 statId:STAT_ID.inactive,
-                projId:projId?Number(projId):null
+                projId:projId?Number(projId):null  // TASK.projId FK → PROJECT.progId
             }).select("taskId").single();
             if(error){alert("Failed to create task: "+error.message);return;}
-            await Promise.all(checked.map(cb=>supa().from("GROUPMEMBER").update({taskId:newTask.taskId}).eq("grpmemId",Number(cb.value))));
+            // For each selected assignee, find their GROUPMEMBER row that has no task yet.
+            // If one exists, link it to this task. If all their rows are already taken, insert a new row.
+            const grpId = getGrpId();
+            await Promise.all(checked.map(async cb => {
+                const memId = Number(cb.value);
+                // Find a free slot for this member (taskId is null)
+                const { data: freeRows } = await supa().from("GROUPMEMBER")
+                    .select("grpmemId")
+                    .eq("grpmemId", memId)
+                    .is("taskId", null)
+                    .limit(1);
+                if (freeRows && freeRows.length > 0) {
+                    // Reuse the existing free slot
+                    await supa().from("GROUPMEMBER").update({ taskId: newTask.taskId }).eq("grpmemId", freeRows[0].grpmemId);
+                } else {
+                    // All rows for this member are taken — get their userId and roleId to insert a new row
+                    const { data: anyRow } = await supa().from("GROUPMEMBER")
+                        .select("userId, roleId")
+                        .eq("grpmemId", memId)
+                        .limit(1);
+                    if (anyRow && anyRow.length > 0) {
+                        await supa().from("GROUPMEMBER").insert({
+                            userId: anyRow[0].userId,
+                            grpId: Number(grpId),
+                            taskId: newTask.taskId,
+                            roleId: anyRow[0].roleId
+                        });
+                    }
+                }
+            }));
             await renderAllTasks(); closePostTaskModal(); postTaskForm.reset(); updatePostTaskSubmitState();
         },{title:"Post Task",confirmText:"Post",cancelText:"Cancel"});
     });
@@ -350,12 +519,39 @@ if(editTaskInfoForm){
                 taskName:name,
                 taskDesc:editTaskDescriptionInput?.value.trim()||"",
                 taskDueD:dueISO,
+                taskResource:editTaskResourcesInput?.value.trim()||null,
                 taskIntensity:document.getElementById("editIntensityInput")?.value||"Light",
                 taskPrio:document.getElementById("editPriorityInput")?.value||"Low"
             }).eq("taskId",task.taskId);
             if(error){alert("Failed to update task: "+error.message);return;}
+            // Clear all GROUPMEMBER rows currently linked to this task
             await supa().from("GROUPMEMBER").update({taskId:null}).eq("taskId",task.taskId);
-            await Promise.all(checked.map(cb=>supa().from("GROUPMEMBER").update({taskId:task.taskId}).eq("grpmemId",Number(cb.value))));
+            // Re-link each selected assignee using the same free-slot-or-insert logic
+            const grpId = getGrpId();
+            await Promise.all(checked.map(async cb => {
+                const memId = Number(cb.value);
+                const { data: freeRows } = await supa().from("GROUPMEMBER")
+                    .select("grpmemId")
+                    .eq("grpmemId", memId)
+                    .is("taskId", null)
+                    .limit(1);
+                if (freeRows && freeRows.length > 0) {
+                    await supa().from("GROUPMEMBER").update({ taskId: task.taskId }).eq("grpmemId", freeRows[0].grpmemId);
+                } else {
+                    const { data: anyRow } = await supa().from("GROUPMEMBER")
+                        .select("userId, roleId")
+                        .eq("grpmemId", memId)
+                        .limit(1);
+                    if (anyRow && anyRow.length > 0) {
+                        await supa().from("GROUPMEMBER").insert({
+                            userId: anyRow[0].userId,
+                            grpId: Number(grpId),
+                            taskId: task.taskId,
+                            roleId: anyRow[0].roleId
+                        });
+                    }
+                }
+            }));
             closeEditTaskInfo(); await renderAllTasks();
         },{title:"Save Changes",confirmText:"Save",cancelText:"Cancel"});
     });

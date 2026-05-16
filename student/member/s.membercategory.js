@@ -25,26 +25,38 @@ const getProgId = async () => {
     return data.progId;
 };
 
-// ── Load projects from Supabase via progId ────────────────────────────────
+// ── Load projects from Supabase via progId with task counts ────────────────
 const loadProjectsFromDB = async () => {
     const progId = await getProgId();
     if (!progId) { renderAllProjects([]); return; }
     const { data, error } = await supabase
         .from("PROJECT")
-        .select("projId, projName")
+        .select("projId, projName, projDueD")
         .eq("progId", progId);
     if (error || !data) { renderAllProjects([]); return; }
-    renderAllProjects(data);
+    
+    // Fetch task counts for each project
+    const projectsWithCounts = await Promise.all(
+        data.map(async (p) => {
+            const { count } = await supabase
+                .from("TASK")
+                .select("taskId", { count: "exact", head: true })
+                .eq("projId", p.projId);
+            return { ...p, taskCount: count || 0 };
+        })
+    );
+    renderAllProjects(projectsWithCounts);
 };
 
 // ── Render ────────────────────────────────────────────────────────────────
-const createCategoryItem = (projId, projName, dueDate) => {
+const createCategoryItem = (projId, projName, taskCount, dueDate) => {
     const categoryItem = document.createElement("div");
     categoryItem.className = "category-item";
     categoryItem.innerHTML = `
         <button class="category-main-btn" type="button" data-category="${projId}">
             <span class="category-name">${projName}</span>
             <span class="category-due-date">${formatDueDate(dueDate)}</span>
+            <span class="category-count">${taskCount} Task${taskCount !== 1 ? "s" : ""}</span>
         </button>
     `;
     const btn = categoryItem.querySelector(".category-main-btn");
@@ -70,13 +82,23 @@ const renderAllProjects = (projects) => {
         return;
     }
     projects.forEach(p => {
-        categoryList.appendChild(createCategoryItem(p.projId, p.projName, p.projDueDate || null));
+        categoryList.appendChild(createCategoryItem(p.projId, p.projName, p.taskCount || 0, p.projDueD || null));
     });
 };
 
 // ── Events ────────────────────────────────────────────────────────────────
-if (topBackBtn)   topBackBtn.addEventListener("click",   () => { window.location.href = "../s.dashb.html"; });
-if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "s.membergrpviewing.html"; });
+if (topBackBtn) {
+    topBackBtn.addEventListener("click", () => {
+        const grpId = getGrpId();
+        window.location.href = grpId ? `s.membergrpviewing.html?grpId=${grpId}` : "../s.dashb.html";
+    });
+}
+if (groupInfoTab) {
+    groupInfoTab.addEventListener("click", () => {
+        const grpId = getGrpId();
+        window.location.href = grpId ? `s.membergrpviewing.html?grpId=${grpId}` : "s.membergrpviewing.html";
+    });
+}
 
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {

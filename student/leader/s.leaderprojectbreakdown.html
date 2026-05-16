@@ -20,7 +20,7 @@
                 </div>
                 <h3>Name</h3>
                 <h3>Email</h3>
-                <a href="#" class="profile-link">Manage Profile</a>
+                <a href="#" class="profile-link" data-no-loading>Manage Profile</a>
             </div>
 
             <div class="sidebar-actions">
@@ -50,42 +50,36 @@
                 <section class="summary-row">
                     <article class="summary-card">
                         <p class="summary-label">My Tasks</p>
-                        <h3>1</h3>
+                        <h3>0</h3>
                     </article>
 
                     <article class="summary-card">
                         <p class="summary-label">Other Tasks</p>
-                        <h3>1</h3>
+                        <h3>0</h3>
                     </article>
 
                     <article class="summary-card">
                         <p class="summary-label">Verifying</p>
-                        <h3>1</h3>
+                        <h3>0</h3>
                     </article>
                 </section>
 
                 <div class="project-name-display">
-                    <h2>Research</h2>
+                    <h2></h2>
                 </div>
 
                 <section class="task-section">
                     <div class="section-title-wrap">
                         <h2>Your Task(s)</h2>
                     </div>
-
-                    <div id="yourTasksList">
-                        <!-- Tasks dynamically inserted here -->
-                    </div>
+                    <div id="yourTasksList"></div>
                 </section>
 
                 <section class="task-section">
                     <div class="section-title-wrap">
                         <h2>Other Task(s)</h2>
                     </div>
-
-                    <div id="otherTasksList">
-                        <!-- Tasks dynamically inserted here -->
-                    </div>
+                    <div id="otherTasksList"></div>
                 </section>
             </section>
         </main>
@@ -98,28 +92,25 @@
         </aside>
     </div>
 
+    <!-- Post Task Modal -->
     <div class="modal-overlay" id="postTaskModalOverlay" aria-hidden="true">
         <div class="post-task-modal" role="dialog" aria-modal="true" aria-labelledby="postTaskModalTitle">
             <div class="post-task-modal-header">
                 <h2 id="postTaskModalTitle">Post Task</h2>
             </div>
-
             <form id="postTaskForm" class="post-task-form">
                 <div class="form-group">
                     <label for="taskNameInput">Task Name *</label>
                     <input id="taskNameInput" name="taskName" type="text" placeholder="Enter task name" required>
                 </div>
-
                 <div class="form-group">
                     <label for="taskDescriptionInput">Task Description</label>
                     <textarea id="taskDescriptionInput" name="taskDescription" rows="4" placeholder="Enter task description"></textarea>
                 </div>
-
                 <div class="form-group">
                     <label for="taskResourcesInput">Resources / Link</label>
                     <input id="taskResourcesInput" name="taskResources" type="url" placeholder="Paste your link or resources here">
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="intensityInput">Intensity</label>
@@ -138,25 +129,12 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <p class="form-label">Assignee(s) *</p>
-                    <div class="assignee-options">
-                        <label class="assignee-option">
-                            <input type="checkbox" name="assignees" value="for-you">
-                            <span>For You (Leader)</span>
-                        </label>
-                        <label class="assignee-option">
-                            <input type="checkbox" name="assignees" value="person-2">
-                            <span>Person 2</span>
-                        </label>
-                        <label class="assignee-option">
-                            <input type="checkbox" name="assignees" value="person-3">
-                            <span>Person 3</span>
-                        </label>
+                    <div class="assignee-options post-assignee-options">
+                        <!-- Populated dynamically from GROUPMEMBER -->
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="dueDateInput">Due Date *</label>
@@ -167,7 +145,6 @@
                         <input id="dueTimeInput" name="dueTime" type="time" required>
                     </div>
                 </div>
-
                 <div class="post-task-modal-actions">
                     <button type="button" class="modal-btn discard-btn" id="discardPostTaskBtn">Discard</button>
                     <button type="submit" class="modal-btn post-btn">Post</button>
@@ -176,6 +153,7 @@
         </div>
     </div>
 
+    <!-- Verify Choice Modal -->
     <div class="modal-overlay" id="verifyChoiceOverlay" aria-hidden="true">
         <div class="project-options-modal" role="dialog" aria-modal="true">
             <div class="project-options-body">
@@ -190,6 +168,7 @@
         </div>
     </div>
 
+    <!-- Pause/Finish Choice Modal -->
     <div class="modal-overlay" id="pauseFinishChoiceOverlay" aria-hidden="true">
         <div class="project-options-modal" role="dialog" aria-modal="true">
             <div class="project-options-body">
@@ -204,6 +183,7 @@
         </div>
     </div>
 
+    <!-- Task Settings Modal -->
     <div class="modal-overlay" id="taskSettingsOverlay" aria-hidden="true">
         <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="taskSettingsTitle">
             <div class="project-options-body">
@@ -218,46 +198,31 @@
         </div>
     </div>
 
+    <!-- Edit Task Info Modal -->
     <div class="modal-overlay" id="editTaskInfoOverlay" aria-hidden="true">
         <div class="post-task-modal" role="dialog" aria-modal="true" aria-labelledby="editTaskInfoTitle">
             <div class="post-task-modal-header">
                 <h2 id="editTaskInfoTitle">Edit Task Info</h2>
             </div>
-
             <form id="editTaskInfoForm" class="post-task-form">
                 <div class="form-group">
                     <label for="editTaskNameInput">Task Name *</label>
                     <input id="editTaskNameInput" name="editTaskName" type="text" placeholder="Enter task name" required>
                 </div>
-
                 <div class="form-group">
                     <label for="editTaskDescriptionInput">Task Description</label>
                     <textarea id="editTaskDescriptionInput" name="editTaskDescription" rows="4" placeholder="Enter task description"></textarea>
                 </div>
-
                 <div class="form-group">
                     <label for="editTaskResourcesInput">Resources / Link</label>
                     <input id="editTaskResourcesInput" name="editTaskResources" type="url" placeholder="Paste a helpful link or resource">
                 </div>
-
                 <div class="form-group">
                     <p class="form-label">Assignee(s) *</p>
-                    <div class="assignee-options">
-                        <label class="assignee-option">
-                            <input type="checkbox" name="editAssignees" value="for-you">
-                            <span>For You (Leader)</span>
-                        </label>
-                        <label class="assignee-option">
-                            <input type="checkbox" name="editAssignees" value="person-2">
-                            <span>Person 2</span>
-                        </label>
-                        <label class="assignee-option">
-                            <input type="checkbox" name="editAssignees" value="person-3">
-                            <span>Person 3</span>
-                        </label>
+                    <div class="assignee-options edit-assignee-options">
+                        <!-- Populated dynamically from GROUPMEMBER -->
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editDueDateInput">Due Date *</label>
@@ -268,7 +233,6 @@
                         <input id="editDueTimeInput" name="editDueTime" type="time" required>
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editIntensityInput">Intensity</label>
@@ -287,7 +251,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="post-task-modal-actions">
                     <button type="button" class="modal-btn discard-btn" id="discardEditTaskInfoBtn">Discard</button>
                     <button type="submit" class="modal-btn post-btn" id="saveEditTaskInfoBtn">Save</button>
@@ -296,6 +259,7 @@
         </div>
     </div>
 
+    <!-- Manual Status Modal -->
     <div class="modal-overlay" id="manualStatusOverlay" aria-hidden="true">
         <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="manualStatusTitle">
             <div class="project-options-body">
@@ -303,6 +267,8 @@
                 <div class="task-settings-actions">
                     <button class="modal-btn post-btn" data-manual-status="inactive" type="button">Not Active</button>
                     <button class="modal-btn post-btn" data-manual-status="active" type="button">Active</button>
+                    <button class="modal-btn post-btn" data-manual-status="pause" type="button">On Break</button>
+                    <button class="modal-btn post-btn" data-manual-status="verifying" type="button">Verifying</button>
                     <button class="modal-btn post-btn" data-manual-status="finished" type="button">Finished</button>
                     <button class="modal-btn post-btn" data-manual-status="missing" type="button">Missing</button>
                     <button class="modal-btn discard-btn" id="discardManualStatusBtn" type="button">Discard</button>
@@ -311,6 +277,7 @@
         </div>
     </div>
 
+    <!-- Remove Task Confirm Modal -->
     <div class="modal-overlay" id="removeTaskConfirmOverlay" aria-hidden="true">
         <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="removeTaskTitle">
             <div class="project-options-body">
@@ -324,6 +291,7 @@
         </div>
     </div>
 
+    <!-- Task Details Modal -->
     <div class="modal-overlay" id="taskDetailsOverlay" aria-hidden="true">
         <div class="project-options-modal" role="dialog" aria-modal="true" aria-labelledby="taskDetailsTitle">
             <div class="project-options-body task-details-body">
@@ -348,12 +316,13 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../lib/supabaseClient.js"></script>
     <script src="../../lib/loading.js"></script>
     <script src="../../lib/datetime.js"></script>
     <script src="../../lib/manage-profile.js"></script>
     <script src="../../lib/settings.js"></script>
     <script src="../../lib/confirmation-modal.js"></script>
     <script src="s.leaderprojectbreakdown.js"></script>
-    <script src="../../lib/supabaseClient.js"></script>
 </body>
 </html>

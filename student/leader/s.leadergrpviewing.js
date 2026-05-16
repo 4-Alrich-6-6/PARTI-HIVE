@@ -1,679 +1,405 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+/* ── Supabase via global window.hiveSupabase (set in supabaseClient.js) ─────── */
+const supabase = window.hiveSupabase;
 
-/* SUPABASE CONFIG */
-const supabaseUrl = "https://rwijmgzxwyrktsjczpbp.supabase.co";
-const supabaseKey = "sb_publishable_8zB-1PnnV7wK7WMkC8qgQA_UD0fFfEC";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-/* ELEMENTS */
-const topBackBtn = document.querySelector("#topBackBtn");
-const backBtn = document.querySelector("#backBtn");
-const projectBreakdownTab = document.querySelector("#projectBreakdownTab");
-
-const openAddMembersModalBtn = document.querySelector("#openAddMembersModalBtn");
-const addMembersModalOverlay = document.querySelector("#addMembersModalOverlay");
-const discardAddMembersBtn = document.querySelector("#discardAddMembersBtn");
-const copyGroupLinkBtn = document.querySelector("#copyGroupLinkBtn");
-const groupLinkValue = document.querySelector("#groupLinkValue");
-
-const openRemoveMembersModalBtn = document.querySelector("#openRemoveMembersModalBtn");
-const removeMembersModalOverlay = document.querySelector("#removeMembersModalOverlay");
-const removeMembersList = document.querySelector("#removeMembersList");
-const discardRemoveMembersBtn = document.querySelector("#discardRemoveMembersBtn");
-const removeMembersBtn = document.querySelector("#removeMembersBtn");
-
-const leaveBtn = document.querySelector("#leaveBtn");
+/* ── ELEMENTS ─────────────────────────────────────────────────────────────── */
+const topBackBtn               = document.querySelector("#topBackBtn");
+const backBtn                  = document.querySelector("#backBtn");
+const projectBreakdownTab      = document.querySelector("#projectBreakdownTab");
+const openAddMembersModalBtn   = document.querySelector("#openAddMembersModalBtn");
+const addMembersModalOverlay   = document.querySelector("#addMembersModalOverlay");
+const discardAddMembersBtn     = document.querySelector("#discardAddMembersBtn");
+const copyGroupLinkBtn         = document.querySelector("#copyGroupLinkBtn");
+const groupLinkValue           = document.querySelector("#groupLinkValue");
+const openRemoveMembersModalBtn= document.querySelector("#openRemoveMembersModalBtn");
+const removeMembersModalOverlay= document.querySelector("#removeMembersModalOverlay");
+const removeMembersList        = document.querySelector("#removeMembersList");
+const discardRemoveMembersBtn  = document.querySelector("#discardRemoveMembersBtn");
+const removeMembersBtn         = document.querySelector("#removeMembersBtn");
+const leaveBtn                 = document.querySelector("#leaveBtn");
 const selectLeaderModalOverlay = document.querySelector("#selectLeaderModalOverlay");
-const discardSelectLeaderBtn = document.querySelector("#discardSelectLeaderBtn");
-const selectLeaderList = document.querySelector("#selectLeaderList");
-const leaveGroupBtn = document.querySelector("#leaveGroupBtn");
-
+const discardSelectLeaderBtn   = document.querySelector("#discardSelectLeaderBtn");
+const selectLeaderList         = document.querySelector("#selectLeaderList");
+const leaveGroupBtn            = document.querySelector("#leaveGroupBtn");
 const confirmLeaveModalOverlay = document.querySelector("#confirmLeaveModalOverlay");
-const cancelLeaveBtn = document.querySelector("#cancelLeaveBtn");
-const confirmLeaveBtn = document.querySelector("#confirmLeaveBtn");
+const cancelLeaveBtn           = document.querySelector("#cancelLeaveBtn");
+const confirmLeaveBtn          = document.querySelector("#confirmLeaveBtn");
+const logoutBtn                = document.querySelector(".logout");
 
-const logoutBtn = document.querySelector(".logout");
-
-const STORAGE_KEY_LEADER_GROUP = "hive_leader_group";
-const STORAGE_KEY_TASKS = "hive_leader_tasks";
-
-/* TEMP DEFAULT DATA */
-const defaultLeaderGroupData = () => ({
-  groupName: "Group Name",
-  subject: "Subject Name",
-  stats: {
-    teacher: 0,
-    members: 0,
-    projects: 0,
-  },
-  leader: {
-    name: "Leader Name",
-    role: "Leader",
-    email: "leader@email.com",
-    totalTasks: 0,
-    completed: 0,
-    pending: 0,
-    missed: 0,
-  },
-  members: [],
-});
-
-/* LOCAL STORAGE */
-const loadLeaderGroupData = () => {
-  const saved = localStorage.getItem(STORAGE_KEY_LEADER_GROUP);
-
-  try {
-    return saved ? JSON.parse(saved) : defaultLeaderGroupData();
-  } catch {
-    return defaultLeaderGroupData();
-  }
+/* ── HELPERS ──────────────────────────────────────────────────────────────── */
+const getGroupId = () => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("grpId") || sessionStorage.getItem("hive_grpId") || null;
 };
 
-const saveLeaderGroupData = (data) => {
-  localStorage.setItem(STORAGE_KEY_LEADER_GROUP, JSON.stringify(data));
-};
+const normalizeText = (v) => String(v || "").trim().toLowerCase();
 
-const getProjectsCount = () => {
-  const saved = localStorage.getItem("hive_leader_projects");
-
-  if (!saved) return 0;
-
-  try {
-    const projects = JSON.parse(saved);
-    return Array.isArray(projects) ? projects.length : 0;
-  } catch {
-    return 0;
-  }
-};
-
-const loadTasks = () => {
-  const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-
-  try {
-    const tasks = saved ? JSON.parse(saved) : [];
-    return Array.isArray(tasks) ? tasks : [];
-  } catch {
-    return [];
-  }
-};
-
-const normalizeText = (value) => String(value || "").trim().toLowerCase();
-
-const isLeaderAssignee = (assignee) => {
-  const normalized = normalizeText(assignee);
-  return normalized.includes("leader") || normalized.includes("for you");
-};
-
-const isTaskAssignedToPerson = (task, person) => {
-  const assignees = Array.isArray(task.assignees) ? task.assignees : [];
-  const assignmentName = normalizeText(person.assignmentName);
-  const personName = normalizeText(person.name || person.fullName);
-  const personRole = normalizeText(person.role || person.roleName);
-
-  return assignees.some((assignee) => {
-    const normalizedAssignee = normalizeText(assignee);
-    if (personRole === "leader" && isLeaderAssignee(normalizedAssignee)) return true;
-    if (assignmentName && normalizedAssignee === assignmentName) return true;
-    return personName && normalizedAssignee === personName;
-  });
-};
-
-const calculateTaskStats = (person) => {
-  const tasks = loadTasks().filter((task) => isTaskAssignedToPerson(task, person));
-  const completed = tasks.filter((task) => normalizeText(task.status) === "finished").length;
-  const missed = tasks.filter((task) => normalizeText(task.status) === "missing").length;
-
-  return {
-    totalTasks: tasks.length,
-    completed,
-    pending: Math.max(tasks.length - completed - missed, 0),
-    missed,
-  };
+const safeShowConfirmation = (msg, onConfirm, opts = {}) => {
+  if (typeof showConfirmation === "function") showConfirmation(msg, onConfirm, opts);
+  else if (confirm(msg)) onConfirm();
 };
 
 const getMemberStat = (member, keys) => {
-  const key = keys.find((candidate) => member[candidate] !== undefined && member[candidate] !== null);
+  const key = keys.find((k) => member[k] !== undefined && member[k] !== null);
   return key ? member[key] : 0;
 };
 
-const getDashboardProjectsCount = (data) => {
-  const supabaseCount = Number(data?.totalProjects ?? 0);
-  const localCount = getProjectsCount();
-  return supabaseCount > 0 ? supabaseCount : localCount;
-};
+/* ── STATE (populated by loadGroupFromDB) ────────────────────────────────── */
+let currentMembers = []; // full list of {grpmemId, userId, fullName, email, roleName, roleId}
 
-/* APPLY LOCAL UI DATA */
-const applyLeaderGroupData = (data) => {
-  const groupLabelH2 = document.querySelector(".group-label h2");
-  const groupLabelP = document.querySelector(".group-label p");
+/* ── DB LOAD ──────────────────────────────────────────────────────────────── */
+const loadGroupFromDB = async () => {
+  const grpId = getGroupId();
+  if (!grpId || !supabase) return;
 
-  if (groupLabelH2) groupLabelH2.textContent = data.groupName || "Group Name";
-  if (groupLabelP) groupLabelP.textContent = data.subject || "Subject Name";
+  // 1. Group info
+  const { data: grp, error: grpErr } = await supabase
+    .from("GROUP")
+    .select("grpName, grpSubject")
+    .eq("grpId", grpId)
+    .maybeSingle();
 
-  const summaryH3s = document.querySelectorAll(".summary-card h3");
-
-  if (summaryH3s[0]) summaryH3s[0].textContent = data.stats?.teacher ?? 0;
-  if (summaryH3s[1]) summaryH3s[1].textContent = data.stats?.members ?? 0;
-  if (summaryH3s[2]) summaryH3s[2].textContent = getProjectsCount();
-
-  const leaderCard = document.querySelector(".leader-card .member-details");
-
-  if (leaderCard && data.leader) {
-    const info = leaderCard.querySelector(".member-info");
-    const stats = leaderCard.querySelector(".stats");
-
-    if (info) {
-      const name = info.querySelector("h3");
-      const ps = info.querySelectorAll("p");
-
-      if (name) name.textContent = data.leader.name || "Leader Name";
-      if (ps[0]) ps[0].textContent = data.leader.role || "Leader";
-      if (ps[1]) ps[1].textContent = data.leader.email || "leader@email.com";
-    }
-
-    if (stats) {
-      const ps = stats.querySelectorAll("p");
-
-      const taskStats = calculateTaskStats(data.leader);
-
-      if (ps[0]) ps[0].textContent = `Total Tasks: ${taskStats.totalTasks}`;
-      if (ps[1]) ps[1].textContent = `Completed: ${taskStats.completed}`;
-      if (ps[2]) ps[2].textContent = `Pending: ${taskStats.pending}`;
-      if (ps[3]) ps[3].textContent = `Missed: ${taskStats.missed}`;
-    }
+  if (!grpErr && grp) {
+    const h2 = document.querySelector(".group-label h2");
+    const p  = document.querySelector(".group-label p");
+    if (h2) h2.textContent = grp.grpName  || "Group Name";
+    if (p)  p.textContent  = grp.grpSubject || "Subject";
+    // also update the copy-link field placeholder
+    if (groupLinkValue) groupLinkValue.value = String(grpId);
   }
 
-  const memberCards = document.querySelectorAll(".member-card .member-details");
+  // 2. Members (join USER and ROLE)
+  const { data: members, error: memErr } = await supabase
+    .from("GROUPMEMBER")
+    .select("grpmemId, userId, roleId, ROLE(roleName), USER(userDisplayName, userEmail)")
+    .eq("grpId", grpId);
 
-  (data.members || []).forEach((member, i) => {
-    const card = memberCards[i];
-    if (!card) return;
-
-    const info = card.querySelector(".member-info");
-    const stats = card.querySelector(".stats");
-
-    if (info) {
-      const name = info.querySelector("h3");
-      const ps = info.querySelectorAll("p");
-
-      if (name) name.textContent = member.name || "Member Name";
-      if (ps[0]) ps[0].textContent = member.role || "Member";
-      if (ps[1]) ps[1].textContent = member.email || "member@email.com";
-    }
-
-    if (stats) {
-      const ps = stats.querySelectorAll("p");
-
-      const taskStats = calculateTaskStats(member);
-
-      if (ps[0]) ps[0].textContent = `Total Tasks: ${taskStats.totalTasks}`;
-      if (ps[1]) ps[1].textContent = `Completed: ${taskStats.completed}`;
-      if (ps[2]) ps[2].textContent = `Pending: ${taskStats.pending}`;
-      if (ps[3]) ps[3].textContent = `Missed: ${taskStats.missed}`;
-    }
-  });
-};
-
-/* LOAD REAL SUPABASE STATS */
-const getGroupId = () => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("grpId") || localStorage.getItem("grpId") || 1;
-};
-
-const loadDashboardStats = async () => {
-  const grpId = getGroupId();
-
-  const { data, error } = await supabase
-    .from("DASHBOARD_STATS")
-    .select("*")
-    .eq("grpId", grpId)
-    .single();
-
-    
-
-    console.log("Dashboard data:", data);
-    console.log("Dashboard error:", error);
-
-  if (error) {
-    console.error("Error loading group info:", error);
+  if (memErr || !members) {
+    console.error("Error loading members:", memErr);
     return;
   }
 
-  document.querySelector(".group-label h2").textContent = data.grpName || "Group Name";
-  document.querySelector(".group-label p").textContent = data.subjectName || data.subject || "Subject";
+  currentMembers = members.map((m) => ({
+    grpmemId:  m.grpmemId,
+    userId:    m.userId,
+    roleId:    m.roleId,
+    roleName:  m.ROLE?.roleName  || "Member",
+    fullName:  m.USER?.userDisplayName || "Unknown",
+    email:     m.USER?.userEmail       || "No email",
+  }));
 
+  // 3. Project count
+  const { count: projCount } = await supabase
+    .from("PROJECT")
+    .select("projId", { count: "exact", head: true })
+    .eq("grpId", grpId);
+
+  // 4. Render summary cards
+  const teacher = currentMembers.filter((m) => normalizeText(m.roleName) === "teacher");
+  const nonTeacher = currentMembers.filter((m) => normalizeText(m.roleName) !== "teacher");
   const summaryH3s = document.querySelectorAll(".summary-card h3");
-  summaryH3s[0].textContent = data.totalTeachers ?? 0;
-  summaryH3s[1].textContent = data.totalMembers ?? 0;
-  summaryH3s[2].textContent = getDashboardProjectsCount(data);
+  if (summaryH3s[0]) summaryH3s[0].textContent = teacher.length;
+  if (summaryH3s[1]) summaryH3s[1].textContent = nonTeacher.length;
+  if (summaryH3s[2]) summaryH3s[2].textContent = projCount || 0;
 
-  renderGroupMembers(data.members || []);
+  // 5. Render member cards
+  renderGroupMembers(currentMembers);
 };
+
+/* ── RENDER MEMBERS ───────────────────────────────────────────────────────── */
+const createMemberCard = (member, cardClass, avatarSize) => `
+  <article class="info-card ${cardClass}">
+    <div class="circle-avatar ${avatarSize}"></div>
+    <div class="member-details">
+      <div class="member-info">
+        <h3>${member.fullName}</h3>
+        <p>${member.roleName}</p>
+        <p>${member.email}</p>
+      </div>
+      <div class="stats">
+        <p>Total Tasks: 0</p>
+        <p>Completed: 0</p>
+        <p>Pending: 0</p>
+        <p>Missed: 0</p>
+      </div>
+    </div>
+  </article>
+`;
 
 const renderGroupMembers = (members) => {
   const container = document.querySelector("#groupInfoStack");
   if (!container) return;
 
-  const teacher = members.find(m => String(m.roleName).toLowerCase() === "teacher");
-  const leader = members.find(m => String(m.roleName).toLowerCase() === "leader");
-  const normalMembers = members.filter(m => {
-    const role = String(m.roleName).toLowerCase();
-    return role !== "teacher" && role !== "leader";
+  const teacher       = members.find((m) => normalizeText(m.roleName) === "teacher");
+  const leader        = members.find((m) => normalizeText(m.roleName) === "leader");
+  const normalMembers = members.filter((m) => {
+    const r = normalizeText(m.roleName);
+    return r !== "teacher" && r !== "leader";
   });
 
   container.innerHTML = `
     <article class="info-card teacher-card">
       <div class="circle-avatar small"></div>
-      <h3>${teacher ? `${teacher.fullName}<br><small>${teacher.email}</small>` : "You currently have no teacher"}</h3>
+      <h3>${teacher
+        ? `${teacher.fullName}<br><small>${teacher.email}</small>`
+        : "You currently have no teacher"
+      }</h3>
     </article>
 
-    ${
-      leader
-        ? createMemberCard({ ...leader, assignmentName: "For You (Leader)" }, "leader-card", "large")
-        : `<article class="info-card leader-card"><h3>No leader found</h3></article>`
+    ${leader
+      ? createMemberCard(leader, "leader-card", "large")
+      : `<article class="info-card leader-card"><h3>No leader found</h3></article>`
     }
 
     <div class="member-grid">
-      ${normalMembers.map((member, index) => (
-        createMemberCard({ ...member, assignmentName: `Person ${index + 2}` }, "member-card", "medium")
-      )).join("")}
+      ${normalMembers.map((m) => createMemberCard(m, "member-card", "medium")).join("")}
     </div>
   `;
 };
 
-const createMemberCard = (member, cardClass, avatarSize) => {
-  const totalTasks = getMemberStat(member, ["totalTasks", "total_tasks"]);
-  const completedTasks = getMemberStat(member, ["completedTasks", "completed", "completed_tasks"]);
-  const pendingTasks = getMemberStat(member, ["pendingTasks", "pending", "pending_tasks"]);
-  const missedTasks = getMemberStat(member, ["missedTasks", "missed", "missed_tasks"]);
+/* ── GROUP LINK (just the numeric grpId so members can join) ─────────────── */
+const getGroupLink = () => getGroupId() || "—";
 
-  return `
-    <article class="info-card ${cardClass}">
-      <div class="circle-avatar ${avatarSize}"></div>
-      <div class="member-details">
-        <div class="member-info">
-          <h3>${member.fullName || "No Name"}</h3>
-          <p>${member.roleName || "Member"}</p>
-          <p>${member.email || "No email"}</p>
-        </div>
-        <div class="stats">
-          <p>Total Tasks: ${totalTasks}</p>
-          <p>Completed: ${completedTasks}</p>
-          <p>Pending: ${pendingTasks}</p>
-          <p>Missed: ${missedTasks}</p>
-        </div>
-      </div>
-    </article>
-  `;
-};
-
-/* GROUP LINK */
-const getGroupLink = () => {
-  const saved = loadLeaderGroupData();
-  const groupName = (saved.groupName || "group")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");
-
-  return `https://hive.app/group/${groupName}`;
-};
-
-/* ADD MEMBERS MODAL */
+/* ── ADD MEMBERS MODAL ────────────────────────────────────────────────────── */
 const closeAddMembersModal = () => {
   if (!addMembersModalOverlay) return;
-
   addMembersModalOverlay.classList.remove("open");
   addMembersModalOverlay.setAttribute("aria-hidden", "true");
 };
-
 const openAddMembersModal = () => {
   if (!addMembersModalOverlay) return;
-
-  if (groupLinkValue) {
-    groupLinkValue.value = getGroupLink();
-  }
-
+  if (groupLinkValue) groupLinkValue.value = getGroupLink();
   addMembersModalOverlay.classList.add("open");
   addMembersModalOverlay.setAttribute("aria-hidden", "false");
 };
 
-/* SELECT LEADER MODAL */
+/* ── SELECT LEADER MODAL ─────────────────────────────────────────────────── */
 const closeSelectLeaderModal = () => {
   if (!selectLeaderModalOverlay) return;
-
   selectLeaderModalOverlay.classList.remove("open");
   selectLeaderModalOverlay.setAttribute("aria-hidden", "true");
 };
 
 const updateLeaveGroupBtnState = () => {
   if (!leaveGroupBtn || !selectLeaderList) return;
-
-  const selectedLeader = selectLeaderList.querySelector("input[type='radio']:checked");
-  leaveGroupBtn.disabled = !selectedLeader;
+  leaveGroupBtn.disabled = !selectLeaderList.querySelector("input[type='radio']:checked");
 };
 
 const renderSelectLeaderList = () => {
   if (!selectLeaderList) return;
-
-  const data = loadLeaderGroupData();
-
-  const eligibleMembers = (data.members || []).filter((member) => {
-    const role = (member.role || "").trim().toLowerCase();
-    return role !== "leader" && role !== "teacher" && role !== "professor";
+  const eligible = currentMembers.filter((m) => {
+    const r = normalizeText(m.roleName);
+    return r !== "leader" && r !== "teacher";
   });
-
-  if (eligibleMembers.length === 0) {
-    selectLeaderList.innerHTML =
-      "<p class='select-leader-empty'>No eligible members found to become leader.</p>";
-
+  if (eligible.length === 0) {
+    selectLeaderList.innerHTML = "<p class='select-leader-empty'>No eligible members to become leader.</p>";
     if (leaveGroupBtn) leaveGroupBtn.disabled = true;
     return;
   }
-
-  selectLeaderList.innerHTML = eligibleMembers
-    .map(
-      (member) => `
-        <label class="select-leader-item">
-          <input type="radio" name="newLeader" value="${member.name}">
-          <span>${member.name}</span>
-        </label>
-      `
-    )
-    .join("");
-
-  selectLeaderList.querySelectorAll("input[type='radio']").forEach((radio) => {
-    radio.addEventListener("change", updateLeaveGroupBtnState);
-  });
-
+  selectLeaderList.innerHTML = eligible.map((m) => `
+    <label class="select-leader-item">
+      <input type="radio" name="newLeader" value="${m.userId}">
+      <span>${m.fullName}</span>
+    </label>
+  `).join("");
+  selectLeaderList.querySelectorAll("input[type='radio']").forEach((r) =>
+    r.addEventListener("change", updateLeaveGroupBtnState)
+  );
   updateLeaveGroupBtnState();
 };
 
 const openSelectLeaderModal = () => {
   if (!selectLeaderModalOverlay) return;
-
   renderSelectLeaderList();
   selectLeaderModalOverlay.classList.add("open");
   selectLeaderModalOverlay.setAttribute("aria-hidden", "false");
 };
 
-/* CONFIRM LEAVE */
+/* ── CONFIRM LEAVE MODAL ─────────────────────────────────────────────────── */
 const closeConfirmLeaveModal = () => {
   if (!confirmLeaveModalOverlay) return;
-
   confirmLeaveModalOverlay.classList.remove("open");
   confirmLeaveModalOverlay.setAttribute("aria-hidden", "true");
 };
-
 const openConfirmLeaveModal = () => {
   if (!confirmLeaveModalOverlay) return;
-
   closeSelectLeaderModal();
   confirmLeaveModalOverlay.classList.add("open");
   confirmLeaveModalOverlay.setAttribute("aria-hidden", "false");
 };
 
-const leaveGroup = () => {
-  const data = loadLeaderGroupData();
-
+const leaveGroup = async () => {
   if (!selectLeaderList) return;
+  const selected = selectLeaderList.querySelector("input[type='radio']:checked");
+  if (!selected) return;
 
-  const selectedLeader = selectLeaderList.querySelector("input[type='radio']:checked");
-  if (!selectedLeader) return;
+  const newLeaderUserId = selected.value;
+  const grpId = getGroupId();
 
-  const newLeaderName = selectedLeader.value;
+  // Find the Leader role id and Member role id
+  const { data: leaderRole } = await getSupabase().from("ROLE").select("roleId").eq("roleName", "Leader").maybeSingle();
+  const { data: memberRole  } = await getSupabase().from("ROLE").select("roleId").eq("roleName", "Member").maybeSingle();
 
-  data.members = (data.members || []).map((member) => {
-    if (member.name === newLeaderName) {
-      return { ...member, role: "Leader" };
-    }
+  // Promote selected member to Leader
+  await getSupabase().from("GROUPMEMBER")
+    .update({ roleId: leaderRole?.roleId })
+    .eq("userId", newLeaderUserId).eq("grpId", grpId);
 
-    return member;
-  });
+  // Demote current user to Member
+  const { data: { user } } = await getSupabase().auth.getUser();
+  if (user) {
+    await getSupabase().from("GROUPMEMBER")
+      .update({ roleId: memberRole?.roleId })
+      .eq("userId", user.id).eq("grpId", grpId);
+  }
 
-  const oldLeader = { ...data.leader, role: "Member" };
-
-  data.members.push(oldLeader);
-  data.leader = data.members.find((m) => m.name === newLeaderName);
-  data.members = data.members.filter((m) => m.name !== newLeaderName);
-
-  saveLeaderGroupData(data);
-  applyLeaderGroupData(data);
   closeConfirmLeaveModal();
-
   window.location.href = "../s.dashb.html";
 };
 
-/* REMOVE MEMBERS */
+/* ── REMOVE MEMBERS MODAL ────────────────────────────────────────────────── */
 const updateRemoveMembersBtnState = () => {
   if (!removeMembersBtn || !removeMembersList) return;
-
-  const selectedCount = removeMembersList.querySelectorAll(
-    "input[type='checkbox']:checked"
-  ).length;
-
-  removeMembersBtn.disabled = selectedCount === 0;
+  removeMembersBtn.disabled =
+    removeMembersList.querySelectorAll("input[type='checkbox']:checked").length === 0;
 };
 
 const renderRemoveMembersList = () => {
   if (!removeMembersList) return;
-
-  const data = loadLeaderGroupData();
-
-  const removableMembers = (data.members || []).filter((member) => {
-    const role = (member.role || "").trim().toLowerCase();
-    return role !== "leader" && role !== "teacher" && role !== "professor";
+  const removable = currentMembers.filter((m) => {
+    const r = normalizeText(m.roleName);
+    return r !== "leader" && r !== "teacher";
   });
-
-  if (removableMembers.length === 0) {
-    removeMembersList.innerHTML =
-      "<p class='remove-members-empty'>No removable members found.</p>";
-
+  if (removable.length === 0) {
+    removeMembersList.innerHTML = "<p class='remove-members-empty'>No removable members found.</p>";
     if (removeMembersBtn) removeMembersBtn.disabled = true;
     return;
   }
-
-  removeMembersList.innerHTML = removableMembers
-    .map(
-      (member) => `
-        <label class="remove-member-item">
-          <input type="checkbox" value="${member.name}">
-          <span>${member.name}</span>
-        </label>
-      `
-    )
-    .join("");
-
-  removeMembersList.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
-    checkbox.addEventListener("change", updateRemoveMembersBtnState);
-  });
-
+  removeMembersList.innerHTML = removable.map((m) => `
+    <label class="remove-member-item">
+      <input type="checkbox" value="${m.grpmemId}">
+      <span>${m.fullName}</span>
+    </label>
+  `).join("");
+  removeMembersList.querySelectorAll("input[type='checkbox']").forEach((cb) =>
+    cb.addEventListener("change", updateRemoveMembersBtnState)
+  );
   updateRemoveMembersBtnState();
 };
 
 const closeRemoveMembersModal = () => {
   if (!removeMembersModalOverlay) return;
-
   removeMembersModalOverlay.classList.remove("open");
   removeMembersModalOverlay.setAttribute("aria-hidden", "true");
 };
-
 const openRemoveMembersModal = () => {
   if (!removeMembersModalOverlay) return;
-
   renderRemoveMembersList();
   removeMembersModalOverlay.classList.add("open");
   removeMembersModalOverlay.setAttribute("aria-hidden", "false");
 };
 
-/* CONFIRMATION FALLBACK */
-const safeShowConfirmation = (message, onConfirm, options = {}) => {
-  if (typeof showConfirmation === "function") {
-    showConfirmation(message, onConfirm, options);
-  } else {
-    const confirmed = confirm(message);
-    if (confirmed) onConfirm();
-  }
-};
-
-/* EVENTS */
-if (openRemoveMembersModalBtn) {
-  openRemoveMembersModalBtn.addEventListener("click", openRemoveMembersModal);
-}
-
-if (discardRemoveMembersBtn) {
-  discardRemoveMembersBtn.addEventListener("click", closeRemoveMembersModal);
-}
-
-if (removeMembersModalOverlay) {
-  removeMembersModalOverlay.addEventListener("click", (event) => {
-    if (event.target === removeMembersModalOverlay) closeRemoveMembersModal();
-  });
-}
+/* ── EVENTS ───────────────────────────────────────────────────────────────── */
+if (openRemoveMembersModalBtn) openRemoveMembersModalBtn.addEventListener("click", openRemoveMembersModal);
+if (discardRemoveMembersBtn)   discardRemoveMembersBtn.addEventListener("click", closeRemoveMembersModal);
+if (removeMembersModalOverlay) removeMembersModalOverlay.addEventListener("click", (e) => { if (e.target === removeMembersModalOverlay) closeRemoveMembersModal(); });
 
 if (removeMembersBtn) {
   removeMembersBtn.addEventListener("click", () => {
-    if (!removeMembersList) return;
-
-    const selectedNames = Array.from(
+    const selectedIds = Array.from(
       removeMembersList.querySelectorAll("input[type='checkbox']:checked")
-    ).map((input) => input.value);
+    ).map((cb) => Number(cb.value));
+    if (selectedIds.length === 0) return;
 
-    if (selectedNames.length === 0) return;
-
-    const memberText =
-      selectedNames.length === 1 ? `"${selectedNames[0]}"` : `${selectedNames.length} members`;
+    const names = currentMembers
+      .filter((m) => selectedIds.includes(m.grpmemId))
+      .map((m) => m.fullName);
+    const label = names.length === 1 ? `"${names[0]}"` : `${names.length} members`;
 
     safeShowConfirmation(
-      `Are you sure you want to remove ${memberText} from the group?`,
-      () => {
-        const data = loadLeaderGroupData();
-
-        data.members = (data.members || []).filter(
-          (member) => !selectedNames.includes(member.name)
-        );
-
-        data.stats.members = data.members.length + 1;
-
-        saveLeaderGroupData(data);
-        applyLeaderGroupData(data);
+      `Are you sure you want to remove ${label} from the group?`,
+      async () => {
+        const { error } = await supabase
+          .from("GROUPMEMBER")
+          .delete()
+          .in("grpmemId", selectedIds);
+        if (error) { alert("Failed to remove members: " + error.message); return; }
         closeRemoveMembersModal();
+        await loadGroupFromDB();
       },
-      {
-        title: "Remove Members",
-        confirmText: "Remove",
-        cancelText: "Cancel",
-      }
+      { title: "Remove Members", confirmText: "Remove", cancelText: "Cancel" }
     );
   });
 }
 
-if (topBackBtn) {
-  topBackBtn.addEventListener("click", () => {
-    window.location.href = "../s.dashb.html";
-  });
-}
-
-if (backBtn) {
-  backBtn.addEventListener("click", () => {
-    window.location.href = "../s.dashb.html";
-  });
-}
-
-if (projectBreakdownTab) {
-  projectBreakdownTab.addEventListener("click", () => {
-    window.location.href = "s.leadercategory.html";
-  });
-}
-
-if (openAddMembersModalBtn) {
-  openAddMembersModalBtn.addEventListener("click", openAddMembersModal);
-}
-
-if (discardAddMembersBtn) {
-  discardAddMembersBtn.addEventListener("click", closeAddMembersModal);
-}
-
-if (addMembersModalOverlay) {
-  addMembersModalOverlay.addEventListener("click", (event) => {
-    if (event.target === addMembersModalOverlay) closeAddMembersModal();
-  });
-}
+if (topBackBtn)     topBackBtn.addEventListener("click", () => { window.location.href = "../s.dashb.html"; });
+if (backBtn)        backBtn.addEventListener("click",    () => { window.location.href = "../s.dashb.html"; });
+if (projectBreakdownTab) projectBreakdownTab.addEventListener("click", () => {
+  const grpId = getGroupId();
+  window.location.href = `s.leadercategory.html?grpId=${grpId}`;
+});
+if (openAddMembersModalBtn) openAddMembersModalBtn.addEventListener("click", openAddMembersModal);
+if (discardAddMembersBtn)   discardAddMembersBtn.addEventListener("click", closeAddMembersModal);
+if (addMembersModalOverlay) addMembersModalOverlay.addEventListener("click", (e) => { if (e.target === addMembersModalOverlay) closeAddMembersModal(); });
 
 if (copyGroupLinkBtn) {
   copyGroupLinkBtn.addEventListener("click", async () => {
     if (!groupLinkValue) return;
-
     const link = groupLinkValue.value;
-    if (!link) return;
-
     try {
       await navigator.clipboard.writeText(link);
-
-      copyGroupLinkBtn.textContent = "Copied";
-
-      setTimeout(() => {
-        copyGroupLinkBtn.textContent = "Copy";
-      }, 1200);
     } catch {
       groupLinkValue.select();
       document.execCommand("copy");
-
-      copyGroupLinkBtn.textContent = "Copied";
-
-      setTimeout(() => {
-        copyGroupLinkBtn.textContent = "Copy";
-      }, 1200);
     }
+    copyGroupLinkBtn.textContent = "Copied";
+    setTimeout(() => { copyGroupLinkBtn.textContent = "Copy"; }, 1200);
   });
 }
 
-if (leaveBtn) {
-  leaveBtn.addEventListener("click", openSelectLeaderModal);
-}
-
-if (discardSelectLeaderBtn) {
-  discardSelectLeaderBtn.addEventListener("click", closeSelectLeaderModal);
-}
-
-if (selectLeaderModalOverlay) {
-  selectLeaderModalOverlay.addEventListener("click", (event) => {
-    if (event.target === selectLeaderModalOverlay) closeSelectLeaderModal();
-  });
-}
-
-if (leaveGroupBtn) {
-  leaveGroupBtn.addEventListener("click", openConfirmLeaveModal);
-}
-
-if (cancelLeaveBtn) {
-  cancelLeaveBtn.addEventListener("click", closeConfirmLeaveModal);
-}
-
-if (confirmLeaveBtn) {
-  confirmLeaveBtn.addEventListener("click", leaveGroup);
-}
-
-if (confirmLeaveModalOverlay) {
-  confirmLeaveModalOverlay.addEventListener("click", (event) => {
-    if (event.target === confirmLeaveModalOverlay) closeConfirmLeaveModal();
-  });
-}
+if (leaveBtn)              leaveBtn.addEventListener("click", openSelectLeaderModal);
+if (discardSelectLeaderBtn) discardSelectLeaderBtn.addEventListener("click", closeSelectLeaderModal);
+if (selectLeaderModalOverlay) selectLeaderModalOverlay.addEventListener("click", (e) => { if (e.target === selectLeaderModalOverlay) closeSelectLeaderModal(); });
+if (leaveGroupBtn)         leaveGroupBtn.addEventListener("click", openConfirmLeaveModal);
+if (cancelLeaveBtn)        cancelLeaveBtn.addEventListener("click", closeConfirmLeaveModal);
+if (confirmLeaveBtn)       confirmLeaveBtn.addEventListener("click", leaveGroup);
+if (confirmLeaveModalOverlay) confirmLeaveModalOverlay.addEventListener("click", (e) => { if (e.target === confirmLeaveModalOverlay) closeConfirmLeaveModal(); });
 
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     safeShowConfirmation(
       "Are you sure you want to log out?",
-      () => {
-        window.location.href = "../../auth/log-sign.html";
-      },
-      {
-        title: "Log Out",
-        confirmText: "Log Out",
-        cancelText: "Cancel",
-      }
+      () => { window.location.href = "../../auth/log-sign.html"; },
+      { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
     );
   });
 }
 
-/* INITIAL LOAD */
-loadDashboardStats();
+
+/* ── SIDEBAR PROFILE ─────────────────────────────────────────────────────── */
+const loadSidebarProfile = async () => {
+  const supabase = getSupabase();
+  if (!supabase) return;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("USER")
+      .select("userDisplayName, userEmail, avatarPath")
+      .eq("userId", user.id)
+      .maybeSingle();
+    if (!data) return;
+    const profileBlock = document.querySelector(".profile-block");
+    if (!profileBlock) return;
+    const headings = profileBlock.querySelectorAll("h3");
+    if (headings[0]) headings[0].textContent = data.userDisplayName || "No Name";
+    if (headings[1]) headings[1].textContent = data.userEmail || user.email || "";
+    const avatarImg = profileBlock.querySelector(".avatar-circle img");
+    if (avatarImg && data.avatarPath) avatarImg.src = data.avatarPath;
+  } catch (err) {
+    console.error("Failed to load sidebar profile:", err);
+  }
+};
+
+/* ── INIT ─────────────────────────────────────────────────────────────────── */
+loadGroupFromDB();
+loadSidebarProfile();

@@ -1,20 +1,22 @@
-const topBackBtn = document.querySelector("#topBackBtn");
-const groupInfoTab = document.querySelector("#groupInfoTab");
+const topBackBtn               = document.querySelector("#topBackBtn");
+const groupInfoTab             = document.querySelector("#groupInfoTab");
 const openPostCategoryModalBtn = document.querySelector("#openPostCategoryModalBtn");
 const postCategoryModalOverlay = document.querySelector("#postCategoryModalOverlay");
-const discardPostCategoryBtn = document.querySelector("#discardPostCategoryBtn");
-const postCategoryForm = document.querySelector("#postCategoryForm");
-const categoryNameInput = document.querySelector("#categoryNameInput");
-const categoryDueDateInput = document.querySelector("#categoryDueDateInput");
-const postCategorySubmitBtn = postCategoryForm ? postCategoryForm.querySelector("button[type='submit']") : null;
-const categoryList = document.querySelector(".category-list");
-const projectOptionsOverlay = document.querySelector("#projectOptionsModalOverlay");
-const editProjectNameInput = document.querySelector("#editProjectNameInput");
-const editProjectDueDateInput = document.querySelector("#editProjectDueDateInput");
-const saveProjectNameBtn = document.querySelector("#saveProjectNameBtn");
-const deleteProjectBtn = document.querySelector("#deleteProjectBtn");
-const closeProjectOptionsBtn = document.querySelector("#closeProjectOptionsBtn");
+const discardPostCategoryBtn   = document.querySelector("#discardPostCategoryBtn");
+const postCategoryForm         = document.querySelector("#postCategoryForm");
+const categoryNameInput        = document.querySelector("#categoryNameInput");
+const categoryDueDateInput     = document.querySelector("#categoryDueDateInput");
+const postCategorySubmitBtn    = postCategoryForm ? postCategoryForm.querySelector("button[type='submit']") : null;
+const categoryList             = document.querySelector(".category-list");
+const projectOptionsOverlay    = document.querySelector("#projectOptionsModalOverlay");
+const editProjectNameInput     = document.querySelector("#editProjectNameInput");
+const editProjectDueDateInput  = document.querySelector("#editProjectDueDateInput");
+const saveProjectNameBtn       = document.querySelector("#saveProjectNameBtn");
+const deleteProjectBtn         = document.querySelector("#deleteProjectBtn");
+const closeProjectOptionsBtn   = document.querySelector("#closeProjectOptionsBtn");
 
+const supa     = () => window.hiveSupabase;
+const getGrpId = () => new URLSearchParams(window.location.search).get("grpId") || sessionStorage.getItem("hive_grpId");
 const todayISO = () => new Date().toISOString().split("T")[0];
 
 const formatDueDate = (iso) => {
@@ -25,86 +27,32 @@ const formatDueDate = (iso) => {
 
 let activeProjectItem = null;
 
-const openProjectOptions = (categoryItem) => {
-    activeProjectItem = categoryItem;
-    const nameEl = categoryItem.querySelector(".category-name");
-    if (editProjectNameInput && nameEl) editProjectNameInput.value = nameEl.textContent;
-    if (editProjectDueDateInput) {
-        editProjectDueDateInput.min = todayISO();
-        editProjectDueDateInput.value = categoryItem.dataset.dueDate || "";
-    }
-    if (projectOptionsOverlay) {
-        projectOptionsOverlay.classList.add("open");
-        projectOptionsOverlay.setAttribute("aria-hidden", "false");
-    }
+// ── Get the progId for the current group ─────────────────────────────────
+const getProgId = async () => {
+    const grpId = getGrpId();
+    if (!grpId) return null;
+    const { data, error } = await supa()
+        .from("GROUP")
+        .select("progId")
+        .eq("grpId", Number(grpId))
+        .maybeSingle();
+    if (error || !data) return null;
+    return data.progId;
 };
 
-const closeProjectOptions = () => {
-    if (projectOptionsOverlay) {
-        projectOptionsOverlay.classList.remove("open");
-        projectOptionsOverlay.setAttribute("aria-hidden", "true");
-    }
-    activeProjectItem = null;
+// ── Load projects from Supabase via progId ────────────────────────────────
+const loadProjects = async () => {
+    const progId = await getProgId();
+    if (!progId) return [];
+    const { data, error } = await supa()
+        .from("PROJECT")
+        .select("projId, projName")
+        .eq("progId", progId);
+    if (error || !data) return [];
+    return data.map(p => ({ key: String(p.projId), name: p.projName, projId: p.projId }));
 };
 
-if (closeProjectOptionsBtn) closeProjectOptionsBtn.addEventListener("click", closeProjectOptions);
-
-if (projectOptionsOverlay) {
-    projectOptionsOverlay.addEventListener("click", (e) => {
-        if (e.target === projectOptionsOverlay) closeProjectOptions();
-    });
-}
-
-const saveProjectName = () => {
-    if (!activeProjectItem) return;
-    const newName = editProjectNameInput ? editProjectNameInput.value.trim() : "";
-    if (!newName) return;
-    const newDueDate = editProjectDueDateInput ? editProjectDueDateInput.value : "";
-    if (newDueDate && newDueDate < todayISO()) return;
-    const oldKey = activeProjectItem.dataset.category;
-    const newKey = newName.toLowerCase().replace(/\s+/g, "-");
-    const saved = loadProjects();
-    if (saved) {
-        const idx = saved.findIndex((p) => p.key === oldKey);
-        if (idx !== -1) {
-            saved[idx].name = newName;
-            saved[idx].key = newKey;
-            saved[idx].dueDate = newDueDate;
-            saveProjects(saved);
-        }
-    }
-    renderAllProjects();
-    closeProjectOptions();
-};
-
-if (saveProjectNameBtn) saveProjectNameBtn.addEventListener("click", saveProjectName);
-
-if (deleteProjectBtn) {
-    deleteProjectBtn.addEventListener("click", () => {
-        if (!activeProjectItem) return;
-        const key = activeProjectItem.dataset.category;
-        const nameEl = activeProjectItem.querySelector(".category-name");
-        const projectName = nameEl ? nameEl.textContent : "this project";
-        showConfirmation(`Are you sure you want to remove the project "${projectName}"?`, () => {
-            const saved = loadProjects();
-            if (saved) saveProjects(saved.filter((p) => p.key !== key));
-            renderAllProjects();
-            closeProjectOptions();
-        }, { title: "Remove Project", confirmText: "Remove", cancelText: "Cancel" });
-    });
-}
-
-const STORAGE_KEY_PROJECTS = "hive_leader_projects";
-
-const loadProjects = () => {
-    const saved = localStorage.getItem(STORAGE_KEY_PROJECTS);
-    return saved ? JSON.parse(saved) : [];
-};
-
-const saveProjects = (projects) => {
-    localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
-};
-
+// ── Create category card ──────────────────────────────────────────────────
 const createCategoryItem = (name, key, count, dueDate) => {
     const categoryItem = document.createElement("div");
     categoryItem.className = "category-item";
@@ -123,22 +71,20 @@ const createCategoryItem = (name, key, count, dueDate) => {
     `;
     const btn = categoryItem.querySelector(".category-main-btn");
     if (btn) btn.addEventListener("click", () => {
-        localStorage.setItem("hive_selected_project", key);
-        localStorage.setItem("hive_selected_project_name", name);
+        sessionStorage.setItem("hive_selected_project", key);
+        sessionStorage.setItem("hive_selected_project_name", name);
         window.location.href = "s.leaderprojectbreakdown.html";
     });
     const moreBtn = categoryItem.querySelector(".more-btn");
-    if (moreBtn) moreBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openProjectOptions(categoryItem);
-    });
+    if (moreBtn) moreBtn.addEventListener("click", (e) => { e.stopPropagation(); openProjectOptions(categoryItem); });
     return categoryItem;
 };
 
-const renderAllProjects = () => {
+// ── Render all projects ───────────────────────────────────────────────────
+const renderAllProjects = async () => {
     if (!categoryList) return;
     categoryList.innerHTML = "";
-    const projects = loadProjects();
+    const projects = await loadProjects();
     if (projects.length === 0) {
         categoryList.innerHTML = `
             <div class="empty-state">
@@ -154,20 +100,69 @@ const renderAllProjects = () => {
     });
 };
 
-if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "../s.dashb.html"; });
-if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "s.leadergrpviewing.html"; });
+// ── Project options modal ─────────────────────────────────────────────────
+const openProjectOptions = (categoryItem) => {
+    activeProjectItem = categoryItem;
+    const nameEl = categoryItem.querySelector(".category-name");
+    if (editProjectNameInput && nameEl) editProjectNameInput.value = nameEl.textContent;
+    if (editProjectDueDateInput) {
+        editProjectDueDateInput.min   = todayISO();
+        editProjectDueDateInput.value = categoryItem.dataset.dueDate || "";
+    }
+    projectOptionsOverlay?.classList.add("open");
+    projectOptionsOverlay?.setAttribute("aria-hidden", "false");
+};
 
+const closeProjectOptions = () => {
+    projectOptionsOverlay?.classList.remove("open");
+    projectOptionsOverlay?.setAttribute("aria-hidden", "true");
+    activeProjectItem = null;
+};
+
+if (closeProjectOptionsBtn) closeProjectOptionsBtn.addEventListener("click", closeProjectOptions);
+if (projectOptionsOverlay) projectOptionsOverlay.addEventListener("click", (e) => { if (e.target === projectOptionsOverlay) closeProjectOptions(); });
+
+// ── Edit project name ─────────────────────────────────────────────────────
+const saveProjectName = async () => {
+    if (!activeProjectItem) return;
+    const newName = editProjectNameInput ? editProjectNameInput.value.trim() : "";
+    if (!newName) return;
+    const projId = Number(activeProjectItem.dataset.category);
+    const { error } = await supa().from("PROJECT").update({ projName: newName }).eq("projId", projId);
+    if (error) { alert("Failed to update project: " + error.message); return; }
+    await renderAllProjects();
+    closeProjectOptions();
+};
+
+if (saveProjectNameBtn) saveProjectNameBtn.addEventListener("click", saveProjectName);
+
+// ── Delete project ────────────────────────────────────────────────────────
+if (deleteProjectBtn) {
+    deleteProjectBtn.addEventListener("click", () => {
+        if (!activeProjectItem) return;
+        const projId = Number(activeProjectItem.dataset.category);
+        const nameEl = activeProjectItem.querySelector(".category-name");
+        const projectName = nameEl ? nameEl.textContent : "this project";
+        showConfirmation(`Are you sure you want to remove the project "${projectName}"?`, async () => {
+            const { error } = await supa().from("PROJECT").delete().eq("projId", projId);
+            if (error) { alert("Failed to delete project: " + error.message); return; }
+            await renderAllProjects();
+            closeProjectOptions();
+        }, { title: "Remove Project", confirmText: "Remove", cancelText: "Cancel" });
+    });
+}
+
+// ── Post project ──────────────────────────────────────────────────────────
 const closePostCategoryModal = () => {
-    if (!postCategoryModalOverlay) return;
-    postCategoryModalOverlay.classList.remove("open");
-    postCategoryModalOverlay.setAttribute("aria-hidden", "true");
+    postCategoryModalOverlay?.classList.remove("open");
+    postCategoryModalOverlay?.setAttribute("aria-hidden", "true");
 };
 
 const updatePostCategorySubmitState = () => {
     if (!postCategorySubmitBtn) return;
-    const hasProjectName = categoryNameInput && categoryNameInput.value.trim().length > 0;
-    const hasDueDate = categoryDueDateInput && categoryDueDateInput.value.length > 0;
-    postCategorySubmitBtn.disabled = !(hasProjectName && hasDueDate);
+    const hasName = categoryNameInput && categoryNameInput.value.trim().length > 0;
+    const hasDate = categoryDueDateInput && categoryDueDateInput.value.length > 0;
+    postCategorySubmitBtn.disabled = !(hasName && hasDate);
 };
 
 if (openPostCategoryModalBtn && postCategoryModalOverlay) {
@@ -181,32 +176,31 @@ if (openPostCategoryModalBtn && postCategoryModalOverlay) {
 
 if (discardPostCategoryBtn) {
     discardPostCategoryBtn.addEventListener("click", () => {
-        if (postCategoryForm) postCategoryForm.reset();
+        postCategoryForm?.reset();
         updatePostCategorySubmitState();
         closePostCategoryModal();
     });
 }
 
-if (categoryNameInput) categoryNameInput.addEventListener("input", updatePostCategorySubmitState);
+if (categoryNameInput)    categoryNameInput.addEventListener("input", updatePostCategorySubmitState);
 if (categoryDueDateInput) categoryDueDateInput.addEventListener("input", updatePostCategorySubmitState);
-
-if (postCategoryModalOverlay) {
-    postCategoryModalOverlay.addEventListener("click", (e) => {
-        if (e.target === postCategoryModalOverlay) closePostCategoryModal();
-    });
-}
+if (postCategoryModalOverlay) postCategoryModalOverlay.addEventListener("click", (e) => { if (e.target === postCategoryModalOverlay) closePostCategoryModal(); });
 
 if (postCategoryForm) {
     postCategoryForm.addEventListener("submit", (e) => {
         e.preventDefault();
         const name = categoryNameInput.value.trim();
-        const due = categoryDueDateInput.value;
+        const due  = categoryDueDateInput.value;
         if (!name || !due || due < todayISO()) return;
-        showConfirmation(`Are you sure you want to post the project "${name}"?`, () => {
-            const projects = loadProjects();
-            projects.push({ name, key: name.toLowerCase().replace(/\s+/g, "-"), count: 0, dueDate: due });
-            saveProjects(projects);
-            renderAllProjects();
+        showConfirmation(`Are you sure you want to post the project "${name}"?`, async () => {
+            // Get the progId for this group — that's the FK on PROJECT
+            const progId = await getProgId();
+            if (!progId) { alert("Could not determine the program for this group. Please go back and try again."); return; }
+            const { error } = await supa()
+                .from("PROJECT")
+                .insert({ projName: name, progId: Number(progId) });
+            if (error) { alert("Failed to create project: " + error.message); return; }
+            await renderAllProjects();
             postCategoryForm.reset();
             updatePostCategorySubmitState();
             closePostCategoryModal();
@@ -214,9 +208,13 @@ if (postCategoryForm) {
     });
 }
 
+if (topBackBtn)    topBackBtn.addEventListener("click",    () => { window.location.href = "../s.dashb.html"; });
+if (groupInfoTab)  groupInfoTab.addEventListener("click",  () => { window.location.href = "s.leadergrpviewing.html"; });
+
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) logoutBtn.addEventListener("click", () => {
     showConfirmation("Are you sure you want to log out?", () => { window.location.href = "../../auth/log-sign.html"; }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
 });
 
+// ── Init ──────────────────────────────────────────────────────────────────
 renderAllProjects();

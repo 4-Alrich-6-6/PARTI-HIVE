@@ -15,6 +15,10 @@ const getGroupId = () => {
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();
 
+const truncateEmail = (email, maxLen = 25) => {
+  return email && email.length > maxLen ? email.slice(0, maxLen) + "..." : email;
+};
+
 /* ── DB LOAD ──────────────────────────────────────────────────────────────── */
 const loadGroupFromDB = async () => {
   const supabase = getSupabase();
@@ -148,7 +152,7 @@ const createMemberCard = (member, cardClass, avatarSize) => {
       <div class="member-info">
         <h3>${member.fullName}</h3>
         <p>${member.roleName}</p>
-        <p>${member.email}</p>
+        <p title="${member.email}">${truncateEmail(member.email)}</p>
       </div>
       <div class="stats">
         <p>Total Tasks: ${member.taskStats?.total || 0}</p>

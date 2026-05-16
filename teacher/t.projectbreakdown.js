@@ -31,9 +31,44 @@ const isPastDue = (task) => {
 
 const STORAGE_KEY_TASKS = "hive_leader_tasks";
 
-const loadTasks = () => {
-    const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-    return saved ? JSON.parse(saved) : [];
+const supa = () => window.hiveSupabase;
+const getProjId = () => sessionStorage.getItem("hive_selected_project");
+const getGrpId = () => sessionStorage.getItem("hive_grpId");
+
+const STAT_SLUG = { 1: "inactive", 2: "active", 3: "pause", 4: "verifying", 5: "finished", 6: "missing" };
+
+const loadTasks = async () => {
+    const projId = getProjId();
+    console.log("[loadTasks] projId=", projId);
+    if (!projId) {
+        console.error("[loadTasks] No projId found");
+        return [];
+    }
+    const { data, error } = await supa()
+        .from("TASK")
+        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskAcmD, statId, GROUPMEMBER(grpmemId, userId, USER(userDisplayName))")
+        .eq("projId", Number(projId));
+    console.log("[loadTasks] data=", data, "error=", error);
+    if (error || !data) return [];
+    return data.map(t => ({
+        taskId: t.taskId,
+        name: t.taskName,
+        description: t.taskDesc || "",
+        dueDate: t.taskDueD ? t.taskDueD.split("T")[0] : "",
+        dueTime: t.taskDueD ? t.taskDueD.split("T")[1]?.slice(0,5) : "",
+        intensity: t.taskIntensity || "Light",
+        priority: t.taskPrio || "Low",
+        resources: t.taskResource || "",
+        acmD: t.taskAcmD || null,
+        status: STAT_SLUG[t.statId] || "inactive",
+        statId: t.statId || 1,
+        assignees: Object.values(
+            (t.GROUPMEMBER || []).reduce((seen, m) => {
+                if (!seen[m.userId]) seen[m.userId] = { grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" };
+                return seen;
+            }, {})
+        ).map(a => a.name)
+    }));
 };
 
 const formatTime12h = (timeStr) => {
@@ -53,29 +88,8 @@ const formatElapsedTime = (ms) => {
 };
 
 const updateTaskTimer = (task, taskIndex) => {
-    const currentStatus = task.status || "inactive";
-    const now = Date.now();
-    
-    if (!task.elapsedTime) task.elapsedTime = 0;
-    
-    if (currentStatus === "active") {
-        if (task.lastActiveTimestamp) {
-            const elapsed = now - task.lastActiveTimestamp;
-            task.elapsedTime += elapsed;
-        }
-        task.lastActiveTimestamp = now;
-    } else {
-        task.lastActiveTimestamp = null;
-    }
-    
-    const tasks = loadTasks();
-    if (tasks[taskIndex]) {
-        tasks[taskIndex].elapsedTime = task.elapsedTime;
-        tasks[taskIndex].lastActiveTimestamp = task.lastActiveTimestamp;
-        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-    }
-    
-    return task.elapsedTime;
+    // Teachers view project breakdown read-only
+    return task.elapsedTime || 0;
 };
 
 const closeTaskDetails = () => {
@@ -84,10 +98,9 @@ const closeTaskDetails = () => {
     taskDetailsOverlay.setAttribute("aria-hidden", "true");
 };
 
-const openTaskDetails = (taskIndex) => {
+const openTaskDetails = (taskIndex, tasks) => {
     if (!taskDetailsOverlay) return;
 
-    const tasks = loadTasks();
     const task = tasks[taskIndex];
     if (!task) return;
 
@@ -161,14 +174,15 @@ const renderTask = (task, taskIndex, targetSection) => {
     `;
 
     article.addEventListener("click", () => {
-        openTaskDetails(taskIndex);
+        openTaskDetails(taskIndex, targetSection === document.querySelector("#tasksList") ? window.currentTasks : []);
     });
 
     targetSection.appendChild(article);
 };
 
-const renderAllTasks = () => {
-    const tasks = loadTasks();
+const renderAllTasks = async () => {
+    const tasks = await loadTasks();
+    window.currentTasks = tasks;
     const tasksList = document.querySelector("#tasksList");
     if (tasksList) tasksList.innerHTML = "";
 
@@ -215,7 +229,8 @@ if (topBackBtn) {
 
 if (groupInfoTab) {
     groupInfoTab.addEventListener("click", () => {
-        window.location.href = "t.grpviewing.html";
+        const grpId = sessionStorage.getItem("hive_grpId");
+        window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`;;
     });
 }
 
@@ -246,7 +261,7 @@ if (logoutBtn) {
 }
 
 const loadAndDisplayProjectName = () => {
-    const projectName = localStorage.getItem("hive_selected_project_name");
+    const projectName = sessionStorage.getItem("hive_selected_project_name");
     const projectNameDisplay = document.querySelector(".project-name-display h2");
     if (projectName && projectNameDisplay) {
         projectNameDisplay.textContent = projectName;

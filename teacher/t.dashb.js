@@ -15,22 +15,70 @@ let dashbData = {
 
 const loadDashbData = async () => {
     const supabase = window.hiveSupabase;
-    if (!supabase) return;
+    if (!supabase) {
+        console.error("Supabase not initialized");
+        return;
+    }
 
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
-    if (!user || userErr) return;
+    if (!user || userErr) {
+        console.error("Cannot get current user:", userErr);
+        return;
+    }
+
+    console.log("Loading dashboard for teacher:", user.id, "Type:", typeof user.id);
+
+    // Debug: Test if RLS is blocking queries
+    const { data: testQuery, error: testErr } = await supabase
+        .from("GROUPMEMBER")
+        .select("*", { count: "exact", head: true });
+    
+    console.log("RLS test - Total GROUPMEMBER records accessible:", testQuery, "Error:", testErr);
+
+    // Debug: Check ALL GROUPMEMBER records to see what's in the table
+    const { data: allMembers, error: allMembersErr } = await supabase
+        .from("GROUPMEMBER")
+        .select("grpmemId, userId, grpId, roleId");
+    
+    console.log("All GROUPMEMBER records in database:", allMembers, "Error:", allMembersErr);
+
+    // Debug: Check if current teacher has ANY records in GROUPMEMBER
+    const { data: teacherMemberships, error: teacherMemErr } = await supabase
+        .from("GROUPMEMBER")
+        .select("grpmemId, userId, grpId, roleId")
+        .eq("userId", user.id);
+    
+    console.log("Teacher's raw GROUPMEMBER records:", teacherMemberships, "Error:", teacherMemErr);
 
     const { data: memberships, error } = await supabase
         .from("GROUPMEMBER")
-        .select("grpId, GROUP(grpId, grpName, grpSubject)")
+        .select("grpId, roleId, ROLE(roleName), GROUP(grpId, grpName, grpSubject)")
         .eq("userId", user.id);
 
-    if (error || !memberships) return;
+    console.log("Teacher group memberships fetched (with joins):", memberships, "Error:", error);
+
+    if (error) {
+        console.error("Error fetching memberships:", error);
+        return;
+    }
+    
+    if (!memberships || memberships.length === 0) {
+        console.log("No group memberships found for this teacher");
+        dashbData = { groups: [], stats: { groups: 0 } };
+        applyDashbData(dashbData);
+        return;
+    }
 
     const groups = [];
     for (const m of memberships) {
+        console.log("Processing membership:", m);
+        
+        if (!m.GROUP) {
+            console.warn("GROUP is null for membership:", m);
+            continue;
+        }
+        
         const grp = m.GROUP;
-        if (!grp) continue;
         
         // Count members in the group - ensure grpId is a number
         const grpId = Number(grp.grpId);
@@ -43,6 +91,8 @@ const loadDashbData = async () => {
             console.error(`Error counting members for group ${grpId}:`, countErr);
         }
 
+        console.log(`Group ${grpId}:`, grp.grpName, "Members:", memberCount, "Teacher role:", m.ROLE?.roleName);
+
         groups.push({
             grpId: grpId,
             name: grp.grpName || "Unnamed Group",
@@ -51,36 +101,111 @@ const loadDashbData = async () => {
         });
     }
 
+    console.log("Final groups list:", groups);
     dashbData = { groups, stats: { groups: groups.length } };
     applyDashbData(dashbData);
 };
 
 const applyDashbData = (data) => {
-    // Teacher dashboard shows a single joined group card (.open-member-group-view)
-    // If there are multiple groups, show the first one; else show empty state
-    const joinedCard = document.querySelector(".open-member-group-view");
-    if (joinedCard) {
-        const h3 = joinedCard.querySelector(".group-info h3");
-        const p = joinedCard.querySelector(".group-info p");
-        const strong = joinedCard.querySelector(".card-right strong");
-        if (data.groups && data.groups.length > 0) {
-            const grp = data.groups[0];
-            if (h3) h3.textContent = grp.name;
-            if (p) p.textContent = grp.subject;
-            if (strong) strong.textContent = `Occupied Members : ${grp.members}`;
-            joinedCard.dataset.grpId = grp.grpId;
-        } else {
-            if (h3) h3.textContent = "No Group Yet";
-            if (p) p.textContent = "Join a group to get started";
-            if (strong) strong.textContent = "Occupied Members : 0";
-        }
+    console.log("applyDashbData called with:", data);
+    
+    const groupsList = document.querySelector("#groupsList");
+    console.log("Found groupsList:", groupsList);
+    
+    if (!groupsList) {
+        console.warn("groupsList element not found!");
+        return;
     }
+    
+    if (data.groups && data.groups.length > 0) {
+        // Display first group (teachers only have one group)
+        const grp = data.groups[0];
+        console.log("Rendering group:", grp);
+        
+        groupsList.innerHTML = `
+            <article class="group-card open-member-group-view">
+                <div class="group-info">
+                    <h3>${grp.name}</h3>
+                    <p>${grp.subject}</p>
+                </div>
+                <div class="card-right">
+                    <strong>Occupied Members : ${grp.members}</strong>
+                </div>
+            </article>
+        `;
+        
+        const card = groupsList.querySelector(".open-member-group-view");
+        if (card) {
+            card.dataset.grpId = grp.grpId;
+            card.addEventListener("click", () => {
+                sessionStorage.setItem("hive_grpId", String(grp.grpId));
+                sessionStorage.setItem("hive_grpName", grp.name);
+                const grpId = sessionStorage.getItem("hive_grpId");
+                window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`;;
+            });
+        }
+    } else {
+        console.log("No groups found, showing empty state");
+        groupsList.innerHTML = `
+            <div class="empty-state">
+                <img src="../assets/JoinGroup.png" class="empty-state-icon" alt="No groups">
+                <h3>No Groups Found</h3>
+                <p>You haven't joined or created any groups yet. Use "Join Groups" to get started!</p>
+            </div>
+        `;
+    }
+    
+    // Update stat card
     const statCards = document.querySelectorAll(".stat-card h3");
-    if (statCards[0]) statCards[0].textContent = data.stats.groups;
+    console.log("Found stat cards:", statCards.length);
+    if (statCards[0]) {
+        statCards[0].textContent = data.stats.groups;
+        console.log("Set stat card to:", data.stats.groups);
+    }
 };
 
 // Load on page start
 loadDashbData();
+
+// ─── Load sidebar profile data ──────────────────────────────────────────────────
+const loadTeacherSidebarProfile = async () => {
+    const supabase = window.hiveSupabase;
+    if (!supabase) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: userData, error } = await supabase
+            .from("USER")
+            .select("userDisplayName, userEmail, avatarPath")
+            .eq("userId", user.id)
+            .maybeSingle();
+
+        if (error || !userData) {
+            console.log("No teacher profile found yet");
+            return;
+        }
+
+        // Update avatar
+        const avatarImg = document.querySelector(".avatar-circle img");
+        if (avatarImg && userData.avatarPath) {
+            avatarImg.src = userData.avatarPath;
+            avatarImg.style.objectFit = "cover";
+        }
+
+        // Update name and email
+        const h3s = document.querySelectorAll(".profile-block h3");
+        if (h3s[0]) h3s[0].textContent = userData.userDisplayName || "Name";
+        if (h3s[1]) h3s[1].textContent = userData.userEmail || "Email";
+
+        console.log("Teacher profile loaded:", userData);
+    } catch (err) {
+        console.error("Error loading teacher profile:", err);
+    }
+};
+
+loadTeacherSidebarProfile();
 
 // ─── Join Group ───────────────────────────────────────────────────────────────
 const joinGroupModal = document.querySelector("#joinGroupModal");
@@ -143,6 +268,21 @@ if (joinGroupBtn) {
                 const { data: { user }, error: userErr } = await supabase.auth.getUser();
                 if (!user || userErr) { alert("You must be logged in."); return; }
 
+                // Verify user exists in USER table
+                const { data: userExists, error: userCheckErr } = await supabase
+                    .from("USER")
+                    .select("userId")
+                    .eq("userId", user.id)
+                    .maybeSingle();
+                
+                console.log("User check in USER table:", userExists, "Error:", userCheckErr);
+                
+                if (!userExists) {
+                    console.error("User not found in USER table. Please complete your profile first.");
+                    alert("Please complete your profile setup first before joining groups. Go to 'Manage Profile'.");
+                    return;
+                }
+
                 const { data: grp, error: grpErr } = await supabase
                     .from("GROUP").select("grpId, grpName").eq("grpId", grpId).maybeSingle();
                 if (grpErr || !grp) { alert("Group not found. Check the invite link and try again."); return; }
@@ -151,13 +291,52 @@ if (joinGroupBtn) {
                     .from("GROUPMEMBER").select("grpmemId").eq("userId", user.id).eq("grpId", grpId).maybeSingle();
                 if (existing) { alert("You are already a member of this group."); closeJoinGroupModal(); return; }
 
-                const { data: memberRole } = await supabase
-                    .from("ROLE").select("roleId").eq("roleName", "Member").maybeSingle();
+                // List all available roles for debugging
+                const { data: allRoles } = await supabase.from("ROLE").select("roleId, roleName");
+                console.log("Available roles in database:", allRoles);
 
+                // Check if group already has a teacher
+                const { data: teacherRole, error: teacherRoleErr } = await supabase
+                    .from("ROLE").select("roleId").eq("roleName", "Teacher").maybeSingle();
+                
+                console.log("Teacher role query result:", teacherRole, "Error:", teacherRoleErr);
+                
+                if (!teacherRole || !teacherRole.roleId) {
+                    console.error("Teacher role not found in ROLE table");
+                    alert("Teacher role not configured in the system. Please contact administrator.");
+                    return;
+                }
+                
+                if (teacherRole) {
+                    const { data: existingTeacher, error: teacherCheckErr } = await supabase
+                        .from("GROUPMEMBER")
+                        .select("grpmemId")
+                        .eq("grpId", grpId)
+                        .eq("roleId", teacherRole.roleId)
+                        .maybeSingle();
+                    
+                    console.log("Existing teacher check:", existingTeacher, "Error:", teacherCheckErr);
+                    
+                    if (existingTeacher) { 
+                        alert("This group already has a teacher. You cannot join as it can only have one teacher."); 
+                        closeJoinGroupModal(); 
+                        return; 
+                    }
+                }
+
+                // Join teacher to group with Teacher role
+                console.log("Inserting teacher to group. userId:", user.id, "grpId:", grpId, "teacherRoleId:", teacherRole?.roleId);
                 const { error: memErr } = await supabase
                     .from("GROUPMEMBER")
-                    .insert({ userId: user.id, grpId: grpId, roleId: memberRole?.roleId || null });
-                if (memErr) { alert("Failed to join group: " + memErr.message); return; }
+                    .insert({ userId: user.id, grpId: grpId, roleId: teacherRole.roleId });
+                
+                if (memErr) { 
+                    console.error("Error inserting teacher to group:", memErr);
+                    alert("Failed to join group: " + memErr.message); 
+                    return; 
+                }
+                
+                console.log("Successfully joined group as teacher");
 
                 closeJoinGroupModal();
                 await loadDashbData();
@@ -176,7 +355,7 @@ if (memberGroupCardLink) {
         const grpId = memberGroupCardLink.dataset.grpId
             || (dashbData.groups[0] ? dashbData.groups[0].grpId : null);
         if (grpId) sessionStorage.setItem("hive_grpId", String(grpId));
-        window.location.href = "t.grpviewing.html";
+        window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`;
     });
     memberGroupCardLink.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); memberGroupCardLink.click(); }

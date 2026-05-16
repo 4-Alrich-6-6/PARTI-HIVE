@@ -33,6 +33,10 @@ const getGroupId = () => {
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();
 
+const truncateEmail = (email, maxLen = 25) => {
+  return email && email.length > maxLen ? email.slice(0, maxLen) + "..." : email;
+};
+
 const safeShowConfirmation = (msg, onConfirm, opts = {}) => {
   if (typeof showConfirmation === "function") showConfirmation(msg, onConfirm, opts);
   else if (confirm(msg)) onConfirm();
@@ -87,6 +91,8 @@ const loadGroupFromDB = async () => {
     email:     m.USER?.userEmail        || "No email",
     avatarPath: m.USER?.avatarPath      || null,
   }));
+
+  console.log("Fetched members with roles:", currentMembers);
 
   // 3. Project count — FIX: PROJECT has no grpId column; link through GROUP.progId
   let projCount = 0;
@@ -186,7 +192,7 @@ const createMemberCard = (member, cardClass, avatarSize) => {
       <div class="member-info">
         <h3>${member.fullName}</h3>
         <p>${member.roleName}</p>
-        <p>${member.email}</p>
+        <p title="${member.email}">${truncateEmail(member.email)}</p>
       </div>
       <div class="stats">
         <p>Total Tasks: ${member.taskStats?.total || 0}</p>

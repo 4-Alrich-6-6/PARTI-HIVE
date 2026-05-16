@@ -99,4 +99,37 @@ if (logoutBtn) {
     });
 }
 
+const supa = () => window.hiveSupabase;
+
+const loadTeacherSidebarProfile = async () => {
+    const supabase = supa();
+    if (!supabase) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: userData, error } = await supabase
+            .from("USER")
+            .select("userDisplayName, userEmail, avatarPath")
+            .eq("userId", user.id)
+            .maybeSingle();
+
+        if (error || !userData) return;
+
+        const avatarImg = document.querySelector(".avatar-circle img");
+        if (avatarImg && userData.avatarPath) {
+            avatarImg.src = userData.avatarPath;
+            avatarImg.style.objectFit = "cover";
+        }
+
+        const h3s = document.querySelectorAll(".profile-block h3");
+        if (h3s[0]) h3s[0].textContent = userData.userDisplayName || "Name";
+        if (h3s[1]) h3s[1].textContent = userData.userEmail || "Email";
+    } catch (err) {
+        console.error("Error loading teacher profile:", err);
+    }
+};
+
 renderNotifications();
+loadTeacherSidebarProfile();

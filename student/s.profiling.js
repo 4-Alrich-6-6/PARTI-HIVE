@@ -8,6 +8,47 @@ const programSelect = document.querySelector("#program");
 
 let avatarFile = null;
 
+// ── Load existing profile data from DB ──────────────────────────────────────
+const loadProfileData = async () => {
+    const supabase = window.hiveSupabase;
+    if (!supabase) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: userData, error } = await supabase
+            .from("USER")
+            .select("userDisplayName, progId, avatarPath")
+            .eq("userId", user.id)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Error loading profile:", error);
+            return;
+        }
+
+        if (userData) {
+            // Set display name
+            if (userData.userDisplayName && displayNameInput) {
+                displayNameInput.value = userData.userDisplayName;
+            }
+
+            // Set program
+            if (userData.progId && programSelect) {
+                programSelect.value = userData.progId;
+            }
+
+            // Set avatar preview
+            if (userData.avatarPath && profilePicPreview) {
+                profilePicPreview.src = userData.avatarPath;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load profile data:", err);
+    }
+};
+
 // Populate program dropdown from DB
 (async () => {
     if (!programSelect) return;
@@ -24,6 +65,9 @@ let avatarFile = null;
         opt.textContent = prog.progName;
         programSelect.appendChild(opt);
     });
+    
+    // Load profile data after programs are loaded
+    await loadProfileData();
 })();
 
 if (editProfilePicBtn && profilePicInput) {
@@ -74,6 +118,21 @@ if (saveButton) {
                     .from("profilePicture")
                     .getPublicUrl(filePath);
                 avatarPath = urlData?.publicUrl || null;
+                console.log("Avatar uploaded successfully:", avatarPath);
+            } else {
+                console.error("Avatar upload error:", uploadErr);
+            }
+        } else {
+            // Load existing avatar path if not changing picture
+            const { data: existingUser, error: fetchErr } = await supabase
+                .from("USER")
+                .select("avatarPath")
+                .eq("userId", user.id)
+                .maybeSingle();
+            
+            if (!fetchErr && existingUser) {
+                avatarPath = existingUser.avatarPath;
+                console.log("Using existing avatar:", avatarPath);
             }
         }
 
@@ -86,11 +145,20 @@ if (saveButton) {
         };
         if (avatarPath) payload.avatarPath = avatarPath;
 
+        console.log("Saving user profile with payload:", payload);
+
         const { error } = await supabase
             .from("USER")
             .upsert(payload, { onConflict: "userId" });
 
-        if (error) { alert("Failed to save profile: " + error.message); return; }
+        if (error) { 
+            console.error("Database save error:", error);
+            alert("Failed to save profile: " + error.message); 
+            return; 
+        }
+
+        console.log("Profile saved successfully to database");
+        alert("Profile saved successfully!");
 
         localStorage.removeItem("hive_posId");
         localStorage.removeItem("hive_role");

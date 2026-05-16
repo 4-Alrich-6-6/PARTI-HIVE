@@ -3,7 +3,12 @@ const groupInfoTab = document.querySelector("#groupInfoTab");
 const categoryList = document.querySelector(".category-list");
 
 const supa     = () => window.hiveSupabase;
-const getGrpId = () => new URLSearchParams(window.location.search).get("grpId") || sessionStorage.getItem("hive_grpId");
+const getGrpId = () => {
+  const params = new URLSearchParams(window.location.search);
+  const grpId = params.get("grpId") || sessionStorage.getItem("hive_grpId");
+  if (grpId) sessionStorage.setItem("hive_grpId", grpId);
+  return grpId;
+};
 
 const formatDueDate = (iso) => {
     if (!iso) return "Due: --/--/----";
@@ -11,54 +16,61 @@ const formatDueDate = (iso) => {
     return `Due: ${m}/${d}/${y}`;
 };
 
-// ── Get the progId for the current group ─────────────────────────────────
-const getProgId = async () => {
-    const grpId = getGrpId();
-    if (!grpId) return null;
-    const { data, error } = await supa()
-        .from("GROUP")
-        .select("progId")
-        .eq("grpId", Number(grpId))
-        .maybeSingle();
-    if (error || !data) return null;
-    return data.progId;
-};
-
-// ── Load projects from Supabase via progId ────────────────────────────────
+// ── Load projects from Supabase ───────────────────────────────────────────
 const loadProjects = async () => {
-    const progId = await getProgId();
-    if (!progId) return [];
     const { data, error } = await supa()
         .from("PROJECT")
-        .select("progId, projName, projDueD")
-        .eq("progId", progId);
+        .select("projId, projName, projDueD");
+    console.log("[loadProjects] data=", data, "error=", error);
     if (error || !data) return [];
-    return data.map(p => ({ key: String(p.progId), name: p.projName, progId: p.progId, dueDate: p.projDueD || null }));
+    
+    // Fetch task count for each project
+    const projectsWithCounts = await Promise.all(
+        data.map(async (p) => {
+            const { count } = await supa()
+                .from("TASK")
+                .select("taskId", { count: "exact", head: true })
+                .eq("projId", p.projId);
+            return {
+                key: String(p.projId),
+                name: p.projName,
+                dueDate: p.projDueD || null,
+                count: count || 0
+            };
+        })
+    );
+    console.log("[loadProjects] projectsWithCounts=", projectsWithCounts);
+    return projectsWithCounts;
 };
 
-const createCategoryItem = (name, key, count, dueDate) => {
+const createCategoryItem = (project) => {
     const categoryItem = document.createElement("div");
     categoryItem.className = "category-item";
     categoryItem.innerHTML = `
-        <button class="category-main-btn" type="button" data-category="${key}">
-            <span class="category-name">${name}</span>
-            <span class="category-due-date">${formatDueDate(dueDate)}</span>
-            <span class="category-count">${count} Task${count !== 1 ? "s" : ""}</span>
+        <button class="category-main-btn" type="button" data-category="${project.key}">
+            <span class="category-name">${project.name}</span>
+            <span class="category-due-date">${formatDueDate(project.dueDate)}</span>
+            <span class="category-count">${project.count} Task${project.count !== 1 ? "s" : ""}</span>
         </button>
     `;
     const btn = categoryItem.querySelector(".category-main-btn");
     btn.addEventListener("click", () => {
-        sessionStorage.setItem("hive_selected_project", key);        // stores progId
-        sessionStorage.setItem("hive_selected_project_name", name);
-        window.location.href = "t.projectbreakdown.html";
+        sessionStorage.setItem("hive_selected_project", project.key);
+        sessionStorage.setItem("hive_selected_project_name", project.name);
+        const grpId = getGrpId();
+        window.location.href = `t.projectbreakdown.html${grpId ? `?grpId=${grpId}` : ""}`;
     });
     return categoryItem;
 };
 
 const renderAllProjects = async () => {
-    if (!categoryList) return;
+    if (!categoryList) {
+        console.log("[renderAllProjects] categoryList not found");
+        return;
+    }
     categoryList.innerHTML = "";
     const projects = await loadProjects();
+    console.log("[renderAllProjects] projects=", projects);
     if (projects.length === 0) {
         categoryList.innerHTML = `
             <div class="empty-state">
@@ -70,12 +82,15 @@ const renderAllProjects = async () => {
         return;
     }
     projects.forEach(p => {
-        categoryList.appendChild(createCategoryItem(p.name, p.key, p.count || 0, p.dueDate));
+        categoryList.appendChild(createCategoryItem(p));
     });
 };
 
 if (topBackBtn)   topBackBtn.addEventListener("click",   () => { window.location.href = "t.dashb.html"; });
-if (groupInfoTab) groupInfoTab.addEventListener("click", () => { window.location.href = "t.grpviewing.html"; });
+if (groupInfoTab) groupInfoTab.addEventListener("click", () => { 
+  const grpId = getGrpId();
+  window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`; 
+});
 
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) {
@@ -86,4 +101,31 @@ if (logoutBtn) {
     });
 }
 
+// ── Load sidebar profile ────────────────────────────────────────────────────
+const loadTeacherSidebarProfile = async () => {
+    const supabase = supa();
+    if (!supabase) return;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: userData, error } = await supabase
+            .from("USER")
+            .select("userDisplayName, userEmail, avatarPath")
+            .eq("userId", user.id)
+            .maybeSingle();
+        if (error || !userData) return;
+        const avatarImg = document.querySelector(".avatar-circle img");
+        if (avatarImg && userData.avatarPath) {
+            avatarImg.src = userData.avatarPath;
+            avatarImg.style.objectFit = "cover";
+        }
+        const h3s = document.querySelectorAll(".profile-block h3");
+        if (h3s[0]) h3s[0].textContent = userData.userDisplayName || "Name";
+        if (h3s[1]) h3s[1].textContent = userData.userEmail || "Email";
+    } catch (err) {
+        console.error("Error loading teacher profile:", err);
+    }
+};
+
 renderAllProjects();
+loadTeacherSidebarProfile();

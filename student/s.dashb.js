@@ -23,7 +23,7 @@ const loadDashbData = async () => {
         .select("grpId, roleId, ROLE(roleName), GROUP(grpId, grpName, grpSubject)")
         .eq("userId", user.id);
 
-    if (error || !memberships) return;
+    console.log("Student group memberships fetched:", memberships, "Error:", error);
 
     const ownedGroups = [];
     const joinedGroups = [];
@@ -42,6 +42,8 @@ const loadDashbData = async () => {
         if (countErr) {
             console.error(`Error counting members for group ${grpId}:`, countErr);
         }
+
+        console.log(`Group ${grpId}:`, grp.grpName, "Role:", m.ROLE?.roleName, "RoleId:", m.roleId, "Members:", memberCount);
 
         const groupObj = {
             grpId: grpId,

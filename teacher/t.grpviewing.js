@@ -10,7 +10,15 @@ const logoutBtn           = document.querySelector(".logout");
 /* ── HELPERS ──────────────────────────────────────────────────────────────── */
 const getGroupId = () => {
   const params = new URLSearchParams(window.location.search);
-  return params.get("grpId") || sessionStorage.getItem("hive_grpId") || null;
+  const fromUrl = params.get("grpId");
+  const fromSession = sessionStorage.getItem("hive_grpId");
+  const grpId = [fromUrl, fromSession].find((value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    return normalized && normalized !== "null" && normalized !== "undefined";
+  });
+
+  if (grpId) sessionStorage.setItem("hive_grpId", String(grpId));
+  return grpId || null;
 };
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();

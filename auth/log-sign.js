@@ -10,6 +10,10 @@ const getFriendlyAuthMessage = (error) => {
     const message = error?.message || "";
     const lowerMessage = message.toLowerCase();
 
+    if (lowerMessage.includes("invalid login") || lowerMessage.includes("invalid credentials")) {
+        return "Incorrect email or password. Please check your login details and try again.";
+    }
+
     if (lowerMessage.includes("confirmation email") || lowerMessage.includes("email")) {
         return "We could not send the OTP email right now. Please check your email address, then try again in a moment.";
     }
@@ -23,6 +27,75 @@ const getFriendlyAuthMessage = (error) => {
     }
 
     return "Something went wrong while sending your OTP. Please try again.";
+};
+
+const redirectAfterLogin = async (supabase) => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        showAuthNotice("Login failed. Please try again.", { title: "Login Failed" });
+        return;
+    }
+
+    const { data: existingUser, error } = await supabase
+        .from("USER")
+        .select("userId, posId, userDisplayName, progId, deptId")
+        .eq("userId", user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Profile lookup failed:", error);
+        showAuthNotice("Login worked, but your profile could not be loaded because of a database policy error. Please fix the Supabase RLS policy and try again.", {
+            title: "Profile Check Failed",
+        });
+        return;
+    }
+
+    if (!existingUser) {
+        window.location.href = "profiling.html";
+        return;
+    }
+
+    let role = "";
+    let posId = existingUser.posId || null;
+
+    if (!posId && existingUser.progId) {
+        role = "student";
+    } else if (!posId && existingUser.deptId) {
+        role = "teacher";
+    }
+
+    if (!posId && role) {
+        const { data: inferredPos } = await supabase
+            .from("POSITION")
+            .select("posId")
+            .ilike("posName", role)
+            .maybeSingle();
+
+        if (inferredPos?.posId) {
+            posId = inferredPos.posId;
+            await supabase
+                .from("USER")
+                .update({ posId })
+                .eq("userId", user.id);
+        }
+    }
+
+    const { data: pos } = await supabase
+        .from("POSITION")
+        .select("posName")
+        .eq("posId", posId)
+        .maybeSingle();
+
+    role = pos?.posName?.toLowerCase() || role;
+
+    if (role === "teacher" || role === "professor") {
+        window.location.href = "../teacher/t.dashb.html";
+    } else if (role === "student") {
+        window.location.href = "../student/s.dashb.html";
+    } else {
+        window.location.href = "profiling.html";
+    }
 };
 
 const showAuthNotice = (message, options = {}) => {
@@ -133,45 +206,45 @@ if (loginForm) {
         event.preventDefault();
 
         const emailInput = document.querySelector("#login-user");
+        const passwordInput = document.querySelector("#login-pass");
 
         if (!emailInput || !emailInput.value.trim()) {
             showAuthNotice("Please enter your email.", { title: "Missing Email" });
             return;
         }
 
-        localStorage.setItem("hive_email", emailInput.value.trim());
-        localStorage.setItem("hive_auth_mode", "login");
+        if (!passwordInput || !passwordInput.value.trim()) {
+            showAuthNotice("Please enter your password.", { title: "Missing Password" });
+            return;
+        }
 
         let error = null;
+        let supabase = null;
 
         try {
-            const supabase = getSupabase();
-            const result = await supabase.auth.signInWithOtp({
+            supabase = getSupabase();
+            const result = await supabase.auth.signInWithPassword({
                 email: emailInput.value.trim(),
-                options: {
-                    shouldCreateUser: false,
-                },
+                password: passwordInput.value,
             });
             error = result.error;
         } catch (authError) {
-            console.error("Login OTP request failed:", authError);
-            showAuthNotice(getFriendlyAuthMessage(authError), { title: "OTP Not Sent" });
+            console.error("Login failed:", authError);
+            showAuthNotice(getFriendlyAuthMessage(authError), { title: "Login Failed" });
             return;
         }
 
         if (error) {
-            console.error("Login OTP request failed:", error);
-            showAuthNotice(getFriendlyAuthMessage(error), { title: "OTP Not Sent" });
+            console.error("Login failed:", error);
+            showAuthNotice(getFriendlyAuthMessage(error), { title: "Login Failed" });
             return;
         }
 
-        showAuthNotice("OTP sent to your email.", {
-            title: "Check Your Email",
-            type: "success",
-            onClose: () => {
-                window.location.href = "signverf.html";
-            },
-        });
+        localStorage.removeItem("hive_email");
+        localStorage.removeItem("hive_auth_mode");
+        localStorage.removeItem("hive_password");
+
+        await redirectAfterLogin(supabase);
     });
 }
 

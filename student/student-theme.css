@@ -57,6 +57,15 @@ body {
     background: var(--student-white);
 }
 
+.sidebar {
+    background-image:
+        linear-gradient(to top, rgba(255, 204, 0, 0.48), rgba(255, 204, 0, 0.94)),
+        url("../assets/honeycomb.png") !important;
+    background-repeat: no-repeat, repeat;
+    background-position: left top, left bottom;
+    background-size: auto, 300px auto;
+}
+
 .menu-btn,
 .action-btn,
 .icon-btn,
@@ -83,12 +92,45 @@ body {
 }
 
 .tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
     background: var(--student-black);
     color: var(--student-white);
     border-radius: 10px;
     white-space: normal;
     text-align: center;
     line-height: 1.15;
+    text-decoration: none;
+}
+
+.tab img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.tab:not(.active) img {
+    filter: invert(1);
+}
+
+.tab.active img {
+    filter: none;
+}
+
+.tab span {
+    display: block;
+}
+
+.tab.active,
+.tab:focus-visible {
+    border: 2px solid var(--student-black, #000000);
+    outline: 2px solid var(--student-black, #000000);
+    outline-offset: 0;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.85);
 }
 
 .tab-group-info,
@@ -152,4 +194,34 @@ body {
 .notif-delete-btn {
     background: var(--student-yellow) !important;
     color: var(--student-black) !important;
+}
+
+/* layout stability */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.layout,
+.main-content-container,
+.main-content,
+.right-rail {
+    min-width: 0;
+}
+
+.sidebar {
+    flex: 0 0 240px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.right-rail {
+    box-sizing: border-box;
+}
+
+.tab.active {
+    left: 0 !important;
+    width: 100% !important;
+    transform: translateX(-8px);
 }

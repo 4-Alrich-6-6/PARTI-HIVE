@@ -16,7 +16,18 @@ const deleteProjectBtn         = document.querySelector("#deleteProjectBtn");
 const closeProjectOptionsBtn   = document.querySelector("#closeProjectOptionsBtn");
 
 const supa     = () => window.hiveSupabase;
-const getGrpId = () => new URLSearchParams(window.location.search).get("grpId") || sessionStorage.getItem("hive_grpId");
+const getGrpId = () => {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("grpId");
+    const fromSession = sessionStorage.getItem("hive_grpId");
+    const grpId = [fromUrl, fromSession].find((value) => {
+        const normalized = String(value || "").trim().toLowerCase();
+        return normalized && normalized !== "null" && normalized !== "undefined";
+    });
+
+    if (grpId) sessionStorage.setItem("hive_grpId", String(grpId));
+    return grpId || null;
+};
 const todayISO = () => new Date().toISOString().split("T")[0];
 
 const formatDueDate = (iso) => {
@@ -30,10 +41,15 @@ let activeProjectItem = null;
 
 // ── Load projects from Supabase ───────────────────────────────────────────
 const loadProjects = async () => {
+    if (!supa()) return [];
+
     const { data, error } = await supa()
         .from("PROJECT")
         .select("projId, projName, projDueD");
-    if (error || !data) return [];
+    if (error || !data) {
+        console.error("Failed to load projects:", error);
+        return [];
+    }
     
     // Fetch task count for each project
     const projectsWithCounts = await Promise.all(
@@ -75,7 +91,8 @@ const createCategoryItem = (name, key, count, dueDate) => {
     if (btn) btn.addEventListener("click", () => {
         sessionStorage.setItem("hive_selected_project", key);
         sessionStorage.setItem("hive_selected_project_name", name);
-        window.location.href = "s.leaderprojectbreakdown.html";
+        const grpId = getGrpId();
+        window.location.href = `s.leaderprojectbreakdown.html${grpId ? "?grpId=" + grpId : ""}`;
     });
     const moreBtn = categoryItem.querySelector(".more-btn");
     if (moreBtn) moreBtn.addEventListener("click", (e) => { e.stopPropagation(); openProjectOptions(categoryItem); });

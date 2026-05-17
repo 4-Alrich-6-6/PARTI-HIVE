@@ -196,6 +196,11 @@ button {
     cursor: pointer;
 }
 
+.validation-link {
+    color: #111111;
+    text-decoration: none;
+}
+
 .post-task-icon {
     width: 18px;
     height: 18px;

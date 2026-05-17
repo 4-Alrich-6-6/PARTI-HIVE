@@ -241,3 +241,43 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.tab.active,
+.tab:focus-visible {
+    border: 2px solid var(--student-black, #000000) !important;
+    outline: 2px solid var(--student-black, #000000) !important;
+    outline-offset: 0 !important;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.85) !important;
+}
+
+.sidebar {
+    background-color: var(--student-yellow, #ffcc00) !important;
+    background-image:
+        linear-gradient(to top, rgba(255, 204, 0, 0.58), rgba(255, 204, 0, 0.96)),
+        url("../assets/honeycomb.png") !important;
+    background-repeat: no-repeat, repeat !important;
+    background-position: left top, left bottom !important;
+    background-size: auto, 300px auto !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* layout stability */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.layout,
+.main-content-container,
+.main-content,
+.right-rail {
+    min-width: 0;
+}
+
+.tab.active {
+    left: 0 !important;
+    width: 100% !important;
+    transform: translateX(-8px);
+}

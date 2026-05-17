@@ -244,3 +244,28 @@ body {
         width: 100%;
     }
 }
+
+.sidebar {
+    background-color: var(--student-yellow, #ffcc00) !important;
+    background-image:
+        linear-gradient(to top, rgba(255, 204, 0, 0.58), rgba(255, 204, 0, 0.96)),
+        url("../assets/honeycomb.png") !important;
+    background-repeat: no-repeat, repeat !important;
+    background-position: left top, left bottom !important;
+    background-size: auto, 300px auto !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* layout stability */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.layout,
+.main-content-container,
+.main-content {
+    min-width: 0;
+}

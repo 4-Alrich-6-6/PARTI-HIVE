@@ -28,7 +28,15 @@ const logoutBtn                = document.querySelector(".logout");
 /* ── HELPERS ──────────────────────────────────────────────────────────────── */
 const getGroupId = () => {
   const params = new URLSearchParams(window.location.search);
-  return params.get("grpId") || sessionStorage.getItem("hive_grpId") || null;
+  const fromUrl = params.get("grpId");
+  const fromSession = sessionStorage.getItem("hive_grpId");
+  const grpId = [fromUrl, fromSession].find((value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    return normalized && normalized !== "null" && normalized !== "undefined";
+  });
+
+  if (grpId) sessionStorage.setItem("hive_grpId", String(grpId));
+  return grpId || null;
 };
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();
@@ -439,7 +447,9 @@ if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.hre
 
 if (projectBreakdownTab) projectBreakdownTab.addEventListener("click", () => {
   const grpId = getGroupId();
-  window.location.href = `s.leadercategory.html?grpId=${grpId}`;
+  window.location.href = grpId
+    ? `s.leadercategory.html?grpId=${grpId}`
+    : "s.leadercategory.html";
 });
 if (openAddMembersModalBtn) openAddMembersModalBtn.addEventListener("click", openAddMembersModal);
 if (discardAddMembersBtn)   discardAddMembersBtn.addEventListener("click", closeAddMembersModal);

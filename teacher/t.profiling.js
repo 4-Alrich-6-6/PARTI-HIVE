@@ -8,6 +8,21 @@ const programSelect = document.querySelector("#program");
 
 let avatarFile = null;
 
+const getPositionId = async (supabase, roleName) => {
+    const { data, error } = await supabase
+        .from("POSITION")
+        .select("posId")
+        .ilike("posName", roleName)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Failed to load position:", error);
+        return null;
+    }
+
+    return data?.posId || null;
+};
+
 // ── Load existing profile data from DB ──────────────────────────────────────
 const loadProfileData = async () => {
     const supabase = window.hiveSupabase;
@@ -102,9 +117,11 @@ if (saveButton) {
         if (!displayName) { alert("Please enter a display name."); return; }
         if (!deptId) { alert("Please select a department."); return; }
 
-        const posId = localStorage.getItem("hive_posId")
+        let posId = localStorage.getItem("hive_posId")
             ? Number(localStorage.getItem("hive_posId"))
             : null;
+
+        if (!posId) posId = await getPositionId(supabase, "teacher");
 
         // Upload avatar if selected
         let avatarPath = null;

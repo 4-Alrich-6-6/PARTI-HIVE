@@ -177,6 +177,23 @@ button {
     object-fit: contain;
 }
 
+.action-btn {
+    min-height: 40px;
+    border: none;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #111111;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    font-size: 15px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
 .main-content {
     flex: 1;
     background: #fdfbdc;

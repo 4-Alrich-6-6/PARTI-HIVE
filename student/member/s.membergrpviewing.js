@@ -10,7 +10,15 @@ const leaveBtn            = document.querySelector(".leave-btn");
 /* ── HELPERS ──────────────────────────────────────────────────────────────── */
 const getGroupId = () => {
   const params = new URLSearchParams(window.location.search);
-  return params.get("grpId") || sessionStorage.getItem("hive_grpId") || null;
+  const fromUrl = params.get("grpId");
+  const fromSession = sessionStorage.getItem("hive_grpId");
+  const grpId = [fromUrl, fromSession].find((value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    return normalized && normalized !== "null" && normalized !== "undefined";
+  });
+
+  if (grpId) sessionStorage.setItem("hive_grpId", String(grpId));
+  return grpId || null;
 };
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();
@@ -336,7 +344,9 @@ if (topBackBtn) {
 if (projectBreakdownTab) {
   projectBreakdownTab.addEventListener("click", () => {
     const grpId = getGroupId();
-    window.location.href = `s.membercategory.html?grpId=${grpId}`;
+    window.location.href = grpId
+      ? `s.membercategory.html?grpId=${grpId}`
+      : "s.membercategory.html";
   });
 }
 

@@ -174,9 +174,10 @@ if (verifyForm) {
     }
 
     let error = null;
+    let supabase = null;
 
     try {
-      const supabase = getSupabase();
+      supabase = getSupabase();
       const result = await supabase.auth.verifyOtp({
         email: userEmail,
         token: otpInput.value.trim(),
@@ -225,26 +226,59 @@ if (verifyForm) {
     localStorage.removeItem("hive_password");
 
     // Check if USER row already exists in DB
-    const supabase = getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error: existingUserError } = await supabase
       .from("USER")
-      .select("userId, posId")
+      .select("userId, posId, userDisplayName, progId, deptId")
       .eq("userId", user.id)
       .maybeSingle();
 
-    if (existingUser && existingUser.posId) {
+    if (existingUserError) {
+      console.error("Profile lookup failed:", existingUserError);
+      showAuthNotice("Login worked, but your profile could not be loaded because of a database policy error. Please fix the Supabase RLS policy and try again.", {
+        title: "Profile Check Failed",
+      });
+      return;
+    }
+
+    if (existingUser) {
+      let role = "";
+      let posId = existingUser.posId || null;
+
+      if (!posId && existingUser.progId) {
+        role = "student";
+      } else if (!posId && existingUser.deptId) {
+        role = "teacher";
+      }
+
+      if (!posId && role) {
+        const { data: inferredPos } = await supabase
+          .from("POSITION")
+          .select("posId")
+          .ilike("posName", role)
+          .maybeSingle();
+
+        if (inferredPos?.posId) {
+          posId = inferredPos.posId;
+          await supabase
+            .from("USER")
+            .update({ posId })
+            .eq("userId", user.id);
+        }
+      }
       // Returning user — check role and redirect to correct dashboard
       const { data: pos } = await supabase
         .from("POSITION")
         .select("posName")
-        .eq("posId", existingUser.posId)
+        .eq("posId", posId)
         .maybeSingle();
-      const role = pos?.posName?.toLowerCase();
+      role = pos?.posName?.toLowerCase() || role;
       if (role === "teacher" || role === "professor") {
         window.location.href = "../teacher/t.dashb.html";
-      } else {
+      } else if (role === "student") {
         window.location.href = "../student/s.dashb.html";
+      } else {
+        window.location.href = "profiling.html";
       }
     } else {
       // New user — go through profiling

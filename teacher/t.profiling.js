@@ -1,3 +1,70 @@
+const showNotice = (message, options = {}) => {
+    const { title = "Notice", type = "info", onClose = null } = options;
+
+    if (!document.querySelector("#hiveNoticeStyle")) {
+        const style = document.createElement("style");
+        style.id = "hiveNoticeStyle";
+        style.textContent = `
+            .hive-notice{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.7)}
+            .hive-notice.open{display:flex}
+            .hive-notice-content{width:min(430px,100%);border:3px solid #ffcf24;border-radius:20px;background:#1c1c1c;color:#fff;padding:26px 24px 22px;box-shadow:0 16px 0 rgba(0,0,0,0.5)}
+            .hive-notice-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+            .hive-notice-icon{width:42px;height:42px;border:3px solid #000;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;background:#ffcf24;color:#000;font-family:Montserrat,sans-serif;font-size:25px;font-weight:900;line-height:1}
+            .hive-notice-title{margin:0;font-family:Montserrat,sans-serif;font-size:22px;font-weight:800;line-height:1.1}
+            .hive-notice-message{margin:0;font-size:15px;font-weight:500;line-height:1.5}
+            .hive-notice-actions{display:flex;justify-content:flex-end;margin-top:22px}
+            .hive-notice-ok{min-width:108px;height:44px;border:none;border-radius:14px;background:#ffcf24;color:#000;font-family:Montserrat,sans-serif;font-size:18px;font-weight:800;cursor:pointer;padding:0 22px}
+        `;
+        document.head.appendChild(style);
+    }
+
+    let notice = document.querySelector("#hiveNotice");
+    if (!notice) {
+        notice = document.createElement("div");
+        notice.className = "hive-notice";
+        notice.id = "hiveNotice";
+        notice.setAttribute("aria-hidden", "true");
+        notice.innerHTML = `
+            <div class="hive-notice-content" role="dialog" aria-modal="true" aria-labelledby="hiveNoticeTitle">
+                <div class="hive-notice-header">
+                    <span class="hive-notice-icon" aria-hidden="true">!</span>
+                    <h2 class="hive-notice-title" id="hiveNoticeTitle"></h2>
+                </div>
+                <p class="hive-notice-message"></p>
+                <div class="hive-notice-actions">
+                    <button class="hive-notice-ok" type="button">OK</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(notice);
+    }
+
+    const icon = notice.querySelector(".hive-notice-icon");
+    const titleEl = notice.querySelector(".hive-notice-title");
+    const messageEl = notice.querySelector(".hive-notice-message");
+    const okBtn = notice.querySelector(".hive-notice-ok");
+
+    if (icon) icon.textContent = type === "success" ? "✓" : "!";
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.textContent = message;
+
+    const closeNotice = () => {
+        notice.classList.remove("open");
+        notice.setAttribute("aria-hidden", "true");
+        okBtn.removeEventListener("click", closeNotice);
+        notice.removeEventListener("click", handleOverlayClick);
+        if (onClose) onClose();
+    };
+
+    const handleOverlayClick = (e) => { if (e.target === notice) closeNotice(); };
+
+    okBtn.addEventListener("click", closeNotice);
+    notice.addEventListener("click", handleOverlayClick);
+    notice.classList.add("open");
+    notice.setAttribute("aria-hidden", "false");
+    okBtn.focus();
+};
+
 const backButton = document.querySelector(".back-button");
 const saveButton = document.querySelector(".save-button button");
 const editProfilePicBtn = document.querySelector("#editProfilePicBtn");
@@ -54,9 +121,15 @@ const loadProfileData = async () => {
                 programSelect.value = userData.deptId;
             }
 
-            // Set avatar preview
+            // Set avatar preview — resolve path to public URL
             if (userData.avatarPath && profilePicPreview) {
-                profilePicPreview.src = userData.avatarPath;
+                const supabase = window.hiveSupabase;
+                if (supabase && !userData.avatarPath.startsWith("http")) {
+                    const { data } = supabase.storage.from("profilePicture").getPublicUrl(userData.avatarPath);
+                    profilePicPreview.src = data?.publicUrl ? data.publicUrl + "?t=" + Date.now() : userData.avatarPath;
+                } else {
+                    profilePicPreview.src = userData.avatarPath;
+                }
             }
         }
     } catch (err) {
@@ -90,6 +163,12 @@ if (editProfilePicBtn && profilePicInput) {
     profilePicInput.addEventListener("change", () => {
         const file = profilePicInput.files && profilePicInput.files[0];
         if (!file) return;
+        const allowed = ["image/png", "image/jpeg", "image/jpg"];
+        if (!allowed.includes(file.type)) {
+            showNotice("Only PNG, JPG, and JPEG files are allowed.", { title: "Invalid File Type" });
+            profilePicInput.value = "";
+            return;
+        }
         avatarFile = file;
         const reader = new FileReader();
         reader.onload = (e) => { if (profilePicPreview) profilePicPreview.src = e.target.result; };
@@ -106,16 +185,16 @@ if (backButton) {
 if (saveButton) {
     saveButton.addEventListener("click", async () => {
         const supabase = window.hiveSupabase;
-        if (!supabase) { alert("Supabase not ready."); return; }
+        if (!supabase) { showNotice("Supabase not ready.", { title: "Error" }); return; }
 
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { alert("Not logged in."); return; }
+        if (!user) { showNotice("Not logged in.", { title: "Error" }); return; }
 
         const displayName = displayNameInput ? displayNameInput.value.trim() : "";
         const deptId = programSelect && programSelect.value ? Number(programSelect.value) : null;
 
-        if (!displayName) { alert("Please enter a display name."); return; }
-        if (!deptId) { alert("Please select a department."); return; }
+        if (!displayName) { showNotice("Please enter a display name.", { title: "Missing Field" }); return; }
+        if (!deptId) { showNotice("Please select a department.", { title: "Missing Field" }); return; }
 
         let posId = localStorage.getItem("hive_posId")
             ? Number(localStorage.getItem("hive_posId"))
@@ -126,19 +205,17 @@ if (saveButton) {
         // Upload avatar if selected
         let avatarPath = null;
         if (avatarFile) {
-            const filePath = `avatars/${user.id}`;
+            const ext = avatarFile.name.split(".").pop().toLowerCase();
+            const filePath = `avatars/${user.id}_${Date.now()}.${ext}`;
             const { error: uploadErr } = await supabase.storage
                 .from("profilePicture")
                 .upload(filePath, avatarFile, { upsert: true, contentType: avatarFile.type });
-            if (!uploadErr) {
-                const { data: urlData } = supabase.storage
-                    .from("profilePicture")
-                    .getPublicUrl(filePath);
-                avatarPath = urlData?.publicUrl || null;
-                console.log("Avatar uploaded successfully:", avatarPath);
-            } else {
-                console.error("Avatar upload error:", uploadErr);
+            if (uploadErr) {
+                showNotice("Failed to upload profile picture: " + uploadErr.message, { title: "Upload Error" });
+                return;
             }
+            // Store the path, not the URL — URLs can expire
+            avatarPath = filePath;
         } else {
             // Load existing avatar path if not changing picture
             const { data: existingUser, error: fetchErr } = await supabase
@@ -168,17 +245,21 @@ if (saveButton) {
             .from("USER")
             .upsert(payload, { onConflict: "userId" });
 
-        if (error) { 
+        if (error) {
             console.error("Database save error:", error);
-            alert("Failed to save profile: " + error.message); 
-            return; 
+            showNotice("Failed to save profile: " + error.message, { title: "Save Failed" });
+            return;
         }
 
         console.log("Profile saved successfully to database");
-        alert("Profile saved successfully!");
-        
-        localStorage.removeItem("hive_posId");
-        localStorage.removeItem("hive_role");
-        window.location.href = "t.dashb.html";
+        showNotice("Profile saved successfully!", {
+            title: "Profile Created",
+            type: "success",
+            onClose: () => {
+                localStorage.removeItem("hive_posId");
+                localStorage.removeItem("hive_role");
+                window.location.href = "t.dashb.html";
+            },
+        });
     });
 }

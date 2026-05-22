@@ -642,10 +642,13 @@ body,
 }
 
 /* layout stability */
-html,
+html {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
 body {
     max-width: 100%;
-    overflow-x: hidden;
 }
 
 .layout,
@@ -662,6 +665,10 @@ body {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     width: 100% !important;
     max-width: none !important;
     margin: 0 0 18px !important;
@@ -674,3 +681,4 @@ body {
     margin: 0 !important;
     text-align: left !important;
 }
+

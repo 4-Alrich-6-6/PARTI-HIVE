@@ -23,68 +23,6 @@ const renderMessage = (title, body) => {
     `;
 };
 
-const getGroup = async () => {
-    const grpId = getGrpId();
-    if (!grpId || !supa()) return null;
-
-    const { data, error } = await supa()
-        .from("GROUP")
-        .select("grpId, progId")
-        .eq("grpId", Number(grpId))
-        .maybeSingle();
-
-    if (error) {
-        console.error("Failed to load group:", error);
-        return null;
-    }
-
-    return data;
-};
-
-const getProjectIdColumn = async () => {
-    const projIdCheck = await supa()
-        .from("PROJECT")
-        .select("projId")
-        .limit(1);
-
-    if (!projIdCheck.error) return "projId";
-
-    const progIdCheck = await supa()
-        .from("PROJECT")
-        .select("progId")
-        .limit(1);
-
-    return progIdCheck.error ? null : "progId";
-};
-
-const getProjectIdsFromGroupTasks = async (grpId) => {
-    const { data: taskLinks, error: linkError } = await supa()
-        .from("GROUPMEMBER")
-        .select("taskId")
-        .eq("grpId", Number(grpId))
-        .not("taskId", "is", null);
-
-    if (linkError) {
-        console.error("Failed to load task links:", linkError);
-        return [];
-    }
-
-    const taskIds = Array.from(new Set((taskLinks || []).map((row) => row.taskId).filter(Boolean)));
-    if (!taskIds.length) return [];
-
-    const { data: tasks, error: taskError } = await supa()
-        .from("TASK")
-        .select("projId")
-        .in("taskId", taskIds);
-
-    if (taskError) {
-        console.error("Failed to load task projects:", taskError);
-        return [];
-    }
-
-    return Array.from(new Set((tasks || []).map((task) => task.projId).filter(Boolean)));
-};
-
 const loadProjectsFromDB = async () => {
     if (!categoryList) return;
     categoryList.innerHTML = "";
@@ -100,51 +38,28 @@ const loadProjectsFromDB = async () => {
         return;
     }
 
-    const projectIdColumn = await getProjectIdColumn();
-    if (!projectIdColumn) {
-        renderMessage("Could Not Load Projects", "PROJECT table id column was not found.");
-        return;
-    }
-
-    const group = await getGroup();
-    const projectIds = new Set(await getProjectIdsFromGroupTasks(grpId));
-
-    if (projectIdColumn === "progId" && group?.progId) {
-        projectIds.add(group.progId);
-    }
-
-    if (!projectIds.size) {
-        renderAllProjects([]);
-        return;
-    }
-
     const { data, error } = await supa()
         .from("PROJECT")
-        .select(`${projectIdColumn}, projName, projDueD`)
-        .in(projectIdColumn, Array.from(projectIds));
+        .select("projId, projName, projDueD")
+        .eq("grpId", Number(grpId));
 
     if (error) {
-        console.error("Failed to load projects:", error);
         renderMessage("Could Not Load Projects", error.message || "Please try again later.");
         return;
     }
 
-    const projects = data || [];
-    if (!projects.length) {
+    if (!data || data.length === 0) {
         renderAllProjects([]);
         return;
     }
 
     const projectsWithCounts = await Promise.all(
-        projects.map(async (project) => {
-            const projectId = project[projectIdColumn];
-            const { count, error: countError } = await supa()
+        data.map(async (project) => {
+            const { count } = await supa()
                 .from("TASK")
                 .select("taskId", { count: "exact", head: true })
-                .eq("projId", projectId);
-
-            if (countError) console.error("Failed to count tasks:", countError);
-            return { ...project, projectId, taskCount: count || 0 };
+                .eq("projId", project.projId);
+            return { ...project, projectId: project.projId, taskCount: count || 0 };
         })
     );
 
@@ -209,11 +124,16 @@ if (groupInfoTab) {
     });
 }
 
+document.querySelector("#mobileGroupInfoBtn")?.addEventListener("click", () => {
+    const grpId = getGrpId();
+    window.location.href = grpId ? `s.membergrpviewing.html?grpId=${grpId}` : "s.membergrpviewing.html";
+});
+
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         showConfirmation(
             "Are you sure you want to log out?",
-            () => { window.location.href = "../../auth/log-sign.html"; },
+            () => window.doLogout?.(),
             { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
         );
     });

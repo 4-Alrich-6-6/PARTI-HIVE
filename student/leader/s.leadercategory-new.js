@@ -48,9 +48,9 @@ const loadProjectsFromDB = async () => {
 
   const { data: projects, error } = await supabase
     .from("PROJECT")
-    .select("projId, projName, projDueDate")
+    .select("projId, projName, projDueD")
     .eq("grpId", grpId)
-    .order("projDueDate", { ascending: true });
+    .order("projDueD", { ascending: true });
 
   if (error || !projects) {
     console.error("Error loading projects:", error);
@@ -68,7 +68,7 @@ const openProjectOptions = (categoryItem, project) => {
   if (editProjectNameInput) editProjectNameInput.value = project.projName;
   if (editProjectDueDateInput) {
     editProjectDueDateInput.min = todayISO();
-    editProjectDueDateInput.value = project.projDueDate || "";
+    editProjectDueDateInput.value = project.projDueD || "";
   }
   if (projectOptionsOverlay) {
     projectOptionsOverlay.classList.add("open");
@@ -95,11 +95,11 @@ const saveProjectName = async () => {
 
   const { error } = await supabase
     .from("PROJECT")
-    .update({ projName: newName, projDueDate: newDueDate })
+    .update({ projName: newName, projDueD: newDueDate })
     .eq("projId", projId);
 
   if (error) {
-    alert("Failed to update project: " + error.message);
+    showAlert("Failed to update project: " + error.message, { title: "Error" });
     return;
   }
 
@@ -116,18 +116,49 @@ const deleteProject = async () => {
     showConfirmation(
       `Are you sure you want to remove the project "${projectName}"?`,
       async () => {
-        const { error } = await supabase
-          .from("PROJECT")
-          .delete()
-          .eq("projId", projId);
+        try {
+          // Get all tasks for this project
+          const { data: tasks } = await supabase
+            .from("TASK")
+            .select("taskId")
+            .eq("projId", projId);
 
-        if (error) {
-          alert("Failed to delete project: " + error.message);
-          return;
+          const taskIds = (tasks || []).map(t => t.taskId);
+
+          // Delete in order of dependencies
+          if (taskIds.length > 0) {
+            // 1. Delete PEEREVAL entries
+            await supabase.from("PEEREVAL").delete().in("taskId", taskIds);
+
+            // 2. Delete SUBMISSION entries
+            await supabase.from("SUBMISSION").delete().in("taskId", taskIds);
+
+            // 3. Delete PARTICIPATION entries
+            await supabase.from("PARTICIPATION").delete().in("taskId", taskIds);
+
+            // 4. Delete TASKASSIGNMENT entries
+            await supabase.from("TASKASSIGNMENT").delete().in("taskId", taskIds);
+          }
+
+          // 5. Delete TASK entries
+          await supabase.from("TASK").delete().eq("projId", projId);
+
+          // 6. Delete PROJECT
+          const { error } = await supabase
+            .from("PROJECT")
+            .delete()
+            .eq("projId", projId);
+
+          if (error) {
+            showAlert("Failed to delete project: " + error.message, { title: "Error" });
+            return;
+          }
+
+          await loadProjectsFromDB();
+          closeProjectOptions();
+        } catch (err) {
+          showAlert("Error deleting project: " + err.message, { title: "Error" });
         }
-
-        await loadProjectsFromDB();
-        closeProjectOptions();
       },
       { title: "Remove Project", confirmText: "Remove", cancelText: "Cancel" }
     );
@@ -140,12 +171,12 @@ const createCategoryItem = (project) => {
   categoryItem.className = "category-item";
   categoryItem.setAttribute("role", "listitem");
   categoryItem.setAttribute("data-proj-id", project.projId);
-  if (project.projDueDate) categoryItem.setAttribute("data-due-date", project.projDueDate);
+  if (project.projDueD) categoryItem.setAttribute("data-due-date", project.projDueD);
   
   categoryItem.innerHTML = `
     <button class="category-main-btn" type="button" data-proj-id="${project.projId}">
       <span class="category-name">${project.projName}</span>
-      <span class="category-due-date">${formatDueDate(project.projDueDate)}</span>
+      <span class="category-due-date">${formatDueDate(project.projDueD)}</span>
     </button>
     <button class="more-btn" type="button" aria-label="More project options">
       <img src="../../assets/More.png" alt="More options">
@@ -223,10 +254,10 @@ const postProject = async (e) => {
       async () => {
         const { error } = await supabase
           .from("PROJECT")
-          .insert([{ projName: name, projDueDate: due, grpId: grpId }]);
+          .insert([{ projName: name, projDueD: due, grpId: grpId }]);
 
         if (error) {
-          alert("Failed to post project: " + error.message);
+          showAlert("Failed to post project: " + error.message, { title: "Error" });
           return;
         }
 
@@ -311,7 +342,7 @@ if (logoutBtn) {
     if (typeof showConfirmation === "function") {
       showConfirmation(
         "Are you sure you want to log out?",
-        () => { window.location.href = "../../auth/log-sign.html"; },
+        () => window.doLogout?.(),
         { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
       );
     } else {

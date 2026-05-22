@@ -9,11 +9,14 @@ html, body {
     min-height: 100%;
 }
 
+html {
+    overflow-x: clip; /* on <html> this propagates to the viewport — safe for position:sticky */
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #ffffff;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -26,6 +29,11 @@ button {
 }
 
 .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     height: 58px;
     background: #ffcc00;
     display: flex;
@@ -34,6 +42,7 @@ button {
     padding: 0 14px;
     gap: 12px;
 }
+
 
 .menu-btn {
     width: 38px;
@@ -66,9 +75,15 @@ button {
     grid-template-columns: 115px 1fr 92px;
     min-height: calc(100vh - 58px);
     width: 100%;
+    padding-top: 58px;
 }
 
 .sidebar {
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    align-self: start;
+    overflow-y: auto;
     background: #f3f3f3;
     border-right: 1px solid #d8d8d8;
     display: flex;
@@ -141,6 +156,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -721,12 +740,24 @@ button {
     display: flex;
     justify-content: center;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .project-options-actions {
+        flex-direction: column;
+    }
+
+    .project-options-actions .modal-btn,
+    .project-options-actions .option-delete-btn {
+        width: 100%;
+    }
 }
 
 .option-delete-btn {
     border: none;
     border-radius: 999px;
-    background: #f38a74;
+    background: #FF2E2E;
     color: #ffffff;
     font-size: 13px;
     font-weight: 800;
@@ -1371,6 +1402,57 @@ body {
     .layout {
         grid-template-columns: 1fr;
     }
+
+    .main-content-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .main-header {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    #yourTasksList,
+    #otherTasksList,
+    #tasksList {
+        width: calc(100% - 28px);
+        max-width: none;
+        margin-left: 14px;
+        margin-right: 14px;
+    }
+
+    .task-card {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .summary-row {
+        padding-left: 14px;
+        padding-right: 14px;
+        gap: 8px;
+    }
+
+    .summary-card {
+        padding: 10px 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        min-height: 80px;
+    }
+
+    .summary-label {
+        font-size: 9px;
+        margin-bottom: 4px;
+    }
+
+    .summary-card h3 {
+        font-size: 18px;
+    }
 }
 
 .task-time-active {
@@ -1380,4 +1462,178 @@ body {
     font-weight: 600;
     color: #2a7a2a;
     letter-spacing: 0.03em;
+}
+
+@media (max-width: 480px) {
+    /* Anchor full-form modals to bottom of screen */
+    #postTaskModalOverlay,
+    #editTaskInfoOverlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    /* Make the modal a flex column capped at viewport height */
+    #postTaskModalOverlay .post-task-modal,
+    #editTaskInfoOverlay .post-task-modal {
+        width: 100%;
+        max-height: 92dvh;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Pin the header — never scrolls away */
+    #postTaskModalOverlay .post-task-modal-header,
+    #editTaskInfoOverlay .post-task-modal-header {
+        flex-shrink: 0;
+    }
+
+    /* Scrollable form body — grows to fill space between header and actions */
+    #postTaskModalOverlay .post-task-form,
+    #editTaskInfoOverlay .post-task-form {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Pin the action buttons to the bottom */
+    #postTaskModalOverlay .post-task-modal-actions,
+    #editTaskInfoOverlay .post-task-modal-actions {
+        flex-shrink: 0;
+        border-top: 1px solid #eee;
+        padding: 12px 18px;
+        margin-top: 0;
+        background: #fff;
+    }
+
+    /* Shrink the description textarea so it doesn't eat the whole screen */
+    #taskDescriptionInput,
+    #editTaskDescriptionInput {
+        min-height: 60px;
+    }
+}
+
+/* ── Participation Rating Modal ─────────────────────────────── */
+#participationRatingOverlay .post-task-modal {
+    width: min(100%, 520px);
+    display: flex;
+    flex-direction: column;
+    max-height: 90dvh;
+    overflow: hidden;
+}
+
+#participationRatingOverlay .post-task-modal-header {
+    flex-shrink: 0;
+}
+
+#participationRatingOverlay > .post-task-modal > p {
+    flex-shrink: 0;
+    padding: 12px 18px 0;
+    margin: 0;
+    font-size: 14px;
+    color: #444;
+}
+
+#participationRatingList {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#participationRatingOverlay .post-task-modal-actions {
+    flex-shrink: 0;
+    border-top: 1px solid #eee;
+    padding: 12px 18px;
+    margin: 0;
+    background: #fff;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Member name label */
+#participationRatingList > div > label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+}
+
+/* Mobile — bottom sheet */
+@media (max-width: 480px) {
+    #participationRatingOverlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #participationRatingOverlay .post-task-modal {
+        width: 100%;
+        max-height: 92dvh;
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* ── Participation Rating — member rows ─────────────────────── */
+.rating-member-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rating-member-label {
+    font-size: 15px;
+    font-weight: 800;
+    color: #222;
+}
+
+.rating-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.rating-score-input,
+.rating-remarks-input {
+    border: 1px solid #cfcfcf;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fffdf0;
+    box-sizing: border-box;
+}
+
+.rating-score-input {
+    width: 72px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.rating-remarks-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.rating-score-input:focus,
+.rating-remarks-input:focus {
+    outline: none;
+    border-color: #ffcc00;
+    box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2);
+}
+
+@media (max-width: 480px) {
+    .rating-inputs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rating-score-input {
+        width: 100%;
+        text-align: left;
+    }
 }

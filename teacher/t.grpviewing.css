@@ -141,9 +141,6 @@ body {
 .sidebar-actions .btn,
 .action-btn,
 .summary-label,
-.group-label p,
-.member-details p,
-.member-details .stats,
 .help-panel p,
 .form-group input,
 .remove-member-item,
@@ -158,6 +155,27 @@ body {
     white-space: normal;
     text-align: center;
     line-height: 1.15;
+}
+
+.group-label p,
+.member-details p,
+.member-details .stats {
+    font-size: 15px;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.15;
+}
+
+.member-details .stats p {
+    white-space: nowrap;
+}
+
+.member-card .member-details h3 {
+    font-size: 14px;
+}
+
+.member-card .member-details p {
+    font-size: 12px;
 }
 
 @media (max-width: 900px) {
@@ -198,7 +216,15 @@ body {
 
 .layout {
     min-height: calc(100vh - 64px);
+    padding-left: 0;
     grid-template-columns: 240px 1fr 252px;
+}
+
+.sidebar {
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
 }
 
 .sidebar {
@@ -266,7 +292,7 @@ body {
 html,
 body {
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 .layout,
@@ -280,4 +306,21 @@ body {
     left: 0 !important;
     width: 100% !important;
     transform: translateX(-8px);
+}
+
+.main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
+}
+
+@media (max-width: 900px) {
+    .group-label-wrap,
+    .group-info-stack {
+        width: calc(100% - 28px);
+        max-width: none;
+        margin-left: 14px;
+        margin-right: 14px;
+    }
 }

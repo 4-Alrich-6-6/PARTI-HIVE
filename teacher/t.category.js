@@ -18,10 +18,12 @@ const formatDueDate = (iso) => {
 
 // ── Load projects from Supabase ───────────────────────────────────────────
 const loadProjects = async () => {
+    const grpId = getGrpId();
+    if (!grpId) return [];
     const { data, error } = await supa()
         .from("PROJECT")
-        .select("projId, projName, projDueD");
-    console.log("[loadProjects] data=", data, "error=", error);
+        .select("projId, projName, projDueD")
+        .eq("grpId", Number(grpId));
     if (error || !data) return [];
     
     // Fetch task count for each project
@@ -39,7 +41,6 @@ const loadProjects = async () => {
             };
         })
     );
-    console.log("[loadProjects] projectsWithCounts=", projectsWithCounts);
     return projectsWithCounts;
 };
 
@@ -65,12 +66,10 @@ const createCategoryItem = (project) => {
 
 const renderAllProjects = async () => {
     if (!categoryList) {
-        console.log("[renderAllProjects] categoryList not found");
         return;
     }
     categoryList.innerHTML = "";
     const projects = await loadProjects();
-    console.log("[renderAllProjects] projects=", projects);
     if (projects.length === 0) {
         categoryList.innerHTML = `
             <div class="empty-state">
@@ -87,17 +86,20 @@ const renderAllProjects = async () => {
 };
 
 if (topBackBtn)   topBackBtn.addEventListener("click",   () => { window.location.href = "t.dashb.html"; });
-if (groupInfoTab) groupInfoTab.addEventListener("click", () => { 
+if (groupInfoTab) groupInfoTab.addEventListener("click", () => {
   const grpId = getGrpId();
-  window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`; 
+  window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`;
+});
+
+document.querySelector("#mobileGroupInfoBtn")?.addEventListener("click", () => {
+  const grpId = getGrpId();
+  window.location.href = `t.grpviewing.html${grpId ? `?grpId=${grpId}` : ""}`;
 });
 
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-        showConfirmation("Are you sure you want to log out?", () => {
-            window.location.href = "../auth/log-sign.html";
-        }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
+        showConfirmation("Are you sure you want to log out?", () => window.doLogout?.(), { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
     });
 }
 

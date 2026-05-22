@@ -8,6 +8,15 @@ const logoutBtn           = document.querySelector(".logout");
 const leaveBtn            = document.querySelector(".leave-btn");
 
 /* ── HELPERS ──────────────────────────────────────────────────────────────── */
+const resolveAvatar = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const sb = getSupabase();
+  if (!sb) return null;
+  const { data } = sb.storage.from("profilePicture").getPublicUrl(path);
+  return data?.publicUrl || null;
+};
+
 const getGroupId = () => {
   const params = new URLSearchParams(window.location.search);
   const fromUrl = params.get("grpId");
@@ -22,6 +31,8 @@ const getGroupId = () => {
 };
 
 const normalizeText = (v) => String(v || "").trim().toLowerCase();
+
+let currentMembers = [];
 
 const escapeHTML = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;",
@@ -122,35 +133,12 @@ const uniqueMembersByUser = (members) => {
   return Array.from(byUser.values());
 };
 
-const getProjectCountForGroup = async (supabase, grpId, grp) => {
-  const projectIds = new Set();
-
-  if (grp?.progId) {
-    const { data } = await supabase
-      .from("PROJECT")
-      .select("progId")
-      .eq("progId", grp.progId);
-    (data || []).forEach((project) => projectIds.add(project.progId));
-  }
-
-  const { data: taskLinks } = await supabase
-    .from("GROUPMEMBER")
-    .select("taskId")
-    .eq("grpId", grpId)
-    .not("taskId", "is", null);
-
-  const taskIds = Array.from(new Set((taskLinks || []).map((row) => row.taskId).filter(Boolean)));
-  if (taskIds.length) {
-    const { data: tasks } = await supabase
-      .from("TASK")
-      .select("projId")
-      .in("taskId", taskIds);
-    (tasks || []).forEach((task) => {
-      if (task.projId) projectIds.add(task.projId);
-    });
-  }
-
-  return projectIds.size;
+const getProjectCountForGroup = async (supabase, grpId) => {
+  const { count } = await supabase
+    .from("PROJECT")
+    .select("*", { count: "exact", head: true })
+    .eq("grpId", grpId);
+  return count || 0;
 };
 
 /* ── DB LOAD ──────────────────────────────────────────────────────────────── */
@@ -159,10 +147,10 @@ const loadGroupFromDB = async () => {
   const grpId = getGroupId();
   if (!grpId || !supabase) return;
 
-  // 1. Group info — also fetch progId so we can query PROJECT correctly
+  // 1. Group info
   const { data: grp, error: grpErr } = await supabase
     .from("GROUP")
-    .select("grpName, grpSubject, progId")
+    .select("grpName, grpSubject, teacherId")
     .eq("grpId", grpId)
     .maybeSingle();
 
@@ -176,11 +164,10 @@ const loadGroupFromDB = async () => {
   // 2. Members (join USER and ROLE)
   const { data: members, error: memErr } = await supabase
     .from("GROUPMEMBER")
-    .select("grpmemId, userId, roleId, ROLE(roleName), USER(userDisplayName, userEmail, avatarPath)")
+    .select("grpmemId, userId, roleId, ROLE(roleName), USER(userDisplayName, userEmail, avatarPath, PROGRAM(progName), DEPARTMENT(deptName))")
     .eq("grpId", grpId);
 
   if (memErr || !members) {
-    console.error("Error loading members:", memErr);
     return;
   }
 
@@ -192,16 +179,41 @@ const loadGroupFromDB = async () => {
     fullName: m.USER?.userDisplayName   || "Unknown",
     email:    m.USER?.userEmail         || "No email",
     avatarPath: m.USER?.avatarPath      || null,
+    progName: m.USER?.PROGRAM?.progName    || null,
+    deptName: m.USER?.DEPARTMENT?.deptName || null,
   }));
-  const allMembers = uniqueMembersByUser(allMemberRows);
 
-  const projCount = await getProjectCountForGroup(supabase, grpId, grp);
+  // Teachers are stored in GROUP.teacherId, not GROUPMEMBER — inject them manually
+  if (grp?.teacherId) {
+    const { data: teacherUser } = await supabase
+      .from("USER")
+      .select("userDisplayName, userEmail, avatarPath, DEPARTMENT(deptName)")
+      .eq("userId", grp.teacherId)
+      .maybeSingle();
+    if (teacherUser) {
+      allMemberRows.push({
+        grpmemId:  null,
+        userId:    grp.teacherId,
+        roleId:    null,
+        roleName:  "Teacher",
+        fullName:  teacherUser.userDisplayName || "Unknown",
+        email:     teacherUser.userEmail       || "No email",
+        avatarPath: teacherUser.avatarPath     || null,
+        progName:  null,
+        deptName:  teacherUser.DEPARTMENT?.deptName || null,
+      });
+    }
+  }
+
+  const allMembers = uniqueMembersByUser(allMemberRows);
+  currentMembers = allMembers;
+
+  const projCount = await getProjectCountForGroup(supabase, grpId);
 
   // 4. Summary cards
-  const teachers   = allMembers.filter((m) => normalizeText(m.roleName) === "teacher");
   const nonTeacher = allMembers.filter((m) => normalizeText(m.roleName) !== "teacher");
   const summaryH3s = document.querySelectorAll(".summary-card h3");
-  if (summaryH3s[0]) summaryH3s[0].textContent = teachers.length;
+  if (summaryH3s[0]) summaryH3s[0].textContent = grp?.teacherId ? 1 : 0;
   if (summaryH3s[1]) summaryH3s[1].textContent = nonTeacher.length;
   if (summaryH3s[2]) summaryH3s[2].textContent = projCount;
 
@@ -216,47 +228,37 @@ const getMemberTaskStats = async (member) => {
   if (!supabase || !grpId) return { total: 0, completed: 0, pending: 0, missed: 0 };
 
   try {
-    // Get all taskIds for this member in this specific group
-    const { data: memberTasks } = await supabase
+    const { data: memberships } = await supabase
       .from("GROUPMEMBER")
-      .select("taskId")
+      .select("grpmemId")
       .eq("userId", member.userId)
-      .eq("grpId", grpId)
-      .not("taskId", "is", null);
+      .eq("grpId", Number(grpId));
 
-    if (!memberTasks || memberTasks.length === 0) {
-      return { total: 0, completed: 0, pending: 0, missed: 0 };
-    }
+    if (!memberships?.length) return { total: 0, completed: 0, pending: 0, missed: 0 };
 
-    const taskIds = Array.from(new Set(memberTasks.map(mt => mt.taskId).filter(Boolean)));
+    const grpmemIds = memberships.map(m => m.grpmemId);
 
-    // Get full task details
+    const { data: assignments } = await supabase
+      .from("TASKASSIGNMENT")
+      .select("taskId")
+      .in("grpmemId", grpmemIds);
+
+    if (!assignments?.length) return { total: 0, completed: 0, pending: 0, missed: 0 };
+
+    const taskIds = [...new Set(assignments.map(a => a.taskId))];
+
     const { data: tasks } = await supabase
       .from("TASK")
       .select("taskId, statId, taskDueD, taskAcmD")
       .in("taskId", taskIds);
 
-    if (!tasks) {
-      return { total: 0, completed: 0, pending: 0, missed: 0 };
-    }
+    if (!tasks) return { total: 0, finished: 0, pending: 0, missed: 0 };
 
     const total = tasks.length;
-    const today = new Date().toISOString().split("T")[0];
-    
-    // Completed = tasks with accomplished date (taskAcmD is not null)
-    const completed = tasks.filter(t => t.taskAcmD !== null && t.taskAcmD !== undefined).length;
-    
-    // Pending = all tasks that are not yet finished (no accomplished date)
-    const pending = tasks.filter(t => !t.taskAcmD).length;
-    
-    // Missed = overdue (taskDueD < today) and not completed (no taskAcmD)
-    const missed = tasks.filter(t => {
-      const isOverdue = t.taskDueD && t.taskDueD < today;
-      const isNotCompleted = !t.taskAcmD;
-      return isOverdue && isNotCompleted;
-    }).length;
-
-    return { total, completed, pending, missed };
+    const finished = tasks.filter(t => t.statId === 5).length;
+    const missed = tasks.filter(t => t.statId === 6).length;
+    const pending = tasks.filter(t => t.statId !== 5 && t.statId !== 6).length;
+    return { total, finished, pending, missed };
   } catch (err) {
     console.error("Error fetching member task stats:", err);
     return { total: 0, completed: 0, pending: 0, missed: 0 };
@@ -265,16 +267,18 @@ const getMemberTaskStats = async (member) => {
 
 /* ── RENDER MEMBERS ───────────────────────────────────────────────────────── */
 const createMemberCard = (member, cardClass, avatarSize) => {
-  const nameLimit = cardClass.includes("leader-card") ? 18 : 8;
-  const avatarStyle = member.avatarPath 
-    ? `style="background-image: url('${member.avatarPath}'); background-size: cover; background-position: center;"` 
+  const nameLimit = (cardClass.includes("leader-card") || cardClass.includes("teacher-card")) ? 18 : 8;
+  const avatarUrl = resolveAvatar(member.avatarPath);
+  const avatarStyle = avatarUrl
+    ? `style="background-image: url('${avatarUrl}'); background-size: cover; background-position: center;"`
     : "";
-  const avatarContent = !member.avatarPath 
-    ? `<img src="../../assets/profile.png" alt="${member.fullName}">` 
+  const avatarContent = !avatarUrl
+    ? `<img src="../../assets/profile.png" alt="${member.fullName}">`
     : "";
-  
+  const isTeacher = cardClass.includes("teacher-card");
+
   return `
-  <article class="info-card ${cardClass}">
+  <article class="info-card ${cardClass}" data-member-id="${member.userId}" style="cursor:pointer;">
     <div class="circle-avatar ${avatarSize}" ${avatarStyle}>
       ${avatarContent}
     </div>
@@ -284,12 +288,13 @@ const createMemberCard = (member, cardClass, avatarSize) => {
         <p>${escapeHTML(member.roleName)}</p>
         <p>${renderEmail(member.email)}</p>
       </div>
+      ${!isTeacher ? `
       <div class="stats">
         <p>Total Tasks: ${member.taskStats?.total || 0}</p>
-        <p>Completed: ${member.taskStats?.completed || 0}</p>
+        <p>Finished: ${member.taskStats?.finished || 0}</p>
         <p>Pending: ${member.taskStats?.pending || 0}</p>
         <p>Missed: ${member.taskStats?.missed || 0}</p>
-      </div>
+      </div>` : ""}
     </div>
   </article>
 `;
@@ -315,15 +320,10 @@ const renderGroupMembers = async (members) => {
   });
 
   container.innerHTML = `
-    <article class="info-card teacher-card">
-      <div class="circle-avatar small" ${teacher && teacher.avatarPath ? `style="background-image: url('${teacher.avatarPath}'); background-size: cover; background-position: center;"` : ""}>
-        ${!teacher || !teacher.avatarPath ? `<img src="../../assets/profile.png" alt="Teacher">` : ""}
-      </div>
-      <h3>${teacher
-        ? `${renderShortText(teacher.fullName, 20)}<br><small>${renderEmail(teacher.email)}</small>`
-        : "You currently have no teacher"
-      }</h3>
-    </article>
+    ${teacher
+      ? createMemberCard(teacher, "teacher-card", "small")
+      : `<article class="info-card teacher-card"><h3>You currently have no teacher</h3></article>`
+    }
 
     ${leader
       ? createMemberCard(leader, "leader-card", "large")
@@ -334,6 +334,14 @@ const renderGroupMembers = async (members) => {
       ${normalMembers.map((m) => createMemberCard(m, "member-card", "medium")).join("")}
     </div>
   `;
+
+  // Attach click handlers directly to each rendered card
+  container.querySelectorAll("[data-member-id]").forEach((card) => {
+    card.addEventListener("click", () => {
+      const member = currentMembers.find((m) => String(m.userId) === card.dataset.memberId);
+      if (member) openMemberProfile(member);
+    });
+  });
 };
 
 /* ── EVENTS ───────────────────────────────────────────────────────────────── */
@@ -350,11 +358,16 @@ if (projectBreakdownTab) {
   });
 }
 
+document.querySelector("#mobileBreakdownBtn")?.addEventListener("click", () => {
+  const grpId = getGroupId();
+  window.location.href = grpId ? `s.membercategory.html?grpId=${grpId}` : "s.membercategory.html";
+});
+
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     showConfirmation(
       "Are you sure you want to log out?",
-      () => { window.location.href = "../../auth/log-sign.html"; },
+      () => window.doLogout?.(),
       { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
     );
   });
@@ -383,45 +396,36 @@ const sendLeaveRequest = async () => {
       .eq("userId", user.id)
       .maybeSingle();
 
-    const { data: memberships, error: membershipErr } = await supabase
-      .from("GROUPMEMBER")
-      .select("grpmemId, taskId")
-      .eq("userId", user.id)
-      .eq("grpId", Number(grpId));
+    const { data: leaderRole } = await supabase
+      .from("ROLE")
+      .select("roleId")
+      .eq("roleName", "Leader")
+      .maybeSingle();
 
-    if (membershipErr || !memberships || memberships.length === 0) {
-      showNotice("Could not find your group membership.", { title: "Ask to Leave" });
+    const { data: leaderMembership, error: leaderErr } = await supabase
+      .from("GROUPMEMBER")
+      .select("grpmemId, userId")
+      .eq("grpId", Number(grpId))
+      .eq("roleId", leaderRole?.roleId)
+      .maybeSingle();
+
+    if (leaderErr || !leaderMembership) {
+      showNotice("Could not find the group leader to send the request to.", { title: "Ask to Leave" });
       return;
     }
 
-    const ownMembership =
-      memberships.find((row) => row.taskId === null) ||
-      memberships[0];
-
     const displayName = profile?.userDisplayName || profile?.userEmail || user.email || "A member";
-    const notification = {
+    const { error } = await supabase.from("NOTIFICATION").insert({
       notiTitle: "Leave Request",
       notiBody: `${displayName} is asking to leave the group.`,
       "notiDate&Time": new Date().toISOString(),
       notiIsRead: false,
-      grpmemId: ownMembership.grpmemId,
+      userId: leaderMembership.userId,
+      grpmemId: leaderMembership.grpmemId,
       grpId: Number(grpId)
-    };
-
-    let { error } = await supabase
-      .from("NOTIFICATION")
-      .insert(notification);
-
-    if (error && String(error.message || "").includes("notiDate")) {
-      const { ["notiDate&Time"]: _notiDateTime, ...notificationWithoutDate } = notification;
-      const retry = await supabase
-        .from("NOTIFICATION")
-        .insert(notificationWithoutDate);
-      error = retry.error;
-    }
+    });
 
     if (error) {
-      console.error("Leave request notification failed:", error);
       showNotice("Failed to send leave request: " + error.message, { title: "Ask to Leave" });
       return;
     }
@@ -461,11 +465,88 @@ const loadSidebarProfile = async () => {
     if (headings[0]) headings[0].textContent = data.userDisplayName || "No Name";
     if (headings[1]) headings[1].textContent = data.userEmail || user.email || "";
     const avatarImg = profileBlock.querySelector(".avatar-circle img");
-    if (avatarImg && data.avatarPath) avatarImg.src = data.avatarPath;
+    if (avatarImg && data.avatarPath) { const url = resolveAvatar(data.avatarPath); if (url) avatarImg.src = url; }
   } catch (err) {
     console.error("Failed to load sidebar profile:", err);
   }
 };
+
+/* ── MEMBER PROFILE MODAL ────────────────────────────────────────────────── */
+const getMemberProfileEl = (id) => document.querySelector(id);
+const memberProfileOverlay  = () => getMemberProfileEl("#memberProfileOverlay");
+const memberProfileName     = () => getMemberProfileEl("#memberProfileName");
+const memberProfileRole     = () => getMemberProfileEl("#memberProfileRole");
+const memberProfileField    = () => getMemberProfileEl("#memberProfileField");
+const memberProfileEmail    = () => getMemberProfileEl("#memberProfileEmail");
+const memberProfileAvatar   = () => getMemberProfileEl("#memberProfileAvatar");
+const closeMemberProfileBtn = () => getMemberProfileEl("#closeMemberProfileBtn");
+
+const getAvatarLightbox = () => {
+  let lb = document.querySelector("#avatarLightbox");
+  if (!lb) {
+    lb = document.createElement("div");
+    lb.id = "avatarLightbox";
+    lb.style.cssText = "display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;align-items:center;justify-content:center;";
+    lb.innerHTML = `
+      <button style="position:absolute;top:16px;right:16px;width:40px;height:40px;border:none;border-radius:50%;background:#fff;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;" id="closeLightboxBtn">✕</button>
+      <img id="lightboxImg" src="" alt="Profile picture" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;">
+    `;
+    document.body.appendChild(lb);
+    lb.querySelector("#closeLightboxBtn").addEventListener("click", () => { lb.style.display = "none"; });
+    lb.addEventListener("click", (e) => { if (e.target === lb) lb.style.display = "none"; });
+  }
+  return lb;
+};
+
+const openMemberProfile = (member) => {
+  const overlay = memberProfileOverlay();
+  if (!overlay) return;
+  const nameEl    = memberProfileName();
+  const roleEl    = memberProfileRole();
+  const fieldEl   = memberProfileField();
+  const emailEl   = memberProfileEmail();
+  const avatarEl  = memberProfileAvatar();
+  if (roleEl)  roleEl.textContent  = member.roleName;
+  if (nameEl)  nameEl.textContent  = member.fullName;
+  if (emailEl) emailEl.textContent = member.email;
+  const field = member.deptName || member.progName || "";
+  if (fieldEl) fieldEl.textContent = field ? (member.deptName ? `Department: ${field}` : `Program: ${field}`) : "";
+  const avatarUrl = resolveAvatar(member.avatarPath);
+  if (avatarEl) {
+    if (avatarUrl) {
+      avatarEl.style.backgroundImage = `url('${avatarUrl}')`;
+      avatarEl.style.backgroundSize  = "cover";
+      avatarEl.style.backgroundPosition = "center";
+      avatarEl.style.cursor = "pointer";
+      avatarEl.innerHTML = "";
+      avatarEl.onclick = () => {
+        const lb = getAvatarLightbox();
+        lb.querySelector("#lightboxImg").src = avatarUrl;
+        lb.style.display = "flex";
+      };
+    } else {
+      avatarEl.style.backgroundImage = "";
+      avatarEl.style.cursor = "default";
+      avatarEl.onclick = null;
+      avatarEl.innerHTML = `<img src="../../assets/profile.png" alt="${member.fullName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    }
+  }
+  overlay.classList.add("open");
+  overlay.setAttribute("aria-hidden", "false");
+};
+
+const closeMemberProfile = () => {
+  const overlay = memberProfileOverlay();
+  overlay?.classList.remove("open");
+  overlay?.setAttribute("aria-hidden", "true");
+};
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("#closeMemberProfileBtn");
+  if (btn) { closeMemberProfile(); return; }
+  const overlay = memberProfileOverlay();
+  if (overlay && e.target === overlay) closeMemberProfile();
+});
 
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
 loadGroupFromDB();

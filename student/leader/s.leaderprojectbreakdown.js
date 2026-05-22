@@ -19,6 +19,10 @@ const pauseFinishChoiceOverlay = document.querySelector("#pauseFinishChoiceOverl
 const pauseFinishPauseBtn = document.querySelector("#pauseFinishPauseBtn");
 const pauseFinishFinishBtn = document.querySelector("#pauseFinishFinishBtn");
 const pauseFinishCloseBtn = document.querySelector("#pauseFinishCloseBtn");
+const leaderActiveChoiceOverlay = document.querySelector("#leaderActiveChoiceOverlay");
+const leaderActivePauseBtn = document.querySelector("#leaderActivePauseBtn");
+const leaderActiveFinishBtn = document.querySelector("#leaderActiveFinishBtn");
+const leaderActiveCloseBtn = document.querySelector("#leaderActiveCloseBtn");
 const taskSettingsOverlay = document.querySelector("#taskSettingsOverlay");
 const openEditTaskInfoBtn = document.querySelector("#openEditTaskInfoBtn");
 const openManualStatusBtn = document.querySelector("#openManualStatusBtn");
@@ -53,15 +57,27 @@ const detailTaskTimeActive = document.querySelector("#detailTaskTimeActive");
 let activeTaskIndex = null;
 let currentUserId = null;
 
-const STAT_ID = { inactive:1, active:2, pause:3, verifying:4, finished:5, missing:6 };
-const STAT_SLUG = { 1:"inactive", 2:"active", 3:"pause", 4:"verifying", 5:"finished", 6:"missing" };
-const STATUS_TEXT = { inactive:"Not Active", active:"Active", pause:"On Break", verifying:"Verifying", finished:"Finished", missing:"Missing" };
+const STAT_ID = { inactive:1, active:2, pause:3, verifying:4, finished:5, missing:6, revising:7 };
+const STAT_SLUG = { 1:"inactive", 2:"active", 3:"pause", 4:"verifying", 5:"finished", 6:"missing", 7:"revising" };
+const STATUS_TEXT = { inactive:"Not Active", active:"Active", pause:"On Break", verifying:"Verifying", finished:"Finished", missing:"Missing", revising:"Revising" };
 
 const isTerminal = (s) => s === "finished" || s === "missing";
 const isPastDue  = (t) => !(!t.dueDate || !t.dueTime) && Date.now() > new Date(`${t.dueDate}T${t.dueTime}`).getTime();
 const supa       = () => window.hiveSupabase;
 const getProjId  = () => sessionStorage.getItem("hive_selected_project");
 const getGrpId   = () => sessionStorage.getItem("hive_grpId");
+
+const todayLocal = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+
+const loadProjectDueDate = async () => {
+    const pid = getProjId();
+    if (!pid) return null;
+    const { data } = await supa().from("PROJECT").select("projDueD").eq("projId", Number(pid)).maybeSingle();
+    return data?.projDueD || null;
+};
 
 const applyStatusToBtn = (btn, status) => {
     btn.textContent = STATUS_TEXT[status] || status;
@@ -74,8 +90,8 @@ const loadTasks = async () => {
     if (!projId) return [];
     const { data, error } = await supa()
         .from("TASK")
-        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskSpan, taskAcmD, statId, GROUPMEMBER(grpmemId, userId, USER(userDisplayName))")
-        .eq("projId", Number(projId)); // TASK.projId FK references PROJECT.progId
+        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskSpan, taskAcmD, statId, teacherApproved, STATUS(statName), TASKASSIGNMENT(grpmemId, GROUPMEMBER(userId, USER(userDisplayName)))")
+        .eq("projId", Number(projId));
     if (error || !data) return [];
     return data.map(t => ({
         taskId: t.taskId,
@@ -89,15 +105,15 @@ const loadTasks = async () => {
         // taskSpan is stored as a Postgres interval string e.g. "01:23:45" or null
         // Convert to milliseconds for JS arithmetic
         spanMs: intervalToMs(t.taskSpan),
-        acmD: t.taskAcmD || null,   // ISO timestamp of last activation, or null
-        status: STAT_SLUG[t.statId] || "inactive",
+        acmD: t.taskAcmD || null,
+        teacherApproved: t.teacherApproved || false,
+        status: STAT_SLUG[t.statId] || t.STATUS?.statName?.toLowerCase() || "inactive",
         statId: t.statId || 1,
-        assignees: Object.values(
-            (t.GROUPMEMBER || []).reduce((seen, m) => {
-                if (!seen[m.userId]) seen[m.userId] = { grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" };
-                return seen;
-            }, {})
-        )
+        assignees: (t.TASKASSIGNMENT || []).map(a => ({
+            grpmemId: a.grpmemId,
+            userId: a.GROUPMEMBER?.userId,
+            name: a.GROUPMEMBER?.USER?.userDisplayName || "Member"
+        }))
     }));
 };
 
@@ -156,21 +172,55 @@ const updateTaskStatus = async (taskId, slugStatus, task) => {
     }
 
     await supa().from("TASK").update(updates).eq("taskId", taskId);
+
+    // Send notification when leader finishes a task
+    if (slugStatus === "finished") {
+        try {
+            const { data: { user } } = await supa().auth.getUser();
+            const { data: leaderInfo } = await supa().from("USER").select("userDisplayName").eq("userId", user.id).maybeSingle();
+            const grpId = getGrpId();
+            const projectName = sessionStorage.getItem("hive_selected_project_name") || "a project";
+            
+            const { data: members } = await supa()
+              .from("GROUPMEMBER")
+              .select("userId")
+              .eq("grpId", grpId);
+            
+            const recipients = (members || []).map(m => m.userId).filter(uid => uid !== user.id);
+            const leaderName = leaderInfo?.userDisplayName || "A leader";
+            
+            await Promise.all(recipients.map(uid =>
+              supa().from("NOTIFICATION").insert({
+                notiTitle: "Leader Finished Task",
+                notiBody: `${leaderName} has finished "${task?.name || 'a task'}" in "${projectName}".`,
+                "notiDate&Time": now,
+                notiIsRead: false,
+                userId: uid,
+                grpId: Number(grpId)
+              })
+            ));
+        } catch (e) {}
+    }
 };
 
 const loadGroupMembers = async () => {
     const grpId = getGrpId();
     if (!grpId) return [];
-    const { data, error } = await supa().from("GROUPMEMBER").select("grpmemId, userId, USER(userDisplayName)").eq("grpId", grpId);
+    const { data, error } = await supa()
+        .from("GROUPMEMBER")
+        .select("grpmemId, userId, ROLE(roleName), USER(userDisplayName)")
+        .eq("grpId", grpId);
     if (error || !data) return [];
     const seen = {};
-    return data.reduce((acc, m) => {
-        if (!seen[m.userId]) {
-            seen[m.userId] = true;
-            acc.push({ grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" });
-        }
-        return acc;
-    }, []);
+    return data
+        .filter(m => m.ROLE?.roleName?.toLowerCase() !== "teacher")
+        .reduce((acc, m) => {
+            if (!seen[m.userId]) {
+                seen[m.userId] = true;
+                acc.push({ grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" });
+            }
+            return acc;
+        }, []);
 };
 
 const populateAssigneeCheckboxes = async (containerSelector, inputName, onChange) => {
@@ -189,19 +239,276 @@ const populateAssigneeCheckboxes = async (containerSelector, inputName, onChange
 
 let verifyChoiceCallback = null;
 let pauseFinishCallback  = null;
-const openVerifyChoice     = (a,b) => { verifyChoiceCallback={onFinish:a,onRevise:b}; verifyChoiceOverlay?.classList.add("open"); verifyChoiceOverlay?.setAttribute("aria-hidden","false"); };
-const closeVerifyChoice    = ()    => { verifyChoiceOverlay?.classList.remove("open"); verifyChoiceOverlay?.setAttribute("aria-hidden","true"); verifyChoiceCallback=null; };
+
+// ── Leader Proof Submission (when leader finishes their own task) ──────────
+const leaderProofSubmitOverlay = document.querySelector("#leaderProofSubmitOverlay");
+const leaderProofLinkInput     = document.querySelector("#leaderProofLinkInput");
+const submitLeaderProofBtn      = document.querySelector("#submitLeaderProofBtn");
+const cancelLeaderProofBtn      = document.querySelector("#cancelLeaderProofBtn");
+let _leaderProofTaskId = null;
+
+const openLeaderProofSubmit = (taskId) => {
+    _leaderProofTaskId = taskId;
+    if (leaderProofLinkInput) leaderProofLinkInput.value = "";
+    leaderProofSubmitOverlay?.classList.add("open");
+    leaderProofSubmitOverlay?.setAttribute("aria-hidden", "false");
+};
+
+const closeLeaderProofSubmit = () => {
+    leaderProofSubmitOverlay?.classList.remove("open");
+    leaderProofSubmitOverlay?.setAttribute("aria-hidden", "true");
+    _leaderProofTaskId = null;
+};
+
+if (submitLeaderProofBtn) {
+    submitLeaderProofBtn.addEventListener("click", async () => {
+        const proofLink = leaderProofLinkInput?.value.trim();
+        if (!proofLink) {
+            showAlert("Please paste a proof link before submitting.", { title: "Missing Proof" });
+            return;
+        }
+        if (!_leaderProofTaskId || !currentUserId) return;
+
+        // Get the leader's grpmemId
+        const grpId = getGrpId();
+        const { data: membership } = await supa()
+            .from("GROUPMEMBER")
+            .select("grpmemId")
+            .eq("userId", currentUserId)
+            .eq("grpId", Number(grpId))
+            .maybeSingle();
+
+        if (!membership) {
+            showAlert("Could not find your group membership.", { title: "Error" });
+            return;
+        }
+
+        // Create or update submission with proof
+        const now = new Date().toISOString();
+        const { error: subErr } = await supa().from("SUBMISSION").insert({
+            taskId: _leaderProofTaskId,
+            grpmemId: membership.grpmemId,
+            proofLink: proofLink,
+            submittedAt: now,
+            status: "approved"
+        }).select().single();
+
+        if (subErr) {
+            console.error("Submission error:", subErr);
+            showAlert("Failed to submit proof: " + subErr.message, { title: "Error" });
+            return;
+        }
+
+        closeLeaderProofSubmit();
+        showAlert("Proof submitted successfully!", { title: "Success" });
+    });
+}
+
+if (cancelLeaderProofBtn) {
+    cancelLeaderProofBtn.addEventListener("click", closeLeaderProofSubmit);
+}
+
+if (leaderProofSubmitOverlay) {
+    leaderProofSubmitOverlay.addEventListener("click", e => {
+        if (e.target === leaderProofSubmitOverlay) closeLeaderProofSubmit();
+    });
+}
+
+// ── Participation rating state ──────────────────────────────────────────────
+const participationRatingOverlay = document.querySelector("#participationRatingOverlay");
+const participationRatingList    = document.querySelector("#participationRatingList");
+const skipRatingBtn              = document.querySelector("#skipRatingBtn");
+const saveRatingBtn              = document.querySelector("#saveRatingBtn");
+let _ratingTaskId = null;
+let _ratingAssignees = [];
+
+const openParticipationRating = (taskId, assignees) => {
+    _ratingTaskId = taskId;
+    // Filter out the current leader from the list of assignees to avoid self-rating
+    _ratingAssignees = assignees.filter(a => a.userId !== currentUserId);
+    
+    // If no other members to rate, just skip
+    if (_ratingAssignees.length === 0) {
+        closeParticipationRating();
+        return;
+    }
+    
+    if (!participationRatingList) return;
+    participationRatingList.innerHTML = _ratingAssignees.map((a, i) => `
+        <div class="rating-member-row">
+            <label class="rating-member-label" for="partScore_${i}">${a.name}</label>
+            <div class="rating-inputs">
+                <input type="number" min="1" max="10" value="10"
+                    id="partScore_${i}"
+                    class="rating-score-input"
+                    inputmode="numeric">
+                <input type="text"
+                    placeholder="Remarks (optional)"
+                    id="partRemarks_${i}"
+                    class="rating-remarks-input">
+            </div>
+        </div>
+    `).join("");
+
+    // Clamp score inputs to 1–10 on change and on blur
+    participationRatingList.querySelectorAll(".rating-score-input").forEach(input => {
+        const clamp = () => {
+            let v = parseInt(input.value);
+            if (isNaN(v) || v < 1) v = 1;
+            if (v > 10) v = 10;
+            input.value = v;
+        };
+        input.addEventListener("change", clamp);
+        input.addEventListener("blur", clamp);
+        input.addEventListener("keyup", () => {
+            // Block non-numeric characters live
+            input.value = input.value.replace(/[^0-9]/g, "");
+        });
+    });
+
+    participationRatingOverlay?.classList.add("open");
+    participationRatingOverlay?.setAttribute("aria-hidden", "false");
+};
+
+const closeParticipationRating = () => {
+    participationRatingOverlay?.classList.remove("open");
+    participationRatingOverlay?.setAttribute("aria-hidden","true");
+    _ratingTaskId = null; _ratingAssignees = [];
+};
+
+if (participationRatingOverlay) participationRatingOverlay.addEventListener("click", e => { if(e.target===participationRatingOverlay) closeParticipationRating(); });
+
+const ensureSubmissionsForFinishedTask = async (taskId, assignees) => {
+    const now = new Date().toISOString();
+    await Promise.all(assignees.map(async (a) => {
+        const { data: existing } = await supa()
+            .from("SUBMISSION")
+            .select("subId")
+            .eq("taskId", taskId)
+            .eq("grpmemId", a.grpmemId)
+            .limit(1)
+            .maybeSingle();
+        if (!existing) {
+            await supa().from("SUBMISSION").insert({
+                taskId,
+                grpmemId: a.grpmemId,
+                status: "approved",
+                submittedAt: now,
+                isRevised: false,
+            });
+        }
+    }));
+};
+
+if (skipRatingBtn) skipRatingBtn.addEventListener("click", async () => {
+    if (_ratingTaskId && _ratingAssignees.length) {
+        await ensureSubmissionsForFinishedTask(_ratingTaskId, _ratingAssignees);
+    }
+    closeParticipationRating();
+});
+
+if (saveRatingBtn) {
+    saveRatingBtn.addEventListener("click", async () => {
+        if (!_ratingTaskId || !_ratingAssignees.length) return;
+        const { data: { user } } = await supa().auth.getUser();
+
+        // Create submission records for assignees that don't have one yet
+        await ensureSubmissionsForFinishedTask(_ratingTaskId, _ratingAssignees);
+
+        await Promise.all(_ratingAssignees.map(async (a, i) => {
+            const score = Number(document.querySelector(`#partScore_${i}`)?.value) || null;
+            const remarks = document.querySelector(`#partRemarks_${i}`)?.value.trim() || null;
+            await supa().from("PARTICIPATION").delete().eq("grpmemId", a.grpmemId).eq("taskId", _ratingTaskId);
+            await supa().from("PARTICIPATION").insert({
+                grpmemId: a.grpmemId,
+                taskId: _ratingTaskId,
+                partScore: score,
+                partRemarks: remarks,
+                ratedBy: user?.id || null,
+                ratedAt: new Date().toISOString()
+            });
+        }));
+        closeParticipationRating();
+    });
+}
+
+// ── Verify choice (with submission load) ───────────────────────────────────
+let _verifySubmissionId = null;
+
+const openVerifyChoice = async (taskId, onFinish, onRevise) => {
+    // Load latest submission for this task
+    const { data: sub } = await supa()
+        .from("SUBMISSION")
+        .select("subId, proofLink")
+        .eq("taskId", taskId)
+        .order("submittedAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    _verifySubmissionId = sub?.subId || null;
+    const proofEl = document.querySelector("#verifyProofLink");
+    const noteEl  = document.querySelector("#leaderNoteInput");
+    if (proofEl) {
+        if (sub?.proofLink) {
+            proofEl.innerHTML = `<a href="${sub.proofLink}" target="_blank" rel="noopener">${sub.proofLink}</a>`;
+        } else {
+            proofEl.textContent = "No proof submitted";
+        }
+    }
+    if (noteEl) noteEl.value = "";
+
+    verifyChoiceCallback = { onFinish, onRevise };
+    verifyChoiceOverlay?.classList.add("open");
+    verifyChoiceOverlay?.setAttribute("aria-hidden","false");
+};
+
+const closeVerifyChoice = () => {
+    verifyChoiceOverlay?.classList.remove("open");
+    verifyChoiceOverlay?.setAttribute("aria-hidden","true");
+    verifyChoiceCallback = null; _verifySubmissionId = null;
+};
+
+if (verifyFinishBtn) {
+    verifyFinishBtn.addEventListener("click", async () => {
+        const note = document.querySelector("#leaderNoteInput")?.value.trim() || null;
+        if (_verifySubmissionId) {
+            await supa().from("SUBMISSION").update({ status: "approved", leaderNote: note }).eq("subId", _verifySubmissionId);
+        }
+        verifyChoiceCallback?.onFinish?.();
+        closeVerifyChoice();
+    });
+}
+
+if (verifyReviseBtn) {
+    verifyReviseBtn.addEventListener("click", async () => {
+        const note = document.querySelector("#leaderNoteInput")?.value.trim() || null;
+        if (_verifySubmissionId) {
+            await supa().from("SUBMISSION").update({ status: "rejected", leaderNote: note }).eq("subId", _verifySubmissionId);
+        }
+        verifyChoiceCallback?.onRevise?.();
+        closeVerifyChoice();
+    });
+}
+
+if (verifyCloseBtn)      verifyCloseBtn.addEventListener("click", closeVerifyChoice);
+if (verifyChoiceOverlay) verifyChoiceOverlay.addEventListener("click", e => { if(e.target===verifyChoiceOverlay) closeVerifyChoice(); });
+
 const openPauseFinishChoice= (a,b) => { pauseFinishCallback={onPause:a,onFinish:b}; pauseFinishChoiceOverlay?.classList.add("open"); pauseFinishChoiceOverlay?.setAttribute("aria-hidden","false"); };
 const closePauseFinishChoice=()    => { pauseFinishChoiceOverlay?.classList.remove("open"); pauseFinishChoiceOverlay?.setAttribute("aria-hidden","true"); pauseFinishCallback=null; };
 
-if (verifyFinishBtn)       verifyFinishBtn.addEventListener("click",       () => { verifyChoiceCallback?.onFinish?.(); closeVerifyChoice(); });
-if (verifyReviseBtn)       verifyReviseBtn.addEventListener("click",       () => { verifyChoiceCallback?.onRevise?.(); closeVerifyChoice(); });
-if (verifyCloseBtn)        verifyCloseBtn.addEventListener("click",        closeVerifyChoice);
-if (verifyChoiceOverlay)   verifyChoiceOverlay.addEventListener("click",   e => { if(e.target===verifyChoiceOverlay) closeVerifyChoice(); });
 if (pauseFinishPauseBtn)   pauseFinishPauseBtn.addEventListener("click",   () => { pauseFinishCallback?.onPause?.(); closePauseFinishChoice(); });
 if (pauseFinishFinishBtn)  pauseFinishFinishBtn.addEventListener("click",  () => { pauseFinishCallback?.onFinish?.(); closePauseFinishChoice(); });
 if (pauseFinishCloseBtn)   pauseFinishCloseBtn.addEventListener("click",   closePauseFinishChoice);
 if (pauseFinishChoiceOverlay) pauseFinishChoiceOverlay.addEventListener("click", e => { if(e.target===pauseFinishChoiceOverlay) closePauseFinishChoice(); });
+
+let leaderActiveCallback = null;
+const openLeaderActiveChoice = (onPause, onFinish) => { leaderActiveCallback={onPause,onFinish}; leaderActiveChoiceOverlay?.classList.add("open"); leaderActiveChoiceOverlay?.setAttribute("aria-hidden","false"); };
+const closeLeaderActiveChoice = () => { leaderActiveChoiceOverlay?.classList.remove("open"); leaderActiveChoiceOverlay?.setAttribute("aria-hidden","true"); leaderActiveCallback=null; };
+
+if (leaderActivePauseBtn)   leaderActivePauseBtn.addEventListener("click",   () => { leaderActiveCallback?.onPause?.();   closeLeaderActiveChoice(); });
+if (leaderActiveFinishBtn)  leaderActiveFinishBtn.addEventListener("click",  () => { leaderActiveCallback?.onFinish?.();  closeLeaderActiveChoice(); });
+if (leaderActiveCloseBtn)   leaderActiveCloseBtn.addEventListener("click",   closeLeaderActiveChoice);
+if (leaderActiveChoiceOverlay) leaderActiveChoiceOverlay.addEventListener("click", e => { if(e.target===leaderActiveChoiceOverlay) closeLeaderActiveChoice(); });
 
 const attachLeaderStatusBtn = (btn, task, isOwnTask) => {
     const setStatus = async (s) => {
@@ -211,33 +518,38 @@ const attachLeaderStatusBtn = (btn, task, isOwnTask) => {
         else { task.acmD = null; }
         applyStatusToBtn(btn, s);
 
-        // Update this card's timer span in-place so the global ticker
-        // immediately has the right data-acm-d / data-span-ms for THIS task only
         const card = btn.closest("article");
         const taskLeft = card?.querySelector(".task-left");
         if (!taskLeft) return;
-        let timerEl = card.querySelector(`.task-time-active[data-task-id="${task.taskId}"]`);
         if (s === "active") {
-            if (!timerEl) {
-                timerEl = document.createElement("span");
-                timerEl.className = "task-time-active";
-                timerEl.dataset.taskId = task.taskId;
-                taskLeft.appendChild(timerEl);
-            }
+            // Remove any existing timer spans (static or dynamic) to avoid duplicates
+            card.querySelectorAll(".task-time-active").forEach(el => el.remove());
+            const timerEl = document.createElement("span");
+            timerEl.className = "task-time-active";
+            timerEl.dataset.taskId = task.taskId;
             timerEl.dataset.acmD = task.acmD;
             timerEl.dataset.spanMs = task.spanMs || 0;
             timerEl.textContent = formatElapsedTime(getTotalElapsedMs(task));
+            taskLeft.appendChild(timerEl);
         } else {
-            // Remove the live ticker attribute so the global ticker stops ticking it
+            const timerEl = card.querySelector(`.task-time-active[data-task-id="${task.taskId}"]`)
+                         || card.querySelector(".task-time-active");
             if (timerEl) {
                 delete timerEl.dataset.acmD;
-                timerEl.dataset.taskId = "";   // remove from ticker's querySelector
                 timerEl.dataset.spanMs = task.spanMs || 0;
-                if (task.spanMs > 0) {
-                    timerEl.textContent = formatElapsedTime(task.spanMs);
-                } else {
-                    timerEl.remove();
-                }
+                if (task.spanMs > 0) { timerEl.textContent = formatElapsedTime(task.spanMs); }
+                else { timerEl.remove(); }
+            }
+        }
+
+        // After finishing: check if leader is assigned to this task
+        if (s === "finished") {
+            // Check if current user is in the assignees
+            const isLeaderAssigned = task.assignees.some(a => a.userId === currentUserId);
+            if (isLeaderAssigned && task.assignees.length > 0) {
+                openLeaderProofSubmit(task.taskId);
+            } else {
+                openParticipationRating(task.taskId, task.assignees);
             }
         }
     };
@@ -251,8 +563,12 @@ const attachLeaderStatusBtn = (btn, task, isOwnTask) => {
             else if (cur==="pause") await setStatus("active");
         } else {
             if (cur==="inactive") await setStatus("active");
-            else if (cur==="active") await setStatus("missing");
-            else if (cur==="verifying") openVerifyChoice(()=>setStatus("finished"),()=>setStatus("active"));
+            else if (cur==="active" || cur==="revising") openLeaderActiveChoice(
+                () => { task._prePauseStatus = cur; setStatus("pause"); },
+                () => setStatus("finished")
+            );
+            else if (cur==="pause") await setStatus(task._prePauseStatus === "revising" ? "revising" : "active");
+            else if (cur==="verifying") openVerifyChoice(task.taskId, ()=>setStatus("finished"), ()=>setStatus("active"));
         }
     });
 };
@@ -264,10 +580,40 @@ const formatTime12h = (t) => {
 };
 const formatElapsedTime = (ms) => { const s=Math.floor((ms||0)/1000); return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m ${s%60}s`; };
 
+const notifyTaskMissing = async (task) => {
+    const grpId = getGrpId();
+    if (!grpId) return;
+    try {
+        const [{ data: assignments }, { data: leaderRole }] = await Promise.all([
+            supa().from("TASKASSIGNMENT").select("GROUPMEMBER(userId)").eq("taskId", task.taskId),
+            supa().from("ROLE").select("roleId").eq("roleName", "Leader").maybeSingle()
+        ]);
+        const { data: leader } = await supa()
+            .from("GROUPMEMBER").select("userId")
+            .eq("grpId", Number(grpId)).eq("roleId", leaderRole?.roleId).maybeSingle();
+        const recipients = new Set();
+        (assignments || []).forEach(a => { if (a.GROUPMEMBER?.userId) recipients.add(a.GROUPMEMBER.userId); });
+        if (leader?.userId) recipients.add(leader.userId);
+        const now = new Date().toISOString();
+        await Promise.all([...recipients].map(userId =>
+            supa().from("NOTIFICATION").insert({
+                notiTitle: "Task Missing",
+                notiBody: `Task "${task.name}" has passed its due date and is now marked as missing.`,
+                "notiDate&Time": now,
+                notiIsRead: false,
+                userId,
+                grpId: Number(grpId)
+            })
+        ));
+    } catch (e) {}
+};
+
 const renderTask = async (task, idx, isOwnTask, target) => {
     if (!target) return;
     if (!isTerminal(task.status) && task.status!=="verifying" && isPastDue(task)) {
-        task.status="missing"; await updateTaskStatus(task.taskId,"missing",task);
+        task.status="missing";
+        await updateTaskStatus(task.taskId,"missing",task);
+        notifyTaskMissing(task);
     }
     const assigneeNames = task.assignees.map(a=>a.name).join(", ")||"None";
     const status = task.status||"inactive";
@@ -276,6 +622,7 @@ const renderTask = async (task, idx, isOwnTask, target) => {
     article.className="task-card task-card-clickable"; article.setAttribute("data-dynamic","true");
     if (priority==="high") article.style.backgroundColor="#FF8383";
     else if (priority==="medium") article.style.backgroundColor="#FFC193";
+    if (task.teacherApproved) article.style.backgroundColor="#B8FFB8";
     const timeHtml = status==="active"
         ? `<span class="task-time-active" data-task-id="${task.taskId}" data-acm-d="${task.acmD||""}" data-span-ms="${task.spanMs||0}">${formatElapsedTime(getTotalElapsedMs(task))}</span>`
         : (task.spanMs > 0 ? `<span class="task-time-active">${formatElapsedTime(task.spanMs)}</span>` : "");
@@ -359,7 +706,12 @@ const openEditTaskInfo=async()=>{
     if(editTaskNameInput) editTaskNameInput.value=task.name||"";
     if(editTaskDescriptionInput) editTaskDescriptionInput.value=task.description||"";
     if(editTaskResourcesInput) editTaskResourcesInput.value=task.resources||"";
-    if(editDueDateInput){editDueDateInput.min=new Date().toISOString().split("T")[0];editDueDateInput.value=task.dueDate||"";}
+    if(editDueDateInput){
+        const projDue = await loadProjectDueDate();
+        editDueDateInput.min = todayLocal();
+        if(projDue) editDueDateInput.max = projDue; else editDueDateInput.removeAttribute("max");
+        editDueDateInput.value = task.dueDate || "";
+    }
     if(editDueTimeInput) editDueTimeInput.value=task.dueTime||"";
     const ei=document.getElementById("editIntensityInput"); if(ei) ei.value=task.intensity||"Light";
     const ep=document.getElementById("editPriorityInput"); if(ep) ep.value=task.priority||"Low";
@@ -393,6 +745,7 @@ const openTaskDetails=async(idx)=>{
 
 if(topBackBtn) topBackBtn.addEventListener("click",()=>{window.location.href="../s.dashb.html";});
 if(groupInfoTab) groupInfoTab.addEventListener("click",()=>{window.location.href="s.leadergrpviewing.html";});
+
 if(backToCategoriesBtn) backToCategoriesBtn.addEventListener("click",()=>{window.location.href="s.leadercategory.html";});
 if(discardTaskSettingsBtn) discardTaskSettingsBtn.addEventListener("click",closeTaskSettings);
 if(taskSettingsOverlay) taskSettingsOverlay.addEventListener("click",e=>{if(e.target===taskSettingsOverlay)closeTaskSettings();});
@@ -413,8 +766,7 @@ if(confirmRemoveTaskBtn){
         if(activeTaskIndex===null)return;
         const tasks=await loadTasks(); const taskId=tasks[activeTaskIndex]?.taskId;
         if(taskId){
-            await supa().from("GROUPMEMBER").update({taskId:null}).eq("taskId",taskId);
-            await supa().from("TASK").delete().eq("taskId",taskId);
+            await supa().rpc("delete_task", { p_task_id: taskId });
         }
         activeTaskIndex=null; closeRemoveTaskConfirm(); await renderAllTasks();
     });
@@ -424,8 +776,16 @@ manualStatusButtons.forEach(btn=>{
     btn.addEventListener("click",async()=>{
         if(activeTaskIndex===null)return;
         const tasks=await loadTasks(); const task=tasks[activeTaskIndex]; if(!task)return;
-        await updateTaskStatus(task.taskId,btn.dataset.manualStatus,task);
-        closeManualStatus(); await renderAllTasks();
+        const targetStatus=btn.dataset.manualStatus;
+        const wasFinished=task.status==="finished";
+        await updateTaskStatus(task.taskId,targetStatus,task);
+        if(targetStatus==="finished"){
+            if(!wasFinished) await ensureSubmissionsForFinishedTask(task.taskId,task.assignees);
+            closeManualStatus(); await renderAllTasks();
+            openParticipationRating(task.taskId,task.assignees);
+        } else {
+            closeManualStatus(); await renderAllTasks();
+        }
     });
 });
 
@@ -438,7 +798,11 @@ const updatePostTaskSubmitState=()=>{
 
 if(openPostTaskModalBtn&&postTaskModalOverlay){
     openPostTaskModalBtn.addEventListener("click",async()=>{
-        if(dueDateInput) dueDateInput.min=new Date().toISOString().split("T")[0];
+        const projDue = await loadProjectDueDate();
+        if(dueDateInput){
+            dueDateInput.min = todayLocal();
+            if(projDue) dueDateInput.max = projDue; else dueDateInput.removeAttribute("max");
+        }
         postTaskModalOverlay.classList.add("open");postTaskModalOverlay.setAttribute("aria-hidden","false");
         await populateAssigneeCheckboxes(".post-assignee-options","assignees",updatePostTaskSubmitState);
         updatePostTaskSubmitState();
@@ -469,35 +833,24 @@ if(postTaskForm){
                 statId:STAT_ID.inactive,
                 projId:projId?Number(projId):null  // TASK.projId FK → PROJECT.progId
             }).select("taskId").single();
-            if(error){alert("Failed to create task: "+error.message);return;}
-            // For each selected assignee, find their GROUPMEMBER row that has no task yet.
-            // If one exists, link it to this task. If all their rows are already taken, insert a new row.
-            const grpId = getGrpId();
+            if(error){showAlert("Failed to create task: "+error.message,{title:"Error"});return;}
+            const grpId=getGrpId();
+            const projectName=sessionStorage.getItem("hive_selected_project_name") || "a project";
             await Promise.all(checked.map(async cb => {
-                const memId = Number(cb.value);
-                // Find a free slot for this member (taskId is null)
-                const { data: freeRows } = await supa().from("GROUPMEMBER")
-                    .select("grpmemId")
-                    .eq("grpmemId", memId)
-                    .is("taskId", null)
-                    .limit(1);
-                if (freeRows && freeRows.length > 0) {
-                    // Reuse the existing free slot
-                    await supa().from("GROUPMEMBER").update({ taskId: newTask.taskId }).eq("grpmemId", freeRows[0].grpmemId);
-                } else {
-                    // All rows for this member are taken — get their userId and roleId to insert a new row
-                    const { data: anyRow } = await supa().from("GROUPMEMBER")
-                        .select("userId, roleId")
-                        .eq("grpmemId", memId)
-                        .limit(1);
-                    if (anyRow && anyRow.length > 0) {
-                        await supa().from("GROUPMEMBER").insert({
-                            userId: anyRow[0].userId,
-                            grpId: Number(grpId),
-                            taskId: newTask.taskId,
-                            roleId: anyRow[0].roleId
-                        });
-                    }
+                const grpmemId = Number(cb.value);
+                await supa().from("TASKASSIGNMENT").insert({ taskId: newTask.taskId, grpmemId });
+                // Notify the assigned member
+                const { data: member } = await supa()
+                    .from("GROUPMEMBER").select("userId").eq("grpmemId", grpmemId).maybeSingle();
+                if (member?.userId) {
+                    await supa().from("NOTIFICATION").insert({
+                        notiTitle: "New Task Assigned",
+                        notiBody: `You have been assigned to "${name}" in project "${projectName}"`,
+                        "notiDate&Time": new Date().toISOString(),
+                        notiIsRead: false,
+                        userId: member.userId,
+                        grpId: grpId ? Number(grpId) : null
+                    });
                 }
             }));
             await renderAllTasks(); closePostTaskModal(); postTaskForm.reset(); updatePostTaskSubmitState();
@@ -523,34 +876,11 @@ if(editTaskInfoForm){
                 taskIntensity:document.getElementById("editIntensityInput")?.value||"Light",
                 taskPrio:document.getElementById("editPriorityInput")?.value||"Low"
             }).eq("taskId",task.taskId);
-            if(error){alert("Failed to update task: "+error.message);return;}
-            // Clear all GROUPMEMBER rows currently linked to this task
-            await supa().from("GROUPMEMBER").update({taskId:null}).eq("taskId",task.taskId);
-            // Re-link each selected assignee using the same free-slot-or-insert logic
-            const grpId = getGrpId();
+            if(error){showAlert("Failed to update task: "+error.message,{title:"Error"});return;}
+            await supa().from("TASKASSIGNMENT").delete().eq("taskId", task.taskId);
             await Promise.all(checked.map(async cb => {
-                const memId = Number(cb.value);
-                const { data: freeRows } = await supa().from("GROUPMEMBER")
-                    .select("grpmemId")
-                    .eq("grpmemId", memId)
-                    .is("taskId", null)
-                    .limit(1);
-                if (freeRows && freeRows.length > 0) {
-                    await supa().from("GROUPMEMBER").update({ taskId: task.taskId }).eq("grpmemId", freeRows[0].grpmemId);
-                } else {
-                    const { data: anyRow } = await supa().from("GROUPMEMBER")
-                        .select("userId, roleId")
-                        .eq("grpmemId", memId)
-                        .limit(1);
-                    if (anyRow && anyRow.length > 0) {
-                        await supa().from("GROUPMEMBER").insert({
-                            userId: anyRow[0].userId,
-                            grpId: Number(grpId),
-                            taskId: task.taskId,
-                            roleId: anyRow[0].roleId
-                        });
-                    }
-                }
+                const grpmemId = Number(cb.value);
+                await supa().from("TASKASSIGNMENT").insert({ taskId: task.taskId, grpmemId });
             }));
             closeEditTaskInfo(); await renderAllTasks();
         },{title:"Save Changes",confirmText:"Save",cancelText:"Cancel"});
@@ -566,7 +896,7 @@ document.addEventListener("keydown",e=>{
 });
 
 const logoutBtn=document.querySelector(".logout");
-if(logoutBtn) logoutBtn.addEventListener("click",()=>{showConfirmation("Are you sure you want to log out?",()=>{window.location.href="../../auth/log-sign.html";},{title:"Log Out",confirmText:"Log Out",cancelText:"Cancel"});});
+if(logoutBtn) logoutBtn.addEventListener("click",()=>{showConfirmation("Are you sure you want to log out?",()=>window.doLogout?.(),{title:"Log Out",confirmText:"Log Out",cancelText:"Cancel"});});
 
 (async()=>{
     const {data:{user}}=await supa().auth.getUser();
@@ -574,5 +904,10 @@ if(logoutBtn) logoutBtn.addEventListener("click",()=>{showConfirmation("Are you 
     const projectName=sessionStorage.getItem("hive_selected_project_name");
     const el=document.querySelector(".project-name-display h2");
     if(projectName&&el) el.textContent=projectName;
+    const validationLink=document.querySelector(".validation-link");
+    if(validationLink){
+        const pid=getProjId(), gid=getGrpId();
+        validationLink.href=`../validation/contribution-validation.html?mode=leader&projId=${pid||""}&grpId=${gid||""}`;
+    }
     await renderAllTasks();
 })();

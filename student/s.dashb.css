@@ -9,11 +9,12 @@ html, body {
     min-height: 100%;
 }
 
+html { overflow-x: clip; }
+
 body {
     font-family: Arial, sans-serif;
     background: #fdfbdc;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -168,6 +169,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -357,6 +362,28 @@ button {
     background: #f8c600;
     padding: 6px;
     cursor: pointer;
+    position: relative;
+}
+
+.notif-btn-mobile {
+    position: relative;
+}
+
+.notif-badge {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #e53935;
+    border: 2px solid #fff;
+    pointer-events: none;
+}
+
+.notif-badge.has-unread {
+    display: block;
 }
 
 .open-group-view {
@@ -1048,5 +1075,25 @@ body {
 
     .sidebar {
         width: 100%;
+    }
+
+    .group-card {
+        width: calc(100% - 28px);
+        max-width: none;
+        margin: 0 14px;
+    }
+
+    #ownedGroupsList,
+    #joinedGroupsList,
+    #groupsList {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .section-title-wrap {
+        width: 100%;
+        max-width: none;
     }
 }

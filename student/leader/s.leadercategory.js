@@ -42,14 +42,14 @@ let activeProjectItem = null;
 // ── Load projects from Supabase ───────────────────────────────────────────
 const loadProjects = async () => {
     if (!supa()) return [];
+    const grpId = getGrpId();
+    if (!grpId) return [];
 
     const { data, error } = await supa()
         .from("PROJECT")
-        .select("projId, projName, projDueD");
-    if (error || !data) {
-        console.error("Failed to load projects:", error);
-        return [];
-    }
+        .select("projId, projName, projDueD")
+        .eq("grpId", Number(grpId));
+    if (error || !data) return [];
     
     // Fetch task count for each project
     const projectsWithCounts = await Promise.all(
@@ -149,7 +149,7 @@ const saveProjectName = async () => {
     if (!newName) return;
     const projId = Number(activeProjectItem.dataset.category);
     const { error } = await supa().from("PROJECT").update({ projName: newName, projDueD: newDue || null }).eq("projId", projId);
-    if (error) { alert("Failed to update project: " + error.message); return; }
+    if (error) { showAlert("Failed to update project: " + error.message, { title: "Error" }); return; }
     await renderAllProjects();
     closeProjectOptions();
 };
@@ -163,11 +163,49 @@ if (deleteProjectBtn) {
         const projId = Number(activeProjectItem.dataset.category);
         const nameEl = activeProjectItem.querySelector(".category-name");
         const projectName = nameEl ? nameEl.textContent : "this project";
-        showConfirmation(`Are you sure you want to remove the project "${projectName}"?`, async () => {
-            const { error } = await supa().from("PROJECT").delete().eq("projId", projId);
-            if (error) { alert("Failed to delete project: " + error.message); return; }
-            await renderAllProjects();
-            closeProjectOptions();
+        showConfirmation(`Are you sure you want to remove the project "${projectName}"? Dislaimer: If the selected member(s) have tasks assigned, they will be reassigned to the group leader.`, async () => {
+            try {
+                const supabase = supa();
+                if (!supabase) return;
+
+                // Get all tasks for this project
+                const { data: tasks } = await supabase
+                    .from("TASK")
+                    .select("taskId")
+                    .eq("projId", projId);
+
+                const taskIds = (tasks || []).map(t => t.taskId);
+
+                // Delete in order of dependencies
+                if (taskIds.length > 0) {
+                    // 1. Delete PEEREVAL entries
+                    await supabase.from("PEEREVAL").delete().in("taskId", taskIds);
+
+                    // 2. Delete SUBMISSION entries
+                    await supabase.from("SUBMISSION").delete().in("taskId", taskIds);
+
+                    // 3. Delete PARTICIPATION entries
+                    await supabase.from("PARTICIPATION").delete().in("taskId", taskIds);
+
+                    // 4. Delete TASKASSIGNMENT entries
+                    await supabase.from("TASKASSIGNMENT").delete().in("taskId", taskIds);
+                }
+
+                // 5. Delete TASK entries
+                await supabase.from("TASK").delete().eq("projId", projId);
+
+                // 6. Delete PROJECT
+                const { error } = await supabase.from("PROJECT").delete().eq("projId", projId);
+                if (error) { 
+                    showAlert("Failed to delete project: " + error.message, { title: "Error" }); 
+                    return; 
+                }
+                
+                await renderAllProjects();
+                closeProjectOptions();
+            } catch (err) {
+                showAlert("Error deleting project: " + err.message, { title: "Error" });
+            }
         }, { title: "Remove Project", confirmText: "Remove", cancelText: "Cancel" });
     });
 }
@@ -215,8 +253,8 @@ if (postCategoryForm) {
         showConfirmation(`Are you sure you want to post the project "${name}"?`, async () => {
             const { error } = await supa()
                 .from("PROJECT")
-                .insert({ projName: name, projDueD: due });
-            if (error) { alert("Failed to create project: " + error.message); return; }
+                .insert({ projName: name, projDueD: due, grpId: Number(getGrpId()) });
+            if (error) { showAlert("Failed to create project: " + error.message, { title: "Error" }); return; }
             await renderAllProjects();
             postCategoryForm.reset();
             updatePostCategorySubmitState();
@@ -231,9 +269,14 @@ if (groupInfoTab)  groupInfoTab.addEventListener("click",  () => {
     window.location.href = `s.leadergrpviewing.html${grpId ? "?grpId=" + grpId : ""}`;
 });
 
+document.querySelector("#mobileGroupInfoBtn")?.addEventListener("click", () => {
+    const grpId = getGrpId();
+    window.location.href = `s.leadergrpviewing.html${grpId ? "?grpId=" + grpId : ""}`;
+});
+
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) logoutBtn.addEventListener("click", () => {
-    showConfirmation("Are you sure you want to log out?", () => { window.location.href = "../../auth/log-sign.html"; }, { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
+    showConfirmation("Are you sure you want to log out?", () => window.doLogout?.(), { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" });
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────

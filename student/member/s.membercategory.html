@@ -1,19 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="visibility:hidden">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects</title>
     <link rel="stylesheet" href="s.membercategory.css">
     <link rel="stylesheet" href="../../lib/loading.css">
     <link rel="stylesheet" href="../student-theme.css">
+    <script src="../../lib/offline-banner.js" defer></script>
+    <link rel="manifest" href="../../manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="../../Logo.png">
+    <link rel="icon" href="../../Logo.png">
 </head>
 <body>
     <div class="topbar">
         <button class="menu-btn" id="topBackBtn" type="button" aria-label="Back to dashboard">
             <img src="../../assets/Back.png" alt="Back icon">
         </button>
-        <p class="datetime">6:00 PM February 01, 2026</p>
+        <p class="datetime"></p>
     </div>
 
     <div class="layout">
@@ -22,8 +29,8 @@
                 <div class="avatar-circle">
                     <img src="../../assets/profile.png" alt="Profile">
                 </div>
-                <h3>Name</h3>
-                <h3>Email</h3>
+                <h3></h3>
+                <h3></h3>
                 <a href="#" class="profile-link" data-no-loading>Manage Profile</a>
             </div>
 
@@ -54,10 +61,20 @@
             <nav class="side-tabs" aria-label="Group sections">
                 <button class="tab tab-group-info" id="groupInfoTab" type="button"><img src="../../assets/grpinfo.png" alt=""> <span>Group<br>Information</span></button>
                 <button class="tab tab-project-breakdown active" type="button"><img src="../../assets/breakdown.png" alt=""> <span>Project<br>Breakdown</span></button>
-                <a class="tab tab-contribution-validation" href="../validation/contribution-validation.html?mode=member"><img src="../../assets/contribution.png" alt=""> <span>Contribution<br>Validation</span></a>
             </nav>
         </aside>
     </div>
+
+    <nav class="mobile-bottom-nav" aria-label="Section navigation">
+        <button class="mob-nav-btn" id="mobileGroupInfoBtn" type="button">
+            <img src="../../assets/grpinfo.png" alt="">
+            <span>Group Info</span>
+        </button>
+        <button class="mob-nav-btn mob-nav-active" type="button" disabled>
+            <img src="../../assets/breakdown.png" alt="">
+            <span>Breakdown</span>
+        </button>
+    </nav>
 
     <script src="../../lib/loading.js"></script>
     <script src="../../lib/datetime.js"></script>
@@ -66,6 +83,12 @@
     <script src="../../lib/confirmation-modal.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../lib/supabaseClient.js"></script>
+    <script src="../../lib/auth-guard.js"></script>
     <script src="s.membercategory.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+    </script>
 </body>
 </html>

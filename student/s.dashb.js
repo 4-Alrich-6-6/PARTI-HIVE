@@ -10,6 +10,49 @@ if (menuBtn && sidebar) {
 // ─── DB: load groups from Supabase ───────────────────────────────────────────
 let dashbData = { ownedGroups: [], joinedGroups: [], stats: { owned: 0, joined: 0, pending: 0 } };
 
+// ─── Helper: Get pending task count for current user ───────────────────────
+const getUserPendingTaskCount = async (userId) => {
+    const supabase = window.hiveSupabase;
+    if (!supabase) return 0;
+
+    try {
+        // Get all group memberships for this user
+        const { data: memberships } = await supabase
+            .from("GROUPMEMBER")
+            .select("grpmemId")
+            .eq("userId", userId);
+
+        if (!memberships?.length) return 0;
+
+        const grpmemIds = memberships.map(m => m.grpmemId);
+
+        // Get all task assignments
+        const { data: assignments } = await supabase
+            .from("TASKASSIGNMENT")
+            .select("taskId")
+            .in("grpmemId", grpmemIds);
+
+        if (!assignments?.length) return 0;
+
+        const taskIds = [...new Set(assignments.map(a => a.taskId))];
+
+        // Get all tasks and filter by status
+        const { data: tasks } = await supabase
+            .from("TASK")
+            .select("statId")
+            .in("taskId", taskIds);
+
+        if (!tasks) return 0;
+
+        // Count pending tasks (statId !== 5 for finished, !== 6 for missed)
+        const pendingCount = tasks.filter(t => t.statId !== 5 && t.statId !== 6).length;
+        return pendingCount;
+    } catch (err) {
+        console.error("Error fetching pending task count:", err);
+        return 0;
+    }
+};
+
 const loadDashbData = async () => {
     const supabase = window.hiveSupabase;
     if (!supabase) return;
@@ -62,7 +105,7 @@ const loadDashbData = async () => {
     dashbData = {
         ownedGroups,
         joinedGroups,
-        stats: { owned: ownedGroups.length, joined: joinedGroups.length, pending: 0 }
+        stats: { owned: ownedGroups.length, joined: joinedGroups.length, pending: await getUserPendingTaskCount(user.id) }
     };
 
     applyDashbData(dashbData);
@@ -216,25 +259,21 @@ if (createAddGroupBtn) {
             `Are you sure you want to create the group "${groupName}"?`,
             async () => {
                 const supabase = window.hiveSupabase;
-                if (!supabase) { alert("Cannot connect to database."); return; }
+                if (!supabase) { showAlert("Cannot connect to database.", { title: "Connection Error" }); return; }
 
                 const { data: { user }, error: userErr } = await supabase.auth.getUser();
-                if (!user || userErr) { alert("You must be logged in to create a group."); return; }
-
-                const { data: userData, error: profileErr } = await supabase
-                    .from("USER").select("progId").eq("userId", user.id).maybeSingle();
-                if (profileErr || !userData) { alert("Could not load your profile."); return; }
+                if (!user || userErr) { showAlert("You must be logged in to create a group.", { title: "Not Logged In" }); return; }
 
                 const { data: newGroup, error: grpErr } = await supabase
                     .from("GROUP")
-                    .insert({ grpName: groupName, grpSubject: subjectName, progId: userData.progId || null })
+                    .insert({ grpName: groupName, grpSubject: subjectName })
                     .select("grpId").single();
-                if (grpErr || !newGroup) { alert("Failed to create group: " + (grpErr?.message || "Unknown error")); return; }
+                if (grpErr || !newGroup) { showAlert("Failed to create group: " + (grpErr?.message || "Unknown error"), { title: "Error" }); return; }
 
                 const { data: leaderRole, error: roleErr } = await supabase
                     .from("ROLE").select("roleId").eq("roleName", "Leader").maybeSingle();
                 if (roleErr || !leaderRole) {
-                    alert("Could not find Leader role.");
+                    showAlert("Could not find Leader role. Group has been removed.", { title: "Setup Error" });
                     await supabase.from("GROUP").delete().eq("grpId", newGroup.grpId);
                     return;
                 }
@@ -242,7 +281,7 @@ if (createAddGroupBtn) {
                 const { error: memErr } = await supabase
                     .from("GROUPMEMBER")
                     .insert({ userId: user.id, grpId: newGroup.grpId, roleId: leaderRole.roleId });
-                if (memErr) { alert("Group created but failed to assign Leader role: " + memErr.message); return; }
+                if (memErr) { showAlert("Group created but failed to assign Leader role: " + memErr.message, { title: "Error" }); return; }
 
                 closeAddGroupModal();
                 await loadDashbData(); // refresh from DB
@@ -279,7 +318,7 @@ if (joinGroupBtn) {
             "Are you sure you want to join this group?",
             async () => {
                 const supabase = window.hiveSupabase;
-                if (!supabase) { alert("Cannot connect to database."); return; }
+                if (!supabase) { showAlert("Cannot connect to database.", { title: "Connection Error" }); return; }
 
                 // Extract group ID from URL or use as-is if numeric
                 let grpId;
@@ -296,20 +335,20 @@ if (joinGroupBtn) {
                     grpId = Number(groupLink);
                 }
 
-                if (!grpId || isNaN(grpId)) { alert("Invalid group link. Please enter a valid invite link or numeric group ID."); return; }
+                if (!grpId || isNaN(grpId)) { showAlert("Invalid group link. Please enter a valid invite link or numeric group ID.", { title: "Invalid Link" }); return; }
 
                 const { data: { user }, error: userErr } = await supabase.auth.getUser();
-                if (!user || userErr) { alert("You must be logged in."); return; }
+                if (!user || userErr) { showAlert("You must be logged in.", { title: "Not Logged In" }); return; }
 
                 // Check group exists
                 const { data: grp, error: grpErr } = await supabase
                     .from("GROUP").select("grpId, grpName").eq("grpId", grpId).maybeSingle();
-                if (grpErr || !grp) { alert("Group not found. Check the invite link and try again."); return; }
+                if (grpErr || !grp) { showAlert("Group not found. Check the invite link and try again.", { title: "Not Found" }); return; }
 
                 // Check not already a member
                 const { data: existing } = await supabase
                     .from("GROUPMEMBER").select("grpmemId").eq("userId", user.id).eq("grpId", grpId).maybeSingle();
-                if (existing) { alert("You are already a member of this group."); closeJoinGroupModal(); return; }
+                if (existing) { showAlert("You are already a member of this group.", { title: "Already Joined" }); closeJoinGroupModal(); return; }
 
                 const { data: memberRole } = await supabase
                     .from("ROLE").select("roleId").eq("roleName", "Member").maybeSingle();
@@ -317,7 +356,33 @@ if (joinGroupBtn) {
                 const { error: memErr } = await supabase
                     .from("GROUPMEMBER")
                     .insert({ userId: user.id, grpId: grpId, roleId: memberRole?.roleId || null });
-                if (memErr) { alert("Failed to join group: " + memErr.message); return; }
+                if (memErr) { showAlert("Failed to join group: " + memErr.message, { title: "Error" }); return; }
+
+                // Notify all existing members + teacher that someone new joined
+                (async () => {
+                    try {
+                        const [{ data: existingMembers }, { data: groupInfo }, { data: joinerProfile }] = await Promise.all([
+                            supabase.from("GROUPMEMBER").select("userId").eq("grpId", grpId).neq("userId", user.id),
+                            supabase.from("GROUP").select("grpName, teacherId").eq("grpId", grpId).maybeSingle(),
+                            supabase.from("USER").select("userDisplayName").eq("userId", user.id).maybeSingle()
+                        ]);
+                        const recipients = new Set((existingMembers || []).map(m => m.userId));
+                        if (groupInfo?.teacherId && groupInfo.teacherId !== user.id) recipients.add(groupInfo.teacherId);
+                        const joinerName = joinerProfile?.userDisplayName || "A new member";
+                        const grpName = groupInfo?.grpName || "the group";
+                        const now = new Date().toISOString();
+                        await Promise.all([...recipients].map(uid =>
+                            supabase.from("NOTIFICATION").insert({
+                                notiTitle: "New Member Joined",
+                                notiBody: `${joinerName} has joined "${grpName}".`,
+                                "notiDate&Time": now,
+                                notiIsRead: false,
+                                userId: uid,
+                                grpId: Number(grpId)
+                            })
+                        ));
+                    } catch (e) {}
+                })();
 
                 closeJoinGroupModal();
                 await loadDashbData(); // refresh from DB
@@ -371,7 +436,7 @@ if (saveEditOwnedGroupBtn) {
                     .from("GROUP")
                     .update({ grpName: newName, grpSubject: newSubject })
                     .eq("grpId", Number(grpId));
-                if (error) { alert("Failed to save: " + error.message); return; }
+                if (error) { showAlert("Failed to save: " + error.message, { title: "Error" }); return; }
                 closeEditOwnedGroupModal();
                 await loadDashbData();
             },
@@ -389,12 +454,30 @@ notifBtns.forEach((btn) => {
     btn.addEventListener("click", () => { window.location.href = "s.notification.html"; });
 });
 
+const checkUnreadNotifications = async () => {
+    const supabase = window.hiveSupabase;
+    if (!supabase) return;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { count } = await supabase
+            .from("NOTIFICATION")
+            .select("notiId", { count: "exact", head: true })
+            .eq("userId", user.id)
+            .eq("notiIsRead", false);
+        const hasUnread = (count || 0) > 0;
+        document.querySelectorAll(".notif-badge").forEach(b => b.classList.toggle("has-unread", hasUnread));
+    } catch (e) {}
+};
+
+checkUnreadNotifications();
+
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         showConfirmation(
             "Are you sure you want to log out?",
-            () => { window.location.href = "../auth/log-sign.html"; },
+            () => window.doLogout?.(),
             { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
         );
     });

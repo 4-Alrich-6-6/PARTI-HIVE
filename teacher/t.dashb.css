@@ -241,7 +241,7 @@ body {
     }
 
     .sidebar {
-        width: 100%;
+        width: 240px;
     }
 }
 
@@ -258,14 +258,32 @@ body {
 }
 
 /* layout stability */
-html,
+html {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
 body {
     max-width: 100%;
-    overflow-x: hidden;
 }
 
 .layout,
 .main-content-container,
 .main-content {
     min-width: 0;
+}
+
+@media (max-width: 900px) {
+    #groupsList {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .group-card {
+        width: calc(100% - 28px);
+        max-width: none;
+        margin: 0 14px;
+    }
 }

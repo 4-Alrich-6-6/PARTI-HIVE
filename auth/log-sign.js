@@ -45,7 +45,7 @@ const redirectAfterLogin = async (supabase) => {
 
     if (error) {
         console.error("Profile lookup failed:", error);
-        showAuthNotice("Login worked, but your profile could not be loaded because of a database policy error. Please fix the Supabase RLS policy and try again.", {
+        showAuthNotice("Login worked, but your profile could not be loaded. Please try again.", {
             title: "Profile Check Failed",
         });
         return;
@@ -89,9 +89,25 @@ const redirectAfterLogin = async (supabase) => {
 
     role = pos?.posName?.toLowerCase() || role;
 
-    if (role === "teacher" || role === "professor") {
+    const isStudent = role === "student";
+    const isTeacher = role === "teacher" || role === "professor";
+    const profileIncomplete =
+        !existingUser.userDisplayName ||
+        (isStudent && !existingUser.progId) ||
+        (isTeacher && !existingUser.deptId);
+
+    if (profileIncomplete && (isStudent || isTeacher)) {
+        localStorage.setItem("hive_posId", String(posId));
+        localStorage.setItem("hive_role", role);
+        window.location.href = isStudent
+            ? "../student/s.profiling.html"
+            : "../teacher/t.profiling.html";
+        return;
+    }
+
+    if (isTeacher) {
         window.location.href = "../teacher/t.dashb.html";
-    } else if (role === "student") {
+    } else if (isStudent) {
         window.location.href = "../student/s.dashb.html";
     } else {
         window.location.href = "profiling.html";
@@ -149,6 +165,23 @@ const showAuthNotice = (message, options = {}) => {
     notice.setAttribute("aria-hidden", "false");
     okBtn.focus();
 };
+
+// Clean up any abandoned signup from a previous session
+(async () => {
+    const abandonedEmail = localStorage.getItem("hive_email");
+    const abandonedMode = localStorage.getItem("hive_auth_mode");
+    if (abandonedEmail && abandonedMode === "signup") {
+        try {
+            const supabase = getSupabase();
+            await supabase.rpc("delete_unverified_signup", { target_email: abandonedEmail });
+        } catch (e) {
+            console.error("Abandoned signup cleanup failed:", e);
+        }
+        localStorage.removeItem("hive_email");
+        localStorage.removeItem("hive_auth_mode");
+        localStorage.removeItem("hive_password");
+    }
+})();
 
 // TOGGLE BUTTONS
 const toggleButtons = document.querySelectorAll(".toggle-btn");
@@ -306,40 +339,6 @@ if (signUpForm) {
         });
     });
 }
-
-// ZOOM PREVENTION
-const blockedZoomKeys = ["+", "-", "=", "_", "0"];
-
-window.addEventListener(
-    "wheel",
-    (event) => {
-        if (event.ctrlKey || event.metaKey) {
-            event.preventDefault();
-        }
-    },
-    { passive: false }
-);
-
-window.addEventListener("keydown", (event) => {
-    if (
-        (event.ctrlKey || event.metaKey) &&
-        blockedZoomKeys.includes(event.key)
-    ) {
-        event.preventDefault();
-    }
-});
-
-window.addEventListener("gesturestart", (event) =>
-    event.preventDefault()
-);
-
-window.addEventListener("gesturechange", (event) =>
-    event.preventDefault()
-);
-
-window.addEventListener("gestureend", (event) =>
-    event.preventDefault()
-);
 
 // TERMS MODAL
 const termsModal = document.getElementById("termsModal");

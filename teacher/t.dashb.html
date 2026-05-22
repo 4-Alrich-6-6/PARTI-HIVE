@@ -1,11 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="visibility:hidden">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="t.dashb.css">
     <link rel="stylesheet" href="../lib/loading.css">
+    <script src="../lib/offline-banner.js" defer></script>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="apple-touch-icon" href="../Logo.png">
+    <link rel="icon" href="../Logo.png">
 </head>
 <body>
     <div class="topbar">
@@ -13,10 +20,11 @@
             <span></span><span></span><span></span>
         </button>
 
-        <p class="datetime">6:00 PM February 01, 2026</p>
+        <p class="datetime"></p>
 
         <button class="notif-btn-mobile" type="button" aria-label="Notifications">
             <img src="../assets/Notification.png" alt="Notification icon">
+            <span class="notif-badge" aria-hidden="true"></span>
         </button>
     </div>
 
@@ -26,8 +34,8 @@
                 <div class="avatar-circle">
                     <img src="../assets/profile.png" alt="Profile">
                 </div>
-                <h3>Name</h3>
-                <h3>Email</h3>
+                <h3></h3>
+                <h3></h3>
                 <a href="#" class="profile-link" data-no-loading>Manage Profile</a>
             </div>
 
@@ -76,6 +84,7 @@
         <aside class="right-rail" aria-hidden="true">
             <button class="notif-btn" type="button" aria-label="Notifications">
                 <img src="../assets/Notification.png" alt="Notification icon">
+                <span class="notif-badge" aria-hidden="true"></span>
             </button>
         </aside>
     </div>
@@ -104,9 +113,15 @@
     <script src="../lib/loading.js"></script>
     <script src="../lib/datetime.js"></script>
     <script src="../lib/supabaseClient.js"></script>
+    <script src="../lib/auth-guard.js"></script>
     <script src="../lib/manage-profile.js"></script>
     <script src="../lib/settings.js"></script>
     <script src="../lib/confirmation-modal.js"></script>
     <script src="t.dashb.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+    </script>
 </body>
 </html>

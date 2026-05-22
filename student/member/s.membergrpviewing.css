@@ -9,11 +9,12 @@ html, body {
     min-height: 100%;
 }
 
+html { overflow-x: clip; }
+
 body {
     font-family: Arial, sans-serif;
     background: #ffffff;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -137,6 +138,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -350,7 +355,7 @@ button {
 
 .stats {
     text-align: right;
-    flex: 0 0 96px;
+    flex: 0 0 auto;
 }
 
 .stats p {
@@ -358,6 +363,7 @@ button {
     font-size: 11px;
     font-weight: 700;
     color: #444;
+    white-space: nowrap;
 }
 
 .right-rail {
@@ -578,6 +584,14 @@ body {
     font-size: 15px;
 }
 
+.member-card .member-details h3 {
+    font-size: 14px;
+}
+
+.member-card .member-details p {
+    font-size: 12px;
+}
+
 @media (max-width: 900px) {
     .main-content-title {
         font-size: 28px;
@@ -624,7 +638,8 @@ body {
 
 /* Confirmation modal overlay */
 #confirmationModalOverlay.modal-overlay,
-#memberNoticeModalOverlay.modal-overlay {
+#memberNoticeModalOverlay.modal-overlay,
+#memberProfileOverlay.modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.45);
@@ -636,7 +651,8 @@ body {
 }
 
 #confirmationModalOverlay.modal-overlay.open,
-#memberNoticeModalOverlay.modal-overlay.open {
+#memberNoticeModalOverlay.modal-overlay.open,
+#memberProfileOverlay.modal-overlay.open {
     display: flex;
 }
 
@@ -679,7 +695,8 @@ body {
 }
 
 #confirmationModalOverlay .modal-btn,
-#memberNoticeModalOverlay .modal-btn {
+#memberNoticeModalOverlay .modal-btn,
+#memberProfileOverlay .modal-btn {
     border: none;
     min-height: 34px;
     border-radius: 999px;
@@ -691,7 +708,8 @@ body {
 }
 
 #confirmationModalOverlay .discard-btn,
-#memberNoticeModalOverlay .discard-btn {
+#memberNoticeModalOverlay .discard-btn,
+#memberProfileOverlay .discard-btn {
     background: #111111;
     color: #ffffff;
 }

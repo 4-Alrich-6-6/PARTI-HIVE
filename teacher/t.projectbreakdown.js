@@ -14,11 +14,13 @@ const detailTaskTimeActive = document.querySelector("#detailTaskTimeActive");
 const detailTaskStatus = document.querySelector("#detailTaskStatus");
 
 const STATUS_TEXT = {
-    inactive: "Not Active",
-    active: "Active",
+    inactive:  "Not Active",
+    active:    "Active",
+    pause:     "On Break",
     verifying: "Verifying",
-    finished: "Finished",
-    missing: "Missing"
+    finished:  "Finished",
+    missing:   "Missing",
+    revising:  "Revising"
 };
 
 const isTerminal = (status) => status === "finished" || status === "missing";
@@ -35,20 +37,15 @@ const supa = () => window.hiveSupabase;
 const getProjId = () => sessionStorage.getItem("hive_selected_project");
 const getGrpId = () => sessionStorage.getItem("hive_grpId");
 
-const STAT_SLUG = { 1: "inactive", 2: "active", 3: "pause", 4: "verifying", 5: "finished", 6: "missing" };
+const STAT_SLUG = { 1: "inactive", 2: "active", 3: "pause", 4: "verifying", 5: "finished", 6: "missing", 7: "revising" };
 
 const loadTasks = async () => {
     const projId = getProjId();
-    console.log("[loadTasks] projId=", projId);
-    if (!projId) {
-        console.error("[loadTasks] No projId found");
-        return [];
-    }
+    if (!projId) return [];
     const { data, error } = await supa()
         .from("TASK")
-        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskAcmD, statId, GROUPMEMBER(grpmemId, userId, USER(userDisplayName))")
+        .select("taskId, taskName, taskDesc, taskDueD, taskIntensity, taskPrio, taskResource, taskSpan, taskAcmD, statId, teacherApproved, STATUS(statName), TASKASSIGNMENT(grpmemId, GROUPMEMBER(userId, USER(userDisplayName)))")
         .eq("projId", Number(projId));
-    console.log("[loadTasks] data=", data, "error=", error);
     if (error || !data) return [];
     return data.map(t => ({
         taskId: t.taskId,
@@ -59,15 +56,12 @@ const loadTasks = async () => {
         intensity: t.taskIntensity || "Light",
         priority: t.taskPrio || "Low",
         resources: t.taskResource || "",
+        spanMs: intervalToMs(t.taskSpan),
         acmD: t.taskAcmD || null,
-        status: STAT_SLUG[t.statId] || "inactive",
+        teacherApproved: t.teacherApproved || false,
+        status: STAT_SLUG[t.statId] || t.STATUS?.statName?.toLowerCase() || "inactive",
         statId: t.statId || 1,
-        assignees: Object.values(
-            (t.GROUPMEMBER || []).reduce((seen, m) => {
-                if (!seen[m.userId]) seen[m.userId] = { grpmemId: m.grpmemId, userId: m.userId, name: m.USER?.userDisplayName || "Member" };
-                return seen;
-            }, {})
-        ).map(a => a.name)
+        assignees: (t.TASKASSIGNMENT || []).map(a => a.GROUPMEMBER?.USER?.userDisplayName || "Member")
     }));
 };
 
@@ -87,10 +81,39 @@ const formatElapsedTime = (ms) => {
     return `${hours}h ${minutes}m ${seconds}s`;
 };
 
-const updateTaskTimer = (task, taskIndex) => {
-    // Teachers view project breakdown read-only
-    return task.elapsedTime || 0;
+const intervalToMs = (interval) => {
+    if (!interval) return 0;
+    const match = interval.match(/(?:(\d+) days? ?)?(\d+):(\d+):(\d+)/);
+    if (match) {
+        const d = parseInt(match[1] || 0);
+        const h = parseInt(match[2]);
+        const m = parseInt(match[3]);
+        const s = parseInt(match[4]);
+        return ((d * 86400) + (h * 3600) + (m * 60) + s) * 1000;
+    }
+    const sec = interval.match(/(\d+(?:\.\d+)?)\s*seconds?/);
+    if (sec) return Math.floor(parseFloat(sec[1]) * 1000);
+    return 0;
 };
+
+const getTotalElapsedMs = (task) => {
+    let total = task.spanMs || 0;
+    if ((task.status === "active" || task.status === "revising") && task.acmD) {
+        total += Date.now() - new Date(task.acmD).getTime();
+    }
+    return total;
+};
+
+if (!window._globalTaskTicker) {
+    window._globalTaskTicker = setInterval(() => {
+        document.querySelectorAll(".task-time-active[data-task-id]").forEach(el => {
+            const acmD   = el.dataset.acmD;
+            const spanMs = Number(el.dataset.spanMs || 0);
+            if (!acmD) return;
+            el.textContent = formatElapsedTime(spanMs + (Date.now() - new Date(acmD).getTime()));
+        });
+    }, 1000);
+}
 
 const closeTaskDetails = () => {
     if (!taskDetailsOverlay) return;
@@ -98,7 +121,9 @@ const closeTaskDetails = () => {
     taskDetailsOverlay.setAttribute("aria-hidden", "true");
 };
 
-const openTaskDetails = (taskIndex, tasks) => {
+let _teacherRemarkSubId = null;
+
+const openTaskDetails = async (taskIndex, tasks) => {
     if (!taskDetailsOverlay) return;
 
     const task = tasks[taskIndex];
@@ -109,14 +134,8 @@ const openTaskDetails = (taskIndex, tasks) => {
     if (detailTaskAssignees) detailTaskAssignees.textContent = (task.assignees && task.assignees.length) ? task.assignees.join(", ") : "None";
     if (detailTaskDueDate) detailTaskDueDate.textContent = task.dueDate || "N/A";
     if (detailTaskDueTime) detailTaskDueTime.textContent = task.dueTime ? formatTime12h(task.dueTime) : "N/A";
-
-    if (detailTaskIntensity) {
-        detailTaskIntensity.textContent = task.intensity || "Light";
-    }
-
-    if (detailTaskPriority) {
-        detailTaskPriority.textContent = task.priority || "Low";
-    }
+    if (detailTaskIntensity) detailTaskIntensity.textContent = task.intensity || "Light";
+    if (detailTaskPriority) detailTaskPriority.textContent = task.priority || "Low";
 
     if (detailTaskStatus) {
         const status = task.status || "inactive";
@@ -126,13 +145,89 @@ const openTaskDetails = (taskIndex, tasks) => {
     }
 
     if (detailTaskTimeActive) {
-        const elapsedTime = updateTaskTimer(task, taskIndex);
-        detailTaskTimeActive.textContent = formatElapsedTime(elapsedTime);
+        detailTaskTimeActive.textContent = formatElapsedTime(getTotalElapsedMs(task));
+    }
+
+    // Load latest submission
+    const proofRow      = document.querySelector("#detailProofRow");
+    const proofLink     = document.querySelector("#detailProofLink");
+    const leaderNoteRow = document.querySelector("#detailLeaderNoteRow");
+    const leaderNote    = document.querySelector("#detailLeaderNote");
+    const teacherNoteRow= document.querySelector("#detailTeacherNoteRow");
+    const teacherNote   = document.querySelector("#detailTeacherNote");
+    const addRemarkBtn  = document.querySelector("#openTeacherRemarkBtn");
+
+    _teacherRemarkSubId = null;
+    if (proofRow) proofRow.style.display = "none";
+    if (leaderNoteRow) leaderNoteRow.style.display = "none";
+    if (teacherNoteRow) teacherNoteRow.style.display = "none";
+    if (addRemarkBtn) addRemarkBtn.style.display = "none";
+
+    const { data: sub } = await supa()
+        .from("SUBMISSION")
+        .select("subId, proofLink, leaderNote, teacherNote")
+        .eq("taskId", task.taskId)
+        .order("submittedAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (sub) {
+        _teacherRemarkSubId = sub.subId;
+        if (proofRow && proofLink && sub.proofLink) {
+            proofLink.href = sub.proofLink;
+            proofLink.textContent = sub.proofLink;
+            proofRow.style.display = "";
+        }
+        if (leaderNoteRow && leaderNote && sub.leaderNote) {
+            leaderNote.textContent = sub.leaderNote;
+            leaderNoteRow.style.display = "";
+        }
+        if (teacherNoteRow && teacherNote && sub.teacherNote) {
+            teacherNote.textContent = sub.teacherNote;
+            teacherNoteRow.style.display = "";
+        }
+        if (addRemarkBtn) addRemarkBtn.style.display = "";
     }
 
     taskDetailsOverlay.classList.add("open");
     taskDetailsOverlay.setAttribute("aria-hidden", "false");
 };
+
+// Teacher remark modal
+const teacherRemarkOverlay  = document.querySelector("#teacherRemarkOverlay");
+const teacherRemarkInput    = document.querySelector("#teacherRemarkInput");
+const saveTeacherRemarkBtn  = document.querySelector("#saveTeacherRemarkBtn");
+const cancelTeacherRemarkBtn= document.querySelector("#cancelTeacherRemarkBtn");
+const openTeacherRemarkBtn  = document.querySelector("#openTeacherRemarkBtn");
+
+const closeTeacherRemark = () => {
+    teacherRemarkOverlay?.classList.remove("open");
+    teacherRemarkOverlay?.setAttribute("aria-hidden","true");
+};
+
+if (openTeacherRemarkBtn) {
+    openTeacherRemarkBtn.addEventListener("click", () => {
+        if (teacherRemarkInput) teacherRemarkInput.value = "";
+        teacherRemarkOverlay?.classList.add("open");
+        teacherRemarkOverlay?.setAttribute("aria-hidden","false");
+    });
+}
+
+if (cancelTeacherRemarkBtn) cancelTeacherRemarkBtn.addEventListener("click", closeTeacherRemark);
+if (teacherRemarkOverlay) teacherRemarkOverlay.addEventListener("click", e => { if(e.target===teacherRemarkOverlay) closeTeacherRemark(); });
+
+if (saveTeacherRemarkBtn) {
+    saveTeacherRemarkBtn.addEventListener("click", async () => {
+        const remark = teacherRemarkInput?.value.trim();
+        if (!remark || !_teacherRemarkSubId) return;
+        await supa().from("SUBMISSION").update({ teacherNote: remark }).eq("subId", _teacherRemarkSubId);
+        const teacherNoteEl  = document.querySelector("#detailTeacherNote");
+        const teacherNoteRow = document.querySelector("#detailTeacherNoteRow");
+        if (teacherNoteEl) teacherNoteEl.textContent = remark;
+        if (teacherNoteRow) teacherNoteRow.style.display = "";
+        closeTeacherRemark();
+    });
+}
 
 const renderTask = (task, taskIndex, targetSection) => {
     if (!targetSection) return;
@@ -155,6 +250,12 @@ const renderTask = (task, taskIndex, targetSection) => {
     } else if (priority === "medium") {
         article.style.backgroundColor = "#FFC193";
     }
+    if (task.teacherApproved) article.style.backgroundColor = "#B8FFB8";
+
+    const isRunning = status === "active" || status === "revising";
+    const timeHtml = isRunning
+        ? `<span class="task-time-active" data-task-id="${task.taskId}" data-acm-d="${task.acmD || ""}" data-span-ms="${task.spanMs || 0}">${formatElapsedTime(getTotalElapsedMs(task))}</span>`
+        : (task.spanMs > 0 ? `<span class="task-time-active">${formatElapsedTime(task.spanMs)}</span>` : "");
 
     article.innerHTML = `
         <div class="task-left">
@@ -167,6 +268,7 @@ const renderTask = (task, taskIndex, targetSection) => {
                 </span>
                 &nbsp; Due Date: ${timeDisplay} -- ${dateDisplay}
             </p>
+            ${timeHtml}
         </div>
         <div class="task-actions">
             <button class="task-status ${status}" type="button" disabled>${STATUS_TEXT[status] || status}</button>
@@ -174,7 +276,7 @@ const renderTask = (task, taskIndex, targetSection) => {
     `;
 
     article.addEventListener("click", () => {
-        openTaskDetails(taskIndex, targetSection === document.querySelector("#tasksList") ? window.currentTasks : []);
+        openTaskDetails(taskIndex, window.currentTasks || []);
     });
 
     targetSection.appendChild(article);
@@ -252,9 +354,7 @@ if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         showConfirmation(
             "Are you sure you want to log out?",
-            () => {
-                window.location.href = "../auth/log-sign.html";
-            },
+            () => window.doLogout?.(),
             { title: "Log Out", confirmText: "Log Out", cancelText: "Cancel" }
         );
     });
@@ -269,4 +369,9 @@ const loadAndDisplayProjectName = () => {
 };
 
 loadAndDisplayProjectName();
+const _validationLink = document.querySelector(".validation-link");
+if (_validationLink) {
+    const _pid = getProjId(), _gid = getGrpId();
+    _validationLink.href = `../student/validation/contribution-validation.html?mode=teacher&projId=${_pid || ""}&grpId=${_gid || ""}`;
+}
 renderAllTasks();

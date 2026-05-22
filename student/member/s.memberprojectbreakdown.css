@@ -9,11 +9,14 @@ html, body {
     min-height: 100%;
 }
 
+html {
+    overflow-x: clip;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #ffffff;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -69,6 +72,11 @@ button {
 }
 
 .sidebar {
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    align-self: start;
+    overflow-y: auto;
     background: #f3f3f3;
     border-right: 1px solid #d8d8d8;
     display: flex;
@@ -137,6 +145,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1215,4 +1227,48 @@ body {
         margin-left: auto;
         margin-right: auto;
     }
+}
+
+/* ── Small modal responsiveness (member side) ───────────────── */
+@media (max-width: 480px) {
+    /* Center-anchored small modals slide to bottom sheet */
+    #pauseVerifyChoiceOverlay,
+    #memberVerifyOverlay,
+    #overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #pauseVerifyChoiceOverlay .project-options-modal,
+    #memberVerifyOverlay .project-options-modal,
+    #overlay .project-options-modal {
+        width: 100%;
+        max-height: 92dvh;
+        border-radius: 16px 16px 0 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Proof link input full-width with better tap size */
+    #memberProofLinkInput {
+        font-size: 16px; /* prevents iOS zoom on focus */
+        padding: 12px 14px;
+    }
+
+    /* Stack action buttons vertically on very small screens */
+    .project-options-actions {
+        flex-direction: column;
+    }
+
+    .project-options-actions .modal-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+}
+
+/* ── Shared modal button sizing bump ────────────────────────── */
+.modal-btn {
+    min-height: 40px;
+    font-size: 14px;
+    padding: 0 20px;
 }

@@ -9,11 +9,12 @@ html, body {
     min-height: 100%;
 }
 
+html { overflow-x: clip; }
+
 body {
     font-family: Arial, sans-serif;
     background: #ffffff;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -26,6 +27,11 @@ button {
 }
 
 .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     height: 58px;
     background: #ffcc00;
     display: flex;
@@ -66,6 +72,7 @@ button {
     grid-template-columns: 115px 1fr 92px;
     min-height: calc(100vh - 58px);
     width: 100%;
+    padding-top: 58px;
 }
 
 .sidebar {
@@ -141,6 +148,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -279,6 +290,23 @@ button {
     align-items: center;
     flex: 1;
     width: 100%;
+    min-width: 0;
+}
+
+.member-grid .info-card {
+    min-width: 0;
+}
+
+.member-info {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.member-info h3,
+.member-info p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .teacher-card h3 {
@@ -291,6 +319,7 @@ button {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    min-width: 0;
 }
 
 .circle-avatar {
@@ -343,6 +372,10 @@ button {
     align-items: flex-end;
     justify-content: center;
     margin-left: auto;
+}
+
+.member-details .stats p {
+    white-space: nowrap;
 }
 
 .help-panel {
@@ -1113,6 +1146,14 @@ body {
     font-size: 15px;
 }
 
+.member-card .member-details h3 {
+    font-size: 14px;
+}
+
+.member-card .member-details p {
+    font-size: 12px;
+}
+
 @media (max-width: 900px) {
     .main-content-title {
         font-size: 28px;
@@ -1182,10 +1223,16 @@ body {
 
 .layout {
     min-height: calc(100vh - 64px);
-    grid-template-columns: 240px 1fr 252px;
+    padding-top: 64px;
+    padding-left: 240px;
+    grid-template-columns: 1fr 252px;
 }
 
 .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
     width: 240px;
     background: var(--student-yellow, #ffcc00);
     color: var(--student-black, #000000);
@@ -1216,12 +1263,46 @@ body {
 
 @media (max-width: 1100px) {
     .layout {
-        grid-template-columns: 240px 1fr;
+        grid-template-columns: 1fr;
+        padding-right: 0;
+    }
+
+    .right-rail {
+        display: none;
     }
 }
 
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .main-content-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .main-header {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .summary-row {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .group-label-wrap,
+    .group-info-stack {
+        width: calc(100% - 28px);
+        max-width: none;
+        margin-left: 14px;
+        margin-right: 14px;
     }
 }

@@ -3,6 +3,7 @@ const resendOtpBtn = document.querySelector("#resendOtpBtn");
 const verifyBackLink = document.querySelector("#verifyBackLink");
 
 let cooldownInterval = null;
+let otpVerified = false;
 
 // Get email from signup/login page
 const userEmail = localStorage.getItem("hive_email");
@@ -85,7 +86,7 @@ const showAuthNotice = (message, options = {}) => {
 const startCooldown = () => {
   if (!resendOtpBtn) return;
 
-  let secondsLeft = 60;
+  let secondsLeft = 120;
   resendOtpBtn.disabled = true;
   resendOtpBtn.textContent = `Resend (${secondsLeft}s)`;
 
@@ -201,6 +202,8 @@ if (verifyForm) {
       return;
     }
 
+    otpVerified = true;
+
     // Set password for signup users
     if (authMode === "signup") {
       const password = localStorage.getItem("hive_password");
@@ -266,16 +269,30 @@ if (verifyForm) {
             .eq("userId", user.id);
         }
       }
-      // Returning user — check role and redirect to correct dashboard
+      // Returning user — check role and redirect
       const { data: pos } = await supabase
         .from("POSITION")
         .select("posName")
         .eq("posId", posId)
         .maybeSingle();
       role = pos?.posName?.toLowerCase() || role;
-      if (role === "teacher" || role === "professor") {
+
+      const isStudent = role === "student";
+      const isTeacher = role === "teacher" || role === "professor";
+      const profileIncomplete =
+        !existingUser.userDisplayName ||
+        (isStudent && !existingUser.progId) ||
+        (isTeacher && !existingUser.deptId);
+
+      if (profileIncomplete && (isStudent || isTeacher)) {
+        localStorage.setItem("hive_posId", String(posId));
+        localStorage.setItem("hive_role", role);
+        window.location.href = isStudent
+          ? "../student/s.profiling.html"
+          : "../teacher/t.profiling.html";
+      } else if (isTeacher) {
         window.location.href = "../teacher/t.dashb.html";
-      } else if (role === "student") {
+      } else if (isStudent) {
         window.location.href = "../student/s.dashb.html";
       } else {
         window.location.href = "profiling.html";
@@ -287,13 +304,40 @@ if (verifyForm) {
   });
 }
 
+const clearSignupStorage = () => {
+  localStorage.removeItem("hive_email");
+  localStorage.removeItem("hive_auth_mode");
+  localStorage.removeItem("hive_password");
+};
+
+const deleteUnverifiedAccount = async () => {
+  if (!userEmail) return;
+  try {
+    const supabase = getSupabase();
+    await supabase.rpc("delete_unverified_signup", { target_email: userEmail });
+  } catch (e) {
+    console.error("Unverified account cleanup failed:", e);
+  }
+  clearSignupStorage();
+};
+
 // BACK
 if (verifyBackLink) {
-  verifyBackLink.addEventListener("click", (event) => {
+  verifyBackLink.addEventListener("click", async (event) => {
     event.preventDefault();
+    if (authMode === "signup" && !otpVerified) {
+      await deleteUnverifiedAccount();
+    }
     window.location.href = `log-sign.html?mode=${authMode}`;
   });
 }
+
+// Clear localStorage if user leaves without verifying (signup only)
+window.addEventListener("pagehide", () => {
+  if (authMode === "signup" && !otpVerified) {
+    clearSignupStorage();
+  }
+});
 
 if (!userEmail) {
   showAuthNotice("Email not found. Please go back and enter your email again.", {

@@ -11,11 +11,12 @@ html, body {
     min-height: 100%;
 }
 
+html { overflow-x: clip; }
+
 body {
     font-family: Arial, sans-serif;
     background: #fdfbdc;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -157,6 +158,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -462,7 +467,7 @@ button {
 .option-delete-btn {
     border: none;
     border-radius: 999px;
-    background: #f38a74;
+    background: #FF2E2E;
     color: #ffffff;
     font-size: 13px;
     font-weight: 800;
@@ -1019,6 +1024,9 @@ body {
     font-size: 18px !important;
     line-height: 1.25 !important;
     text-align: left !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 .category-due-date {
@@ -1047,8 +1055,29 @@ body {
         width: 100% !important;
     }
 
-    .category-main-btn {
+    .category-item {
         width: calc(100% - 28px) !important;
         margin: 0 14px !important;
+    }
+
+    .category-main-btn {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .category-name {
+        width: 100% !important;
+        max-width: 200px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    .category-due-date {
+        margin-left: 0 !important;
     }
 }

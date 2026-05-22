@@ -24,11 +24,12 @@ html, body {
 
 
 
+html { overflow-x: clip; }
+
 body {
     font-family: Arial, sans-serif;
     background: #fdfbdc;
     color: #111;
-    overflow-x: hidden;
 }
 
 img {
@@ -166,6 +167,10 @@ button {
 }
 
 .main-header {
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -622,8 +627,27 @@ body {
 }
 
 /* Match project card styling with the other category pages */
+.section-title-wrap,
 .category-list {
     width: min(100%, 820px);
+}
+
+.section-title-wrap {
+    display: block !important;
+    text-align: left !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.section-title-wrap h2 {
+    display: block !important;
+    margin: 0 !important;
+}
+
+.section-title-wrap p {
+    display: block !important;
+    margin: 4px 0 0 !important;
+    text-align: left !important;
 }
 
 .category-item {
@@ -664,8 +688,24 @@ body {
     }
 
     .category-main-btn {
-        width: calc(100% - 28px);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
         margin: 0 14px;
+        box-sizing: border-box;
+    }
+
+    .category-name {
+        width: auto;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .category-due-date {
+        margin-left: 0;
     }
 }
 

@@ -1,0 +1,342 @@
+.sidebar .brand-mark,
+.sidebar .brand-mark img {
+    width: 96px;
+    height: 76px;
+}
+
+.sidebar .side-nav {
+    align-items: center;
+    gap: 18px;
+    margin-top: 32px;
+}
+
+.sidebar .side-nav-bottom {
+    margin-top: auto;
+    gap: 18px;
+}
+
+.sidebar .side-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+    width: calc(100% - 24px);
+    min-width: 0;
+    height: 46px;
+    padding: 8px 14px;
+    box-sizing: border-box;
+    color: #ffcc00;
+    font: 600 14px 'Inter', sans-serif;
+    line-height: 1.2;
+    text-align: left;
+    text-decoration: none;
+}
+
+.sidebar .side-nav-link svg,
+.sidebar .side-nav-link img {
+    flex: 0 0 29px;
+    width: 29px;
+    height: 29px;
+}
+
+.sidebar .side-nav-link[data-sidebar-label]::after {
+    content: attr(data-sidebar-label);
+    overflow: hidden;
+    color: #ffcc00;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar .side-nav-link.active {
+    background: #ffcc00;
+    box-shadow: 0 5px 0 #ddd;
+    padding: 7.5px;
+}
+
+.sidebar .side-nav:not(.side-nav-bottom) .side-nav-link.active svg,
+.sidebar .side-nav .side-nav-link.active > span:not(.notif-badge),
+.sidebar .side-nav-link.active[data-sidebar-label]::after {
+    color: #fff;
+}
+
+.sidebar .side-nav-bottom .side-nav-link {
+    background: transparent;
+    box-shadow: none;
+}
+
+.sidebar .side-nav-bottom .side-nav-link.active {
+    background: #ffcc00;
+    box-shadow: 0 5px 0 #ddd;
+}
+
+.sidebar .side-nav-bottom .side-nav-link.active svg {
+    color: #fff;
+}
+
+.sidebar .side-nav-bottom .side-nav-link[data-sidebar-label]::after {
+    color: #ffcc00;
+}
+
+.sidebar .side-nav-bottom .notification-link.active[data-sidebar-label]::after {
+    color: #fff;
+}
+
+.sidebar .side-nav-link:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: 2px;
+}
+
+@media (min-width: 901px) {
+    .layout {
+        padding-left: 240px !important;
+    }
+
+    .sidebar {
+        top: 0;
+        width: 240px !important;
+        min-height: 100vh;
+        background: #fffff5;
+        border-right: 1px solid #bfbcbc;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, .04);
+        justify-content: flex-start;
+        padding: 20px 0 28px;
+    }
+
+    .profile-row {
+        left: 240px !important;
+    }
+
+    .leader-group-page .layout {
+        padding-left: 240px !important;
+    }
+
+    .leader-group-page .sidebar {
+        width: 240px !important;
+    }
+
+    .profiling-page {
+        grid-template-columns: 240px minmax(0, 1fr);
+    }
+
+    .teacher-sidebar-profile {
+        width: 240px;
+    }
+}
+
+@media (max-width: 600px) {
+    .sidebar .side-nav {
+        gap: 18px;
+        margin-top: 32px;
+    }
+
+    .sidebar .side-nav-link {
+        gap: 14px;
+        width: calc(100% - 24px);
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 900px) {
+    .layout {
+        padding-left: 0 !important;
+    }
+
+    .dashboard-copy-page .layout {
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding-right: 0 !important;
+    }
+
+    .layout > .sidebar,
+    .teacher-sidebar-profile {
+        display: flex !important;
+        visibility: visible !important;
+        position: fixed !important;
+        inset: 62px auto 0 0;
+        z-index: 1100;
+        width: min(240px, 82vw) !important;
+        height: auto !important;
+        min-height: 0 !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        padding: 20px 0 28px !important;
+        background: #fffff5 !important;
+        border-right: 1px solid #bfbcbc !important;
+        border-bottom: 0 !important;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, .04);
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+    }
+
+    .layout > .sidebar.open,
+    .teacher-sidebar-profile.open {
+        transform: translateX(0);
+    }
+
+    .layout > .sidebar .brand-mark,
+    .layout > .sidebar .brand-mark img,
+    .teacher-sidebar-profile .teacher-sidebar-profile-brand img {
+        width: 96px;
+        height: 76px;
+    }
+
+    .layout > .sidebar .side-nav,
+    .layout > .sidebar .side-nav-bottom {
+        width: 100% !important;
+        flex: 0 0 auto;
+        align-self: stretch;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 18px !important;
+        margin-top: 32px;
+    }
+
+    .layout > .sidebar .side-nav-bottom {
+        display: flex !important;
+        margin-top: auto !important;
+        transform: none !important;
+        padding-bottom: 12px;
+    }
+
+    .layout > .sidebar .side-nav-link {
+        display: flex !important;
+        width: calc(100% - 24px) !important;
+        min-width: 0;
+        height: 46px !important;
+        min-height: 46px !important;
+        padding: 8px 14px !important;
+        justify-content: flex-start;
+        gap: 14px;
+        font-size: 14px !important;
+    }
+
+    .layout > .sidebar .side-nav-link svg,
+    .layout > .sidebar .side-nav-link img {
+        flex: 0 0 29px;
+        width: 29px !important;
+        height: 29px !important;
+    }
+
+    .layout > .sidebar .teacher-page-nav,
+    .layout > .sidebar .teacher-page-nav-bottom {
+        width: 100%;
+        gap: 18px;
+        margin-top: 32px;
+    }
+
+    .layout > .sidebar .teacher-page-nav-bottom {
+        margin-top: auto;
+    }
+
+    .teacher-sidebar-profile .teacher-sidebar-profile-nav {
+        width: 100%;
+        flex: 0 0 auto;
+        align-self: stretch;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        margin-top: 32px;
+    }
+
+    .teacher-sidebar-profile .teacher-sidebar-profile-nav a,
+    .teacher-sidebar-profile .teacher-sidebar-profile-nav button {
+        width: calc(100% - 24px);
+        height: 46px;
+        min-height: 46px;
+        padding: 8px 14px;
+        gap: 14px;
+        font-size: 14px;
+    }
+
+    .teacher-sidebar-profile .teacher-sidebar-profile-nav a::before,
+    .teacher-sidebar-profile .teacher-sidebar-profile-nav button::before {
+        flex: 0 0 29px;
+        width: 29px;
+        height: 29px;
+    }
+
+    .teacher-sidebar-profile .teacher-sidebar-profile-bottom {
+        margin-top: auto;
+    }
+
+    .teacher-sidebar-toggle {
+        display: inline-flex;
+        position: absolute;
+        top: 10px;
+        left: 12px;
+        z-index: 5001;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid #cfcfc7;
+        border-radius: 8px;
+        background: #fff;
+        color: #111;
+        cursor: pointer;
+    }
+
+    .teacher-sidebar-toggle-after-back {
+        left: 58px;
+    }
+
+    .teacher-sidebar-toggle svg {
+        width: 24px;
+        height: 24px;
+        transition: transform 280ms ease;
+    }
+
+    .teacher-sidebar-toggle[aria-expanded="true"] svg {
+        transform: rotate(90deg);
+    }
+
+    .task-list-page .teacher-sidebar-toggle {
+        position: fixed;
+        top: 4px;
+        left: 8px;
+    }
+
+    .profiling-page {
+        display: block !important;
+    }
+
+    .profiling-page > .navbar,
+    .profiling-page > .profiling-main {
+        width: 100%;
+    }
+
+    .layout > .main-content-container .profile-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        height: 62px;
+        right: 0;
+        padding-left: 58px;
+    }
+
+    .layout > .main-content-container .profile-trigger {
+        display: inline-flex !important;
+        margin-left: auto;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .layout > .main-content-container .profile-trigger img {
+        display: block;
+        width: 38px;
+        height: 38px;
+    }
+
+}
+
+@media (min-width: 901px) {
+    .teacher-sidebar-toggle {
+        display: none;
+    }
+}
+
+.layout > .sidebar a.side-nav-link[href="t.tasklist.html"],
+.layout > .sidebar a.teacher-page-nav-link[href="t.tasklist.html"] {
+    display: none !important;
+}

@@ -9,7 +9,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://googleapis.com">
+  <link rel="preconnect" href="https://gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kodchasan" rel="stylesheet">
   <script src="/lib/offline-banner.js" defer></script>
+  <link href="https://fonts.googleapis.com" rel="stylesheet">
   <link rel="stylesheet" href="landing.css">
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#000000">
@@ -18,39 +22,39 @@
 </head>
 
 <body>
+  <div class="bg-wrapper">
+    <div class="bg-left">
+    </div>
+  </div>
 
   <!-- navbar -->
   <nav class="navbar">
-    <img class="title-logo" src="../Title.png" alt="HIVE Title Logo">
+    <img class="title-logo" src="../PrimeLogo.png" alt="HIVE Title Logo">
 
     <ul class="nav-links">
-      <li><a href="#about">About</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#" id="openTerms">Terms & Condition</a></li>
+      <li><a href="#terms">Terms & Condition</a></li>
+      <li><a href="#footer">Contact</a></li>
     </ul>
 
-    <a href="../../auth/log-sign.html" class="login-btn">LOG IN</a>
+    <a href="../../auth/log-sign.html" class="login-btn">Sign In</a>
   </nav>
-
+  
   <!-- hero -->
   <section class="hero">
 
     <div class="hero-left">
 
       <div class="hero-card">
-        <h1>HIVE</h1>
-
         <h2>GROUP PARTICIPATION TRACKING SYSTEM</h2>
 
         <p>
-          HIVE is a web-based system designed to help
-          group leaders, students, and instructors monitor
-          group participation fairly and transparently.
+          HIVE is a web-based system designed to help group leaders, students, and teachers monitor group participation fairly and transparently.<br><br>With HIVE every effort counts.
         </p>
 
         <div class="hero-buttons">
           <a href="../auth/log-sign.html" class="primary-btn">GET STARTED</a>
-          <a href="#about" class="secondary-btn">LEARN MORE</a>
+          <a href="#features" class="secondary-btn">LEARN MORE</a>
         </div>
 
       </div>
@@ -58,94 +62,72 @@
     </div>
 
     <div class="hero-right">
-      <img src="../Logo.png" alt="Bee Logo">
+      <img src="../assets/collab.png" alt="Collaborative Illustration">
     </div>
-
+  
   </section>
 
   <!-- about -->
-  <section class="about-section" id="about">
-  
-    <h1>WHAT IS THE SYSTEM ABOUT</h1>
-  
-    <div class="line"></div>
-  
-    <div class="about-content">
-  
-      <div class="about-image">
-        <img src="../assets/group.png" alt="Group Monitoring">
+  <section class="about-section" id="features">
+
+    <div class="about">
+      <div class="about-left">
+        <img src="../assets/collab2.png" alt="Participation Illustration">
       </div>
+    
+      <div class="about-right">
+        <div class="about-card">
+      
+          <div class="about-text">
+            <h1>INSIDE THE HIVE</h1>
+            <div class="features-grid">
   
-      <div class="about-text">
-  
-        <p>
-          HIVE is a web-based Group Participation Tracking System
-          that promotes fairness, accountability, and transparency
-          by allowing users to record, review, and validate each
-          member’s contributions.
-        </p>
-  
-        <p>
-          With HIVE, every effort counts.
-        </p>
-  
-      </div>
-  
+              <div id="feature-card-1" class="feature-card">
+                <img src="../assets/participation.png" alt="">
+                <h3>Track Participation</h3>
+          
+                <p>
+                  Leaders can record and monitor each member's participation.
+                </p>
+              </div>
+          
+              <div id="feature-card-2" class="feature-card">
+                <img src="../assets/track.png" alt="">
+                <h3>Manage Tasks</h3>
+          
+                <p>
+                  Create and assign tasks to members easily.
+                </p>
+              </div>
+            </div>
+            <div class="features-grid">
+              <div id="feature-card-3" class="feature-card">
+                <img src="../assets/reports.png" alt="">
+                <h3>View Reports</h3>
+          
+                <p>
+                  Students can monitor their contribution records.
+                </p>
+              </div>
+          
+              <div id="feature-card-4" class="feature-card">
+                <img src="../assets/validate.png" alt="">
+                <h3>Instructor Validation</h3>
+          
+                <p>
+                  Instructors can review participation records fairly.
+                </p>
+              </div>
+                    
+            </div>
+          </div>
+            
+        </div>
     </div>
-  
-  </section>
-  
-  <!-- features -->
-  <section class="features-section" id="features">
-  
-    <h1>WHAT CAN THE SYSTEM DO</h1>
-  
-    <div class="line"></div>
-  
-    <div class="features-grid">
-  
-      <div class="feature-card">
-        <img src="../assets/participation.png" alt="">
-        <h3>Track Participation</h3>
-  
-        <p>
-          Leaders can record and monitor each member's participation.
-        </p>
-      </div>
-  
-      <div class="feature-card">
-        <img src="../assets/track.png" alt="">
-        <h3>Manage Tasks</h3>
-  
-        <p>
-          Create and assign tasks to members easily.
-        </p>
-      </div>
-  
-      <div class="feature-card">
-        <img src="../assets/reports.png" alt="">
-        <h3>View Reports</h3>
-  
-        <p>
-          Students can monitor their contribution records.
-        </p>
-      </div>
-  
-      <div class="feature-card">
-        <img src="../assets/validate.png" alt="">
-        <h3>Instructor Validation</h3>
-  
-        <p>
-          Instructors can review participation records fairly.
-        </p>
-      </div>
-  
-    </div>
-  
   </section>
 
   <!-- terms preview -->
-  <section class="terms-preview">
+  <section class="terms-preview" id="terms">
 
     <div class="terms-left">
       <h2>Terms & Conditions</h2>
@@ -156,14 +138,14 @@
       </p>
     </div>
 
-    <button id="viewTermsBtn">
+    <button id="openTerms">
       VIEW TERMS & CONDITIONS
     </button>
 
   </section>
 
   <!-- footer -->
-  <footer class="footer">
+  <footer class="footer" id="footer">
 
     <div class="footer-content">
 
@@ -261,23 +243,22 @@
 
     const modal = document.getElementById("termsModal");
     const openBtn = document.getElementById("openTerms");
-    const viewBtn = document.getElementById("viewTermsBtn");
     const closeBtn = document.getElementById("closeTerms");
 
-    openBtn.onclick = () => {
-      modal.style.display = "flex";
-    };
+    if (openBtn && modal) {
+      openBtn.onclick = () => {
+        modal.style.display = "flex";
+      };
+    }
 
-    viewBtn.onclick = () => {
-      modal.style.display = "flex";
-    };
-
-    closeBtn.onclick = () => {
-      modal.style.display = "none";
-    };
+    if (closeBtn && modal) {
+      closeBtn.onclick = () => {
+        modal.style.display = "none";
+      };
+    }
 
     window.onclick = (e) => {
-      if (e.target === modal) {
+      if (modal && e.target === modal) {
         modal.style.display = "none";
       }
     };

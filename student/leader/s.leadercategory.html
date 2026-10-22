@@ -98,8 +98,17 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="categoryDescriptionInput">Description</label>
+                    <textarea id="categoryDescriptionInput" name="categoryDescription" rows="4" placeholder="Enter project description"></textarea>
+                </div>
+
+                <div class="form-group">
                     <label for="categoryDueDateInput">Due Date *</label>
                     <input id="categoryDueDateInput" name="categoryDueDate" type="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="categoryDueTimeInput">Due Time *</label>
+                    <input id="categoryDueTimeInput" name="categoryDueTime" type="time" required>
                 </div>
 
                 <div class="post-category-modal-actions">
@@ -118,8 +127,14 @@
                     <input id="editProjectNameInput" type="text" placeholder="Enter new name">
                 </div>
                 <div class="form-group">
+                    <label for="editProjectDescriptionInput">Edit Description</label>
+                    <textarea id="editProjectDescriptionInput" rows="3" placeholder="Enter project description"></textarea>
+                </div>
+                <div class="form-group">
                     <label for="editProjectDueDateInput">Edit Due Date</label>
                     <input id="editProjectDueDateInput" type="date">
+                    <label for="editProjectDueTimeInput">Edit Due Time</label>
+                    <input id="editProjectDueTimeInput" type="time">
                     <button class="modal-btn post-btn" id="saveProjectNameBtn" type="button">Save</button>
                 </div>
                 <div class="project-options-actions">

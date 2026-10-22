@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard</title>
+    <title>Instructor  Dashboard</title>
     <link rel="stylesheet" href="t.dashb.css">
     <link rel="stylesheet" href="../lib/loading.css">
     <script src="../lib/offline-banner.js" defer></script>
@@ -13,74 +13,229 @@
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="../Logo.png">
     <link rel="icon" href="../Logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Kodchasan:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="teacher-sidebar.css">
+    <script src="teacher-sidebar.js" defer></script>
 </head>
-<body>
-    <div class="topbar">
-        <button class="menu-btn" type="button" aria-label="Toggle menu">
-            <span></span><span></span><span></span>
-        </button>
-
-        <p class="datetime"></p>
-
-        <button class="notif-btn-mobile" type="button" aria-label="Notifications">
-            <img src="../assets/Notification.png" alt="Notification icon">
-            <span class="notif-badge" aria-hidden="true"></span>
-        </button>
-    </div>
-
+<body class="dashboard-copy-page">
     <div class="layout">
         <aside class="sidebar" id="sidebar">
-            <div class="profile-block">
-                <div class="avatar-circle">
-                    <img src="../assets/profile.png" alt="Profile">
-                </div>
-                <h3></h3>
-                <h3></h3>
-                <a href="#" class="profile-link" data-no-loading>Manage Profile</a>
-            </div>
+            <a class="brand-mark" href="t.dashb.html" aria-label="HIVE dashboard">
+                <img src="../PrimeLogo.png" alt="HIVE">
+            </a>
+            <nav class="side-nav" aria-label="Main navigation">
+                <a class="side-nav-link active" href="t.dashb.html" aria-label="Dashboard"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+                    <defs>
+                        <!-- Mask to create transparent geometric cutouts in each tile -->
+                        <mask id="tile-cutouts">
+                        <!-- White background keeps the tile shapes visible -->
+                        <rect width="100" height="100" fill="#ffffff" />
+                        
+                        <!-- Black shapes create true transparent holes -->
+                        <!-- Top-Left: Circle -->
+                        <circle cx="25" cy="25" r="13.5" fill="#000000" />
+                        
+                        <!-- Top-Right: Square -->
+                        <rect x="63" y="13" width="24" height="24" fill="#000000" />
+                        
+                        <!-- Bottom-Left: Triangle -->
+                        <polygon points="25,62 12.5,85 37.5,85" fill="#000000" />
+                        
+                        <!-- Bottom-Right: Diamond -->
+                        <polygon points="75,61 89,75 75,89 61,75" fill="#000000" />
+                        </mask>
+                    </defs>
+                    <!-- 2x2 Grid of Rounded Black Tiles -->
+                    <g fill="currentColor" mask="url(#tile-cutouts)">
+                        <rect x="3" y="3" width="44" height="44" rx="10" />
+                        <rect x="53" y="3" width="44" height="44" rx="10" />
+                        <rect x="3" y="53" width="44" height="44" rx="10" />
+                        <rect x="53" y="53" width="44" height="44" rx="10" />
+                    </g>
+                    </svg>
+                </a>
+                <a class="side-nav-link" href="t.team.html" aria-label="Teams">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+                    <!-- Top-Right L-Bracket -->
+                    <path 
+                        d="M 48 13 H 75 A 12 12 0 0 1 87 25 V 38" 
+                        fill="none" 
+                        stroke="currentColor"
+                        stroke-width="8.5" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                    />
 
-            <div class="sidebar-actions">
-                <button class="btn settings" type="button">Settings</button>
-                <button class="btn logout" type="button">Log Out</button>
-            </div>
+                    <!-- Bottom-Left L-Bracket -->
+                    <path 
+                        d="M 13 62 V 75 A 12 12 0 0 0 25 87 H 48" 
+                        fill="none" 
+                        stroke="currentColor"
+                        stroke-width="8.5" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                    />
+
+                    <!-- Top-Left User (Male Avatar) -->
+                    <g fill="currentColor">
+                        <!-- Head -->
+                        <circle cx="32" cy="20" r="9.5" />
+                        <!-- Shoulders -->
+                        <path d="M 14 54 C 14 41 21 38 32 38 C 43 38 50 41 50 54 Z" />
+                    </g>
+
+                    <!-- Bottom-Right User (Female Avatar) -->
+                    <g fill="currentColor">
+                        <!-- Head & Hair Silhouette -->
+                        <path d="M 61 70 C 61 63 61 52 61 49 C 61 42 66 40 72 40 C 78 40 83 42 83 49 C 83 52 83 63 83 70 C 79 72 76 72 72 72 C 68 72 65 72 61 70 Z" />
+                        <!-- Shoulders -->
+                        <path d="M 58 88 C 58 77 64 74 72 74 C 80 74 86 77 86 88 Z" />
+                    </g>
+                    </svg>
+                </a>
+                <a class="side-nav-link" href="t.tasklist.html" aria-label="Tasks">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+                    <g fill="currentColor">
+                        <!-- Top Row -->
+                        <rect x="5" y="5" width="25" height="25" rx="6" />
+                        <rect x="38" y="12.5" width="57" height="10" rx="5" />
+
+                        <!-- Middle Row -->
+                        <rect x="5" y="37.5" width="25" height="25" rx="6" />
+                        <rect x="38" y="45" width="57" height="10" rx="5" />
+
+                        <!-- Bottom Row: Bar -->
+                        <rect x="38" y="77.5" width="57" height="10" rx="5" />
+
+                        <!-- Bottom Row: Hollow Bullet (using evenodd fill for cutout) -->
+                        <path fill-rule="evenodd" d="
+                        M 11 70 
+                        H 24 
+                        A 6 6 0 0 1 30 76 
+                        V 89 
+                        A 6 6 0 0 1 24 95 
+                        H 11 
+                        A 6 6 0 0 1 5 89 
+                        V 76 
+                        A 6 6 0 0 1 11 70 
+                        Z 
+                        M 12 77 
+                        H 23 
+                        V 88 
+                        H 12 
+                        Z" />
+                    </g>
+                    </svg>
+                </a>
+            </nav>
+            <nav class="side-nav side-nav-bottom" aria-label="Account navigation">
+                <button class="side-nav-link notification-link notif-btn" type="button" aria-label="Notifications">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+                    <g fill="currentColor">
+                        <!-- Top Knob -->
+                        <circle cx="50" cy="16" r="7" />
+
+                        <!-- Bell Body -->
+                        <path d="M 50 18 
+                                C 33 18 24 33 24 50 
+                                C 24 58 20 64 20 64 
+                                H 80 
+                                C 80 64 76 58 76 50 
+                                C 76 33 67 18 50 18 Z" />
+
+                        <!-- Bottom Bar -->
+                        <rect x="13" y="70" width="74" height="6.5" rx="3.25" />
+
+                        <!-- Clapper -->
+                        <path d="M 41.5 76.5 A 8.5 8.5 0 0 0 58.5 76.5 Z" />
+                    </g>
+                    </svg>
+                    <span class="notif-badge" aria-hidden="true"></span></button>
+                <button class="side-nav-link settings-link settings" type="button" aria-label="Settings"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+                <defs>
+                    <!-- Mask to carve out the clean central circular hole -->
+                    <mask id="center-hole">
+                    <rect width="100" height="100" fill="#ffffff" />
+                    <circle cx="50" cy="50" r="18" fill="#000000" />
+                    </mask>
+                </defs>
+
+                <!-- Solid 8-Tooth Gear Icon -->
+                <g fill="currentColor" mask="url(#center-hole)">
+                    <!-- Central Ring Body -->
+                    <circle cx="50" cy="50" r="32" />
+
+                    <!-- 8 Rounded Teeth (45° spacing) -->
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(0 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(45 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(90 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(135 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(180 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(225 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(270 50 50)" />
+                    <rect x="43" y="10" width="14" height="12" rx="3.5" transform="rotate(315 50 50)" />
+                </g>
+                </svg>
+                </button>
+            </nav>
         </aside>
-
         <main class="main-content-container">
             <div class="main-header">
-                <h1 class="main-content-title">TEACHER'S DASHBOARD</h1>
-
-                <div class="section-actions">
-                    <button type="button" id="openJoinGroupModal">
-                        <span><img src="../assets/JoinGroup.png" alt="Join Group icon"></span>
-                        Join Groups
-                    </button>
+                <div class="profile-row">
+                    <button class="profile-trigger" id="profileTrigger" type="button" aria-label="Open profile menu" aria-expanded="false" aria-controls="profileDropdown"><img src="../assets/profile-placeholder.svg" alt=""><svg class="profile-chevron" viewBox="0 0 16 10" aria-hidden="true"><path d="M1 1.5 8 8.5 15 1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                    <div class="profile-dropdown" id="profileDropdown" role="menu" aria-hidden="true">
+                        <div class="profile-summary">
+                            <img id="profileDropdownAvatar" src="../assets/profile-placeholder.svg" alt="">
+                            <div class="profile-summary-details">
+                                <strong id="profileDropdownName">Profile</strong>
+                                <span id="profileDropdownEmail">Email</span>
+                            </div>
+                        </div>
+                        <button class="profile-dropdown-item" id="profileHelpBtn" type="button" role="menuitem">Help</button>
+                        <button class="profile-dropdown-item" id="profileLogoutBtn" type="button" role="menuitem">Log Out</button>
+                    </div>
+                </div>
+                <div class="title-row">
+                    <h1 class="main-content-title">Dashboard</h1>
+                    <a class="contributor-profile-btn" href="t.profiling.html" aria-label="Open My Contributor Profile" hidden style="display: none;">
+                        <svg fill="#000000" version="1.1" viewBox="0 0 45.975 45.975" aria-hidden="true" focusable="false">
+                            <path d="M44.168 24.877 33.837 13.609l-.031.029c-.25-2.079-1.088-3.98-2.342-5.533l3.438-4.618c.651-.877.472-2.119-.406-2.772-.88-.653-2.119-.471-2.773.407l-3.271 4.396c-1.611-.939-3.484-1.479-5.479-1.479-1.984 0-3.848.533-5.453 1.464l-3.261-4.381c-.652-.878-1.895-1.06-2.773-.407-.877.654-1.06 1.896-.406 2.772l3.42 4.595c-1.263 1.553-2.105 3.458-2.358 5.542l-.017-.015L1.806 24.877c-1.241 1.354-1.879 3.113-1.799 4.951.081 1.837.874 3.532 2.229 4.774 1.273 1.166 2.926 1.81 4.651 1.81.101 0 .202-.002.302-.007 1.838-.08 3.533-.871 4.776-2.229l.706-.772c1.277 3.645 4.438 6.409 8.346 7.117v3.149c0 1.094.896 1.981 1.991 1.981s1.989-.889 1.989-1.981v-3.157c3.858-.719 7.012-3.488 8.281-7.135l.731.798c1.241 1.356 2.939 2.147 4.776 2.229.101.004.201.007.303.007 1.727 0 3.377-.645 4.65-1.81 1.354-1.242 2.146-2.938 2.229-4.775.081-1.837-.557-3.596-1.798-4.95ZM9.764 32.169c-.707.771-1.666 1.222-2.709 1.268l-.17.003c-.979 0-1.918-.364-2.64-1.026-.772-.707-1.222-1.67-1.267-2.713-.045-1.044.318-2.043 1.024-2.812l8.058-8.808v11.577l-2.296 2.511ZM29.901 29.791h-13.86v-4.977h13.86v4.977Zm0-9.88h-13.86v-4.976h13.86v4.976Zm13.096 9.786c-.045 1.044-.494 2.008-1.267 2.714-.724.663-1.66 1.026-2.642 1.026l-.172-.003c-1.043-.046-2.016-.495-2.72-1.267l-2.317-2.523V18.058l8.091 8.826c.707.771 1.072 1.77 1.026 2.813Z"/>
+                        </svg>
+                        <span>My Contributor Profile</span>
+                    </a>
                 </div>
             </div>
-
             <div class="main-content">
-
-                <section class="group-section" id="groupsSection">
-                    <div class="section-title-wrap">
-                        <h2>Your Groups</h2>
-                    </div>
-
-                    <div id="groupsList">
-                        <!-- Empty State Placeholder -->
-                        <div class="empty-state">
-                            <img src="../assets/JoinGroup.png" class="empty-state-icon" alt="No groups">
-                            <h3>No Groups Found</h3>
-                            <p>You haven't joined or created any groups yet. Use "Join Groups" to get started!</p>
-                        </div>
-                    </div>
+                <section class="stats-row">
+                    <article class="stat-card stat-card-yellow">
+                        <p class="stat-label">Total Teams</p>
+                        <h3 data-stat="teams"></h3>
+                    </article>
+                    <article class="stat-card stat-card-yellow">
+                        <p class="stat-label">Created Teams</p>
+                        <h3 data-stat="your-teams"></h3>
+                    </article>
+                    <article class="stat-card stat-card-green">
+                        <p class="stat-label">Pending Validations</p>
+                        <h3 data-stat="validations"></h3>
+                    </article>
+                    <article class="stat-card stat-card-red">
+                        <p class="stat-label">Active Projects</p>
+                        <h3 data-stat="active-projects"></h3>
+                    </article>
                 </section>
-
-                <section class="help-panel">
-                    <h2>Quick Tips</h2>
-                    <p>Use <strong>Join Groups</strong> if you already have an invite link to join a group as a teacher.</p>
+                <section class="validation-section">
+                    <h2>Tasks to be Validated</h2>
+                        <div class="validation-list" id="validationList"></div>
+                </section>
+                <section class="group-section recent-section" id="joinedGroupsSection">
+                    <div class="section-title-wrap">
+                        <h2>Ongoing Team Projects</h2>
+                    </div>
+                    <div id="joinedGroupsList"></div>
                 </section>
             </div>
         </main>
-
         <aside class="right-rail" aria-hidden="true">
             <button class="notif-btn" type="button" aria-label="Notifications">
                 <img src="../assets/Notification.png" alt="Notification icon">
@@ -89,18 +244,69 @@
         </aside>
     </div>
 
+    <div class="modal-overlay" id="memberProfileOverlay" aria-hidden="true">
+        <div class="confirmation-modal member-profile-card" role="dialog" aria-modal="true" aria-labelledby="memberProfileTitle">
+            <div class="confirmation-modal-header"><h2 id="memberProfileTitle">Profile Card</h2></div>
+            <div class="confirmation-modal-body member-profile-modal-body">
+                <div class="member-profile-identity">
+                    <div class="circle-avatar large" id="memberProfileAvatar"><img src="../assets/profile-placeholder.svg" alt="Profile picture placeholder"></div>
+                    <div>
+                        <p id="memberProfileRole"></p>
+                        <p id="memberProfileName"></p>
+                        <p id="memberProfileField"></p>
+                        <p id="memberProfileEmail"></p>
+                    </div>
+                </div>
+                <div id="memberProfileStatsContent">
+                    <div class="member-profile-stats">
+                        <div class="member-profile-stat"><span class="member-profile-stat-label">Total Teams</span><strong class="member-profile-stat-value" id="memberProfileTotalTeams">--</strong></div>
+                        <div class="member-profile-stat"><span class="member-profile-stat-label">Created Teams</span><strong class="member-profile-stat-value" id="memberProfileCreatedTeams">--</strong></div>
+                        <div class="member-profile-stat"><span class="member-profile-stat-label">Ongoing Projects</span><strong class="member-profile-stat-value" id="memberProfileCompletedTasks">--</strong></div>
+                        <div class="member-profile-stat"><span class="member-profile-stat-label">Pending Tasks</span><strong class="member-profile-stat-value" id="memberProfilePendingTasks">--</strong></div>
+                    </div>
+                    <div class="member-profile-detail">
+                        <div class="member-profile-task-stats"><p>Total Tasks Received: <strong id="memberProfileReceivedTasks">--</strong></p><p>Total Tasks Completed: <strong id="memberProfileCompletedTaskTotal">--</strong></p><p>Total Tasks Missed: <strong id="memberProfileMissedTasks">--</strong></p></div>
+                        <div class="member-profile-average"><div class="profile-average-item"><p class="member-profile-average-label">Average Score:</p><p class="member-profile-average-value" id="memberProfileAverageScore" tabindex="0" aria-describedby="memberProfileScoreCalculation">N/A</p><div class="profile-average-calculation" id="memberProfileScoreCalculation" role="tooltip">Completed tasks / total tasks received x 100</div></div><div class="profile-average-item"><p class="member-profile-average-label">Average Reputation:</p><p class="member-profile-average-value reputation" id="memberProfileAverageReputation" tabindex="0" aria-describedby="memberProfileReputationCalculation">N/A</p><div class="profile-average-calculation" id="memberProfileReputationCalculation" role="tooltip">Sum of peer ratings / number of ratings</div></div></div>
+                    </div>
+                </div>
+                <div id="memberProfileStatsHidden" class="member-profile-statistics-hidden" hidden>Profile Statistics hidden</div>
+            </div>
+            <div class="confirmation-modal-actions"><button type="button" class="modal-btn discard-btn" id="closeMemberProfileBtn">Close</button></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addGroupModal" aria-hidden="true">
+        <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="addGroupTitle">
+            <div class="group-modal-header">
+                <h2 id="addGroupTitle">Enter Group Information</h2>
+            </div>
+            <div class="group-modal-form">
+                <div class="group-form-field">
+                    <label for="groupNameInput">Group Name:</label>
+                    <input id="groupNameInput" type="text" placeholder="Enter group name">
+                </div>
+                <div class="group-form-field">
+                    <label for="groupSubjectInput">Subject:</label>
+                    <input id="groupSubjectInput" type="text" placeholder="Enter subject">
+                </div>
+                <div class="group-modal-actions">
+                    <button type="button" class="group-modal-btn group-discard-btn" id="discardAddGroup">Discard</button>
+                    <button type="button" class="group-modal-btn group-create-btn" id="createAddGroup">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="joinGroupModal" aria-hidden="true">
         <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="joinGroupTitle">
             <div class="group-modal-header">
                 <h2 id="joinGroupTitle">Enter Group Link</h2>
             </div>
-
             <div class="group-modal-form">
                 <div class="group-form-field">
                     <label for="groupLinkInput">Group Link:</label>
                     <input id="groupLinkInput" type="text" placeholder="Paste group link">
                 </div>
-
                 <div class="group-modal-actions">
                     <button type="button" class="group-modal-btn group-discard-btn" id="discardJoinGroup">Discard</button>
                     <button type="button" class="group-modal-btn group-create-btn" id="joinGroupBtn">Join</button>
@@ -109,15 +315,92 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="editOwnedGroupModal" aria-hidden="true">
+        <div class="group-modal" role="dialog" aria-modal="true" aria-labelledby="editOwnedGroupTitle">
+            <div class="group-modal-header">
+                <h2 id="editOwnedGroupTitle">Edit Group</h2>
+            </div>
+            <div class="group-modal-form">
+                <div class="group-form-field">
+                    <label for="editOwnedGroupNameInput">Group Name:</label>
+                    <input id="editOwnedGroupNameInput" type="text" placeholder="Enter group name">
+                </div>
+                <div class="group-form-field">
+                    <label for="editOwnedGroupSubjectInput">Subject:</label>
+                    <input id="editOwnedGroupSubjectInput" type="text" placeholder="Enter subject">
+                </div>
+                <div class="group-form-field">
+                    <label for="editOwnedGroupMottoInput">Motto:</label>
+                    <input id="editOwnedGroupMottoInput" type="text" placeholder="Enter group motto">
+                </div>
+                <div class="group-modal-actions">
+                    <button type="button" class="group-modal-btn group-discard-btn" id="discardEditOwnedGroup">Discard</button>
+                    <button type="button" class="group-modal-btn group-create-btn" id="saveEditOwnedGroup">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="invitationPreviewModal" aria-hidden="true">
+        <div class="invite-preview-modal" role="dialog" aria-modal="true" aria-labelledby="invitePreviewTitle">
+            <div class="invite-preview-header">
+                <p class="invite-preview-intro" id="invitePreviewIntro">We are inviting you to our Colony</p>
+            </div>
+            <div class="invite-preview-body">
+                <section class="invite-preview-main">
+                    <div class="invite-preview-summary">
+                        <h3 id="invitePreviewTeamName">Swarm/Colony Name</h3>
+                        <p id="invitePreviewMeta">Subject | 0 members | 0 instructors</p>
+                    </div>
+
+                    <div class="invite-preview-leader-row">
+                        <span class="invite-preview-leader-label">Lead by:</span>
+                        <div class="invite-preview-leader">
+                            <img id="invitePreviewLeaderAvatar" src="../assets/profile.png" alt="Leader avatar" />
+                            <span id="invitePreviewLeader">Leader Name</span>
+                        </div>
+                    </div>
+
+                    <div class="invite-preview-description">
+                        <p id="invitePreviewDescription">Keep your team details and shared project context in one place.</p>
+                    </div>
+
+                    <div class="invite-preview-ratings" aria-label="Invitation preview ratings">
+                        <div>
+                            <span>Total Projects</span>
+                            <strong id="invitePreviewProjectCount">0 Projects</strong>
+                        </div>
+                        <div>
+                            <span id="invitePreviewStatusLabel">Group Status</span>
+                            <strong class="status-badge" id="invitePreviewStatus">Active</strong>
+                        </div>
+                        <div>
+                            <span id="invitePreviewMottoLabel">Group Motto</span>
+                            <strong id="invitePreviewMotto">We are all in this together.</strong>
+                        </div>
+                    </div>
+
+                    <div class="invite-preview-actions">
+                        <button type="button" class="group-modal-btn group-discard-btn" id="closeInvitationPreviewBtn">Close</button>
+                        <button type="button" class="group-modal-btn group-create-btn" id="joinAsInstructorBtn">Join as an Instructor</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../lib/loading.js"></script>
-    <script src="../lib/datetime.js"></script>
     <script src="../lib/supabaseClient.js"></script>
     <script src="../lib/auth-guard.js"></script>
+    <script src="../lib/profile-dropdown.js"></script>
+    <script src="../lib/datetime.js"></script>
     <script src="../lib/manage-profile.js"></script>
     <script src="../lib/settings.js"></script>
     <script src="../lib/confirmation-modal.js"></script>
+    <script src="../lib/member-profile-stats.js"></script>
+    <script src="../lib/loading.js"></script>
     <script src="t.dashb.js"></script>
+
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');

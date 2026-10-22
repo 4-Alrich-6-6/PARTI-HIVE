@@ -13,8 +13,27 @@ const closeNotifModalBtn = document.querySelector("#closeNotifModalBtn");
 
 const supa = () => window.hiveSupabase;
 
+const loadTopbarAvatar = async () => {
+    const profileImage = document.querySelector(".profile-trigger img");
+    const supabase = supa();
+    if (!profileImage || !supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("USER").select("avatarPath").eq("userId", user.id).maybeSingle();
+    if (!data?.avatarPath) return;
+    const avatarUrl = data.avatarPath.startsWith("http")
+        ? data.avatarPath
+        : supabase.storage.from("profilePicture").getPublicUrl(data.avatarPath).data?.publicUrl;
+    if (avatarUrl) profileImage.src = avatarUrl;
+};
+
+loadTopbarAvatar();
+
 if (menuBtn && sidebar) {
-    menuBtn.addEventListener("click", () => sidebar.classList.toggle("open"));
+    menuBtn.addEventListener("click", () => {
+        const isOpen = sidebar.classList.toggle("open");
+        menuBtn.setAttribute("aria-expanded", String(isOpen));
+    });
 }
 
 const openNotifModal = async (notif) => {
@@ -46,9 +65,9 @@ const renderNotifications = async () => {
 
     if (!notifications.length) {
         notifList.innerHTML = `
-            <div class="empty-state">
-                <img src="../assets/Notification.png" class="empty-state-icon" alt="No notifications">
-                <h3>No Notifications</h3>
+            <div class="empty-state notification-empty-placeholder">
+                <img src="../assets/bee-flight.svg" class="empty-state-icon" alt="">
+                <h3>No notifications</h3>
                 <p>You're all caught up! No new notifications at the moment.</p>
             </div>
         `;
@@ -70,6 +89,7 @@ const renderNotifications = async () => {
                 <span class="notif-date"></span>
             </div>
             <p class="notif-body"></p>
+            ${notif.isRead ? "" : '<span class="notif-unread-dot" aria-label="Unread"></span>'}
         `;
         card.querySelector(".notif-title").textContent = notif.title;
         card.querySelector(".notif-date").textContent = formatNotifDate(notif.date);

@@ -247,6 +247,50 @@ button {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+
+.category-list > .empty-state {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 0 auto;
+    min-height: 200px;
+}
+
+.project-empty-state {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 0 auto;
+    min-height: 50vh;
+    color: #AAA;
+    font-size: 14px;
+}
+
+.project-empty-state-illustration {
+    width: min(100%, 60px);
+    height: auto;
+    margin: 0 auto 8px;
+}
+
+.project-empty-state strong {
+    color: #111;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.project-empty-state p {
+    color: #999;
+    font-size: 14px;
 }
 
 .category-item {
@@ -426,7 +470,8 @@ button {
     color: #222;
 }
 
-.form-group input[type="text"] {
+.form-group input[type="text"],
+.form-group textarea {
     width: 100%;
     border: 1px solid #cfcfcf;
     border-radius: 8px;
@@ -434,6 +479,11 @@ button {
     font-size: 13px;
     font-family: inherit;
     background: #fffdf0;
+}
+
+.form-group textarea {
+    min-height: 92px;
+    resize: vertical;
 }
 
 .post-category-modal-actions {
@@ -544,6 +594,7 @@ button {
 
 /* System-Appropriate Empty State Styling */
 .empty-state {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -552,6 +603,13 @@ button {
     background: transparent;
     text-align: center;
     animation: fadeIn 0.4s ease-out;
+}
+
+.category-list > .empty-state {
+    width: 100%;
+    align-items: center;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .empty-state-icon {
@@ -564,7 +622,7 @@ button {
 
 .empty-state h3 {
     margin: 0 0 4px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: #111;
@@ -577,6 +635,23 @@ button {
     font-size: 12px;
     font-weight: 600;
     color: #555;
+}
+
+.empty-post-link {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    appearance: none;
+}
+
+.empty-post-link:hover {
+    color: #FFCC00;
 }
 
 @keyframes fadeIn {

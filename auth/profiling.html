@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="visibility:hidden">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
@@ -8,7 +8,7 @@
     <title>Profiling</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kodchasan:wght@400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="profiling.css">
     <script src="/lib/offline-banner.js" defer></script>
     <link rel="manifest" href="../manifest.json">
@@ -17,29 +17,24 @@
     <link rel="icon" href="../Logo.png">
 </head>
 <body>
-<div class="hex-wrap">
-  <div class="hex-left"></div>
-  <div class="hex-mid">
-    <div class="hex-container">
-        <div class="title">
-            <h1>WELCOME TO</h1>
-            <img src="../Title.png" class="title-image" alt="Logo">
-            <h2>Where Teamwork Thrives!</h2>
+    <div class="profiling-page">
+        <div class="bg-wrapper" aria-hidden="true">
+            <div class="bg-left"></div>
+            <div class="bg-right"></div>
         </div>
-        <div class="selection">
-            <h1>I am a...</h1>
-        </div>
-        <div class="options" id="positionOptions">
-            <p style="color:#000000;opacity:.7;">Loading...</p>
-        </div>
-        <div class="disclaimer-container">
-            <span class="disclaimer-label">Disclaimer:</span>
-            <p class="disclaimer-text">"Teacher" role isn't limited to just teachers, it can be an individual who is responsible to validate group works and performances.</p>
-        </div>
+        <nav class="navbar">
+            <img class="title-logo" src="../PrimeLogo.png" alt="HIVE Title Logo">
+        </nav>
+        <main class="profiling-main">
+            <section class="profiling-card" aria-labelledby="profiling-title">
+                <h1 id="profiling-title">Welcome to<br>HIVE</h1>
+                <p class="profiling-prompt">To continue, please select a role.</p>
+                <div class="options" id="positionOptions">
+                    <p class="loading-option">Loading...</p>
+                </div>
+            </section>
+        </main>
     </div>
-  </div>
-  <div class="hex-right"></div>
-</div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../lib/supabaseClient.js"></script>
     <script src="../lib/auth-guard.js"></script>

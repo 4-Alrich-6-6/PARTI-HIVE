@@ -121,6 +121,38 @@ const sendOtp = async () => {
 
   try {
     const supabase = getSupabase();
+
+    if (authMode === "signup") {
+      const { exists, error: emailCheckError } = await (async () => {
+        const result = await supabase.auth.signInWithOtp({
+          email: userEmail,
+          options: { shouldCreateUser: false },
+        });
+
+        if (!result.error) {
+          return { exists: true, error: null };
+        }
+
+        const lowerMessage = (result.error.message || "").toLowerCase();
+        if (lowerMessage.includes("user not found") || lowerMessage.includes("signups not allowed")) {
+          return { exists: false, error: null };
+        }
+
+        return { exists: false, error: result.error };
+      })();
+
+      if (emailCheckError) {
+        throw emailCheckError;
+      }
+
+      if (exists) {
+        showAuthNotice("This email is already registered. Please log in instead.", {
+          title: "Email Already Exists",
+        });
+        return;
+      }
+    }
+
     const result = await supabase.auth.signInWithOtp({
       email: userEmail,
       options: {

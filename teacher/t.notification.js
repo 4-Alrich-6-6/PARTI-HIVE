@@ -2,9 +2,8 @@ const menuBtn = document.querySelector(".menu-btn");
 const sidebar = document.querySelector("#sidebar");
 const topBackBtn = document.querySelector("#topBackBtn");
 const notifList = document.querySelector("#notifList");
-const notifEmpty = document.querySelector("#notifEmpty");
 const markAllReadBtn = document.querySelector("#markAllReadBtn");
-const clearNotificationsBtn = document.querySelector("#clearNotificationsBtn");
+const emptyNotifBtn = document.querySelector("#emptyNotifBtn");
 const notifModalOverlay = document.querySelector("#notifModalOverlay");
 const notifModalTitle = document.querySelector("#notifModalTitle");
 const notifModalGroup = document.querySelector("#notifModalGroup");
@@ -13,6 +12,23 @@ const notifModalBody = document.querySelector("#notifModalBody");
 const closeNotifModalBtn = document.querySelector("#closeNotifModalBtn");
 
 const supa = () => window.hiveSupabase;
+document.querySelectorAll('.sidebar a[href="t.category.html"]').forEach((link) => { link.href = "t.team.html"; });
+
+const loadTopbarAvatar = async () => {
+    const profileImage = document.querySelector(".profile-trigger img");
+    const supabase = supa();
+    if (!profileImage || !supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("USER").select("avatarPath").eq("userId", user.id).maybeSingle();
+    if (!data?.avatarPath) return;
+    const avatarUrl = data.avatarPath.startsWith("http")
+        ? data.avatarPath
+        : supabase.storage.from("profilePicture").getPublicUrl(data.avatarPath).data?.publicUrl;
+    if (avatarUrl) profileImage.src = avatarUrl;
+};
+
+loadTopbarAvatar();
 
 if (menuBtn && sidebar) {
     menuBtn.addEventListener("click", () => sidebar.classList.toggle("open"));
@@ -41,21 +57,22 @@ const renderNotifications = async () => {
 
     const notifications = await loadNotifications(supa());
 
+    if (emptyNotifBtn) {
+        emptyNotifBtn.style.display = notifications.length > 0 ? "inline-flex" : "none";
+    }
+
     if (!notifications.length) {
-        if (notifEmpty) notifEmpty.hidden = false;
         notifList.innerHTML = `
-            <div class="empty-state">
-                <img src="../assets/Notification.png" class="empty-state-icon" alt="No notifications">
-                <h3>No Notifications</h3>
+            <div class="empty-state notification-empty-placeholder">
+                <img src="../assets/bee-flight.svg" class="empty-state-icon" alt="">
+                <h3>No notifications</h3>
                 <p>You're all caught up! No new notifications at the moment.</p>
             </div>
         `;
         return;
     }
 
-    if (notifEmpty) notifEmpty.hidden = true;
     notifList.innerHTML = "";
-
     notifications.forEach((notif) => {
         const itemWrap = document.createElement("div");
         itemWrap.className = "notif-item-wrap";
@@ -70,6 +87,7 @@ const renderNotifications = async () => {
                 <span class="notif-date"></span>
             </div>
             <p class="notif-body"></p>
+            ${notif.isRead ? "" : '<span class="notif-unread-dot" aria-label="Unread"></span>'}
         `;
         card.querySelector(".notif-title").textContent = notif.title;
         card.querySelector(".notif-date").textContent = formatNotifDate(notif.date);
@@ -104,10 +122,18 @@ const renderNotifications = async () => {
     });
 };
 
-if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "t.dashb.html"; });
-if (closeNotifModalBtn) closeNotifModalBtn.addEventListener("click", closeNotifModal);
-if (notifModalOverlay) notifModalOverlay.addEventListener("click", (e) => { if (e.target === notifModalOverlay) closeNotifModal(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNotifModal(); });
+if (emptyNotifBtn) {
+    emptyNotifBtn.addEventListener("click", () => {
+        showConfirmation(
+            "This action will delete all your notifications.",
+            async () => {
+                await deleteAllNotificationsForUser(supa());
+                await renderNotifications();
+            },
+            { title: "Clear All Notifications", confirmText: "Clear All", cancelText: "Cancel" }
+        );
+    });
+}
 
 if (markAllReadBtn) {
     markAllReadBtn.addEventListener("click", async () => {
@@ -133,18 +159,10 @@ if (markAllReadBtn) {
     });
 }
 
-if (clearNotificationsBtn) {
-    clearNotificationsBtn.addEventListener("click", () => {
-        showConfirmation(
-            "This action will delete all your notifications.",
-            async () => {
-                await deleteAllNotificationsForUser(supa());
-                await renderNotifications();
-            },
-            { title: "Clear All Notifications", confirmText: "Clear All", cancelText: "Cancel" }
-        );
-    });
-}
+if (topBackBtn) topBackBtn.addEventListener("click", () => { window.location.href = "t.dashb.html"; });
+if (closeNotifModalBtn) closeNotifModalBtn.addEventListener("click", closeNotifModal);
+if (notifModalOverlay) notifModalOverlay.addEventListener("click", (e) => { if (e.target === notifModalOverlay) closeNotifModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNotifModal(); });
 
 const logoutBtn = document.querySelector(".logout");
 if (logoutBtn) {
@@ -157,33 +175,4 @@ if (logoutBtn) {
     });
 }
 
-const loadTeacherSidebarProfile = async () => {
-    const supabase = supa();
-    if (!supabase) return;
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: userData, error } = await supabase
-            .from("USER")
-            .select("userDisplayName, userEmail, avatarPath")
-            .eq("userId", user.id)
-            .maybeSingle();
-        if (error || !userData) return;
-        const avatarImg = document.querySelector(".avatar-circle img");
-        if (avatarImg && userData.avatarPath) {
-            const { data } = supabase.storage.from("profilePicture").getPublicUrl(userData.avatarPath);
-            if (data?.publicUrl) {
-                avatarImg.src = data.publicUrl;
-                avatarImg.style.objectFit = "cover";
-            }
-        }
-        const h3s = document.querySelectorAll(".profile-block h3");
-        if (h3s[0]) h3s[0].textContent = userData.userDisplayName || "Name";
-        if (h3s[1]) h3s[1].textContent = userData.userEmail || "Email";
-    } catch (err) {
-        console.error("Error loading teacher profile:", err);
-    }
-};
-
 renderNotifications();
-loadTeacherSidebarProfile();

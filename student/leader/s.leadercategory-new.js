@@ -9,6 +9,7 @@ const postCategoryModalOverlay = document.querySelector("#postCategoryModalOverl
 const discardPostCategoryBtn = document.querySelector("#discardPostCategoryBtn");
 const postCategoryForm = document.querySelector("#postCategoryForm");
 const categoryNameInput = document.querySelector("#categoryNameInput");
+const categoryDescriptionInput = document.querySelector("#categoryDescriptionInput");
 const categoryDueDateInput = document.querySelector("#categoryDueDateInput");
 const postCategorySubmitBtn = postCategoryForm ? postCategoryForm.querySelector("button[type='submit']") : null;
 const categoryList = document.querySelector(".category-list");
@@ -48,9 +49,10 @@ const loadProjectsFromDB = async () => {
 
   const { data: projects, error } = await supabase
     .from("PROJECT")
-    .select("projId, projName, projDueD")
+    .select("projId, projName, projDesc, projCreatedAt, projDueD")
     .eq("grpId", grpId)
-    .order("projDueD", { ascending: true });
+    .order("projCreatedAt", { ascending: false, nullsFirst: false })
+    .order("projId", { ascending: false });
 
   if (error || !projects) {
     console.error("Error loading projects:", error);
@@ -171,6 +173,7 @@ const createCategoryItem = (project) => {
   categoryItem.className = "category-item";
   categoryItem.setAttribute("role", "listitem");
   categoryItem.setAttribute("data-proj-id", project.projId);
+  categoryItem.setAttribute("data-description", project.projDesc || "");
   if (project.projDueD) categoryItem.setAttribute("data-due-date", project.projDueD);
   
   categoryItem.innerHTML = `
@@ -211,7 +214,6 @@ const renderAllProjects = (projects) => {
   if (!projects || projects.length === 0) {
     categoryList.innerHTML = `
       <div class="empty-state">
-        <img src="../../assets/Plus.png" class="empty-state-icon" alt="No projects">
         <h3>No Projects Yet</h3>
         <p>Click "Post Project" to create your first project and start breaking down tasks!</p>
       </div>
@@ -254,7 +256,7 @@ const postProject = async (e) => {
       async () => {
         const { error } = await supabase
           .from("PROJECT")
-          .insert([{ projName: name, projDueD: due, grpId: grpId }]);
+          .insert([{ projName: name, projDesc: categoryDescriptionInput?.value.trim() || null, projDueD: due, projCreatedAt: new Date().toISOString(), grpId: grpId }]);
 
         if (error) {
           showAlert("Failed to post project: " + error.message, { title: "Error" });

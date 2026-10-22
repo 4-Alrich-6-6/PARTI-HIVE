@@ -14,6 +14,10 @@ const getFriendlyAuthMessage = (error) => {
         return "Incorrect email or password. Please check your login details and try again.";
     }
 
+    if (lowerMessage.includes("already registered") || lowerMessage.includes("user already registered") || lowerMessage.includes("email already exists") || lowerMessage.includes("email already in use") || lowerMessage.includes("duplicate") || lowerMessage.includes("already exists")) {
+        return "This email is already registered. Please log in instead.";
+    }
+
     if (lowerMessage.includes("confirmation email") || lowerMessage.includes("email")) {
         return "We could not send the OTP email right now. Please check your email address, then try again in a moment.";
     }
@@ -27,6 +31,27 @@ const getFriendlyAuthMessage = (error) => {
     }
 
     return "Something went wrong while sending your OTP. Please try again.";
+};
+
+const checkExistingSignupEmail = async (supabase, email) => {
+    const result = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+            shouldCreateUser: false,
+        },
+    });
+
+    if (!result.error) {
+        return { exists: true, error: null };
+    }
+
+    const lowerMessage = (result.error.message || "").toLowerCase();
+
+    if (lowerMessage.includes("user not found") || lowerMessage.includes("signups not allowed")) {
+        return { exists: false, error: null };
+    }
+
+    return { exists: false, error: result.error };
 };
 
 const redirectAfterLogin = async (supabase) => {
@@ -303,7 +328,8 @@ if (signUpForm) {
             return;
         }
 
-        localStorage.setItem("hive_email", emailInput.value.trim());
+        const normalizedEmail = emailInput.value.trim();
+        localStorage.setItem("hive_email", normalizedEmail);
         localStorage.setItem("hive_auth_mode", "signup");
         localStorage.setItem("hive_password", passwordInput.value.trim());
 
@@ -311,8 +337,24 @@ if (signUpForm) {
 
         try {
             const supabase = getSupabase();
+            const { exists, error: emailCheckError } = await checkExistingSignupEmail(supabase, normalizedEmail);
+
+            if (emailCheckError) {
+                throw emailCheckError;
+            }
+
+            if (exists) {
+                localStorage.removeItem("hive_email");
+                localStorage.removeItem("hive_auth_mode");
+                localStorage.removeItem("hive_password");
+                showAuthNotice("This email is already registered. Please log in instead.", {
+                    title: "Email Already Exists",
+                });
+                return;
+            }
+
             const result = await supabase.auth.signInWithOtp({
-                email: emailInput.value.trim(),
+                email: normalizedEmail,
                 options: {
                     shouldCreateUser: true,
                 },

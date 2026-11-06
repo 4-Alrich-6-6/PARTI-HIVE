@@ -1565,7 +1565,7 @@ const leaveGroup = async () => {
       p_new_leader_user_id:  selected.value,
       p_old_leader_user_id:  user.id,
     });
-    if (error) { alert("Failed to transfer leadership. Please try again."); return; }
+    if (error) { showAlert(`Failed to transfer leadership: ${error.message}`, { title: "Error" }); return; }
     
     // Notify new leader
     try {

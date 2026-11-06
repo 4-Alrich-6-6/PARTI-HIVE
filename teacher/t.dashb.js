@@ -78,13 +78,20 @@ const getProfileAverageScore = async (userId) => {
 
 const getProfileAverageReputation = async (userId) => {
     const supabase = window.hiveSupabase;
-    const { data: history, error: historyError } = await supabase.from("TASKHISTORY").select("projId").eq("userId", userId).not("projId", "is", null);
-    if (historyError || !history?.length) return { score: null, calculation: "" };
-    const projectIds = [...new Set(history.map((task) => Number(task.projId)).filter(Number.isFinite))];
-    const { data: memberships, error: membershipError } = await supabase.from("GROUPMEMBER").select("grpmemId").eq("userId", userId);
-    if (membershipError || !memberships?.length) return { score: null, calculation: "" };
-    const { data: evaluations, error: evaluationError } = await supabase.from("PEEREVAL").select("projId, evaluatedGrpmemId, evalRemarks, confirmed").in("projId", projectIds).in("evaluatedGrpmemId", memberships.map((membership) => membership.grpmemId));
-    if (evaluationError || !evaluations?.length) return { score: null, calculation: "" };
+    if (!supabase) return { score: null, calculation: "" };
+    const [{ data: memberships, error: membershipError }, { data: archivedReputations, error: reputationHistoryError }] = await Promise.all([
+        supabase.from("GROUPMEMBER").select("grpmemId").eq("userId", userId),
+        supabase.from("REPUTATIONHISTORY").select("projId, evalRemarks, confirmed").eq("userId", userId)
+    ]);
+    if (membershipError) console.error("Could not load reputation memberships:", membershipError);
+    if (reputationHistoryError) console.error("Could not load archived reputation history:", reputationHistoryError);
+    const memberIds = (memberships || []).map((membership) => membership.grpmemId).filter(Boolean);
+    const { data: currentEvaluations, error: evaluationError } = memberIds.length
+        ? await supabase.from("PEEREVAL").select("projId, evaluatedGrpmemId, evalRemarks, confirmed").in("evaluatedGrpmemId", memberIds)
+        : { data: [], error: null };
+    if (evaluationError) console.error("Could not load peer evaluations:", evaluationError);
+    const evaluations = [...(currentEvaluations || []), ...(archivedReputations || [])];
+    if (!evaluations.length) return { score: null, calculation: "" };
     const ratingsByProject = new Map();
     evaluations.filter((evaluation) => evaluation.confirmed !== false).forEach((evaluation) => {
         const rating = Number(String(evaluation.evalRemarks || "").match(/(10|[0-9])\s*\/\s*10/)?.[1]);

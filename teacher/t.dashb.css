@@ -325,7 +325,7 @@ button {
 .stats-row h3 {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
-    font-size: 128px;
+    font-size: 80px;
 }
 
 .stat-card {
@@ -346,6 +346,10 @@ button {
     font-size: 12px;
     font-weight: 700;
     color: #555;
+}
+
+.stat-card p {
+    font-family: "Kodchasan", sans-serif;
 }
 
 .stat-card h3 {
@@ -2420,7 +2424,7 @@ body {
 }
 
 .stat-card h3 {
-    font-size: 123px;
+    font-size: 80px;
 }
 
 .recent-section .section-title-wrap h2 {
@@ -2487,14 +2491,14 @@ body {
 
 .dashboard-copy-page .stat-card h3 {
     margin: 0 !important;
-    font-size: 123px !important;
+    font-size: 80px !important;
     line-height: 1 !important;
 }
 
 .dashboard-copy-page .stat-label {
     margin: 0 0 4px !important;
     color: #111 !important;
-    font-family: Arial, sans-serif !important;
+    font-family: "Kodchasan", sans-serif !important;
     font-size: 16px !important;
     font-weight: 400 !important;
 }

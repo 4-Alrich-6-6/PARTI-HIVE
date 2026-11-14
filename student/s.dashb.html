@@ -232,7 +232,7 @@
                 </section>
                 <section class="ratings-section">
                     <h2>Your Ratings</h2>
-                    <div class="ratings-card"><div class="ratings-totals"><p>Total Tasks Received: <strong></strong></p><p>Total Tasks Completed: <strong></strong></p><p>Total Tasks Missed: <strong></strong></p></div><div class="average-score"><p>Average Score:</p><strong tabindex="0" aria-describedby="averageScoreCalculation"></strong><div class="average-score-calculation" id="averageScoreCalculation" role="tooltip" aria-live="polite"></div></div><div class="average-reputation"><p>Average Reputation:</p><strong tabindex="0" aria-describedby="averageReputationCalculation"></strong><div class="average-score-calculation" id="averageReputationCalculation" role="tooltip" aria-live="polite"></div></div></div>
+                    <div class="ratings-card"><div class="ratings-totals"><p>Total Tasks Received: <strong></strong></p><p>Total Tasks Completed: <strong></strong></p><p>Total Tasks Missed: <strong></strong></p></div><div class="average-score"><p>Average Score: <button class="average-score-info" type="button" aria-label="Show average score ranks" aria-describedby="averageScoreCalculation" aria-haspopup="dialog" aria-controls="scoreScaleModal"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1257 1741" aria-hidden="true"><g fill="#FFCC00"><rect x="165" y="459" width="928" height="292" rx="146"/><rect x="7" y="841" width="1244" height="292" rx="146"/><path d="M629 1225L250 1225Q203 1227 189 1254Q170 1290 177 1324C185 1365 212 1390 248 1412C318 1455 366 1474 426 1521C492 1572 542 1622 576 1676C592 1700 604 1718 613 1730Q629 1745 645 1730C654 1718 666 1700 682 1676C716 1622 766 1572 832 1521C892 1474 940 1455 1010 1412C1046 1390 1073 1365 1081 1324Q1088 1290 1069 1254Q1055 1227 1008 1225Z"/><path d="M485 408L585 408Q599 406 594 391C585 345 550 270 480 185C420 110 340 50 268 7Q255 -1 241 9L196 62Q186 76 200 89C250 120 320 170 365 235C420 305 445 345 468 385Q476 408 485 408Z"/><path d="M773 408L673 408Q659 406 664 391C673 345 708 270 778 185C838 110 918 50 990 7Q1003 -1 1017 9L1062 62Q1072 76 1058 89C1008 120 938 170 893 235C838 305 813 345 790 385Q782 408 773 408Z"/></g></svg></button></p><strong tabindex="0" aria-describedby="averageScoreCalculation"></strong><div class="average-score-calculation" id="averageScoreCalculation" role="tooltip" aria-live="polite"></div></div><div class="average-reputation"><p>Average Reputation:</p><strong tabindex="0" aria-describedby="averageReputationCalculation"></strong><div class="average-score-calculation" id="averageReputationCalculation" role="tooltip" aria-live="polite"></div></div></div>
                 </section>
                 <section class="group-section recent-section" id="joinedGroupsSection">
                     <div class="section-title-wrap">
@@ -248,6 +248,28 @@
                 <span class="notif-badge" aria-hidden="true"></span>
             </button>
         </aside>
+    </div>
+
+    <div class="modal-overlay score-scale-overlay" id="scoreScaleModal" aria-hidden="true">
+        <section class="score-scale-modal" role="dialog" aria-modal="true" aria-labelledby="scoreScaleTitle">
+            <header class="score-scale-header">
+                <h2 id="scoreScaleTitle">Hive Ranks</h2>
+                <button class="score-scale-close" id="closeScoreScaleModal" type="button" aria-label="Close average score ranks">&times;</button>
+            </header>
+            <table class="score-scale-table">
+                <thead>
+                    <tr><th scope="col">Percentages</th><th scope="col">Rank Tier</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>90 - 100%</td><td>S</td></tr>
+                    <tr><td>80 - 89%</td><td>A</td></tr>
+                    <tr><td>70 - 79%</td><td>B</td></tr>
+                    <tr><td>60 - 69%</td><td>C</td></tr>
+                    <tr><td>50 - 59%</td><td>D</td></tr>
+                    <tr><td>Below 50%</td><td>F</td></tr>
+                </tbody>
+            </table>
+        </section>
     </div>
 
     <div class="modal-overlay" id="addGroupModal" aria-hidden="true">

@@ -653,6 +653,10 @@ const joinAsInstructorBtn = document.querySelector("#joinAsInstructorBtn");
 const groupLinkInput = document.querySelector("#groupLinkInput");
 const openEditOwnedGroupModalBtn = document.querySelector("#openEditOwnedGroupModal");
 const editOwnedGroupModal = document.querySelector("#editOwnedGroupModal");
+const scoreScaleModal = document.querySelector("#scoreScaleModal");
+const closeScoreScaleModalBtn = document.querySelector("#closeScoreScaleModal");
+const averageScoreInfoButton = document.querySelector(".average-score-info");
+let scoreScaleModalTrigger = null;
 const discardEditOwnedGroupBtn = document.querySelector("#discardEditOwnedGroup");
 const saveEditOwnedGroupBtn = document.querySelector("#saveEditOwnedGroup");
 const editOwnedGroupNameInput = document.querySelector("#editOwnedGroupNameInput");
@@ -670,6 +674,28 @@ const invitePreviewLeaderAvatar = document.querySelector("#invitePreviewLeaderAv
 const invitePreviewStatus = document.querySelector("#invitePreviewStatus");
 const invitePreviewStatusLabel = document.querySelector("#invitePreviewStatusLabel");
 const invitePreviewMottoLabel = document.querySelector("#invitePreviewMottoLabel");
+
+const closeScoreScaleModal = () => {
+    if (!scoreScaleModal) return;
+    scoreScaleModal.classList.remove("open");
+    scoreScaleModal.setAttribute("aria-hidden", "true");
+    scoreScaleModalTrigger?.focus();
+    scoreScaleModalTrigger = null;
+};
+
+const openScoreScaleModal = () => {
+    if (!scoreScaleModal) return;
+    scoreScaleModalTrigger = averageScoreInfoButton;
+    scoreScaleModal.classList.add("open");
+    scoreScaleModal.setAttribute("aria-hidden", "false");
+    closeScoreScaleModalBtn?.focus();
+};
+
+averageScoreInfoButton?.addEventListener("click", openScoreScaleModal);
+closeScoreScaleModalBtn?.addEventListener("click", closeScoreScaleModal);
+scoreScaleModal?.addEventListener("click", (event) => {
+    if (event.target === scoreScaleModal) closeScoreScaleModal();
+});
 
 const getGroupLinkIcon = (type) => {
     const icons = {
@@ -1341,7 +1367,10 @@ if (editOwnedGroupModal) editOwnedGroupModal.addEventListener("click", (e) => { 
 
 document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    if (addGroupModal?.classList.contains("open")) {
+    if (scoreScaleModal?.classList.contains("open")) {
+        event.preventDefault();
+        closeScoreScaleModal();
+    } else if (addGroupModal?.classList.contains("open")) {
         event.preventDefault();
         requestCloseAddGroupModal();
     } else if (createTeamModal?.classList.contains("open")) {
